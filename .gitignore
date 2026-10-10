@@ -1,0 +1,25 @@
+# Python / Django
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+db.sqlite3
+.env
+.env.*
+!.env.example
+staticfiles/
+media/
+
+# Android / Gradle
+.gradle/
+**/build/
+local.properties
+*.iml
+.idea/
+.cxx/
+.externalNativeBuild/
+
+# Secrets and local files
+*.pem
+*.key
+.DS_Store
