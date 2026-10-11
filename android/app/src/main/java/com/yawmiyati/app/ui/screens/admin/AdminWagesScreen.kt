@@ -57,20 +57,14 @@ import com.yawmiyati.app.viewmodels.selectReviewableDeclaration
 @Composable
 fun AdminWagesScreen(
     onBack: () -> Unit,
-    onNavigateToLogin: () -> Unit = {},
     viewModel: AdminWagesViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val actionState by viewModel.actionState.collectAsState()
-    val sessionExpired by viewModel.sessionExpired.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
     data class VerifyTarget(val obligation: WageObligationResponse, val declaration: PaymentDeclarationResponse, val isReject: Boolean)
     var verifyTarget by remember { mutableStateOf<VerifyTarget?>(null) }
-
-    LaunchedEffect(sessionExpired) {
-        if (sessionExpired) onNavigateToLogin()
-    }
 
     LaunchedEffect(actionState) {
         when (actionState) {

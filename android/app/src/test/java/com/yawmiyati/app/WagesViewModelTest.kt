@@ -4,6 +4,7 @@ import com.yawmiyati.app.data.api.AdminVerifyDeclarationRequest
 import com.yawmiyati.app.data.api.DeclarePaymentRequest
 import com.yawmiyati.app.data.api.PaymentDeclarationResponse
 import com.yawmiyati.app.data.api.WageObligationResponse
+import com.yawmiyati.app.data.auth.SessionEventBus
 import com.yawmiyati.app.data.wages.WageRepository
 import com.yawmiyati.app.data.wages.WageResult
 import com.yawmiyati.app.viewmodels.AdminWagesViewModel
@@ -14,6 +15,7 @@ import com.yawmiyati.app.viewmodels.WorkerWagesViewModel
 import com.yawmiyati.app.viewmodels.selectReviewableDeclaration
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -220,71 +222,87 @@ class WagesViewModelTest {
         assertTrue(vm.uiState.value is WagesUiState.Empty)
     }
 
-    // ── H-1: Session expiry propagation ──────────────────────────────────────
+    // ── H-1: Session expiry propagation via SessionEventBus ──────────────────
 
     @Test
-    fun `WagesViewModel auth error on load sets sessionExpired`() = runTest(testDispatcher) {
+    fun `WagesViewModel auth error on load emits session expired event`() = runTest(testDispatcher) {
         val repo = object : WageRepository() {
             override suspend fun listObligations(status: String?) =
                 WageResult.Error("انتهت الجلسة", isAuth = true)
         }
+        val events = mutableListOf<Unit>()
+        val job = launch { SessionEventBus.sessionExpired.collect { events.add(it) } }
         val vm = WagesViewModel(repo)
         advanceUntilIdle()
-        assertTrue(vm.sessionExpired.value)
-        assertTrue(vm.uiState.value is WagesUiState.Loading) // stays Loading, not Error
+        assertTrue("Expected session expired event", events.isNotEmpty())
+        // uiState stays as Loading (never set to Error) since auth error navigates away
+        assertTrue(vm.uiState.value is WagesUiState.Loading)
+        job.cancel()
     }
 
     @Test
-    fun `WagesViewModel auth error on declarePayment sets sessionExpired`() = runTest(testDispatcher) {
+    fun `WagesViewModel auth error on declarePayment emits session expired and resets actionState`() = runTest(testDispatcher) {
         val obligation = fakeObligation("obl-auth", "PENDING")
         val repo = object : WageRepository() {
             override suspend fun listObligations(status: String?) = WageResult.Success(listOf(obligation))
             override suspend fun declarePayment(id: String, request: DeclarePaymentRequest) =
                 WageResult.Error("انتهت الجلسة", isAuth = true)
         }
+        val events = mutableListOf<Unit>()
+        val job = launch { SessionEventBus.sessionExpired.collect { events.add(it) } }
         val vm = WagesViewModel(repo)
         advanceUntilIdle()
         vm.declarePayment("obl-auth", 10000L, "2026-10-11", "CASH", "")
         advanceUntilIdle()
-        assertTrue(vm.sessionExpired.value)
-        assertTrue(vm.actionState.value is WageActionState.Idle) // no error shown
+        assertTrue("Expected session expired event", events.isNotEmpty())
+        assertTrue(vm.actionState.value is WageActionState.Idle)
+        job.cancel()
     }
 
     @Test
-    fun `WorkerWagesViewModel auth error on acknowledgePayment sets sessionExpired`() = runTest(testDispatcher) {
+    fun `WorkerWagesViewModel auth error on acknowledgePayment emits session expired`() = runTest(testDispatcher) {
         val obligation = fakeObligation("w-auth-1", "AWAITING_ACK")
         val repo = object : WageRepository() {
             override suspend fun listObligations(status: String?) = WageResult.Success(listOf(obligation))
             override suspend fun acknowledgePayment(id: String) =
                 WageResult.Error("غير مصرح", isAuth = true)
         }
+        val events = mutableListOf<Unit>()
+        val job = launch { SessionEventBus.sessionExpired.collect { events.add(it) } }
         val vm = WorkerWagesViewModel(repo)
         advanceUntilIdle()
         vm.acknowledgePayment("w-auth-1")
         advanceUntilIdle()
-        assertTrue(vm.sessionExpired.value)
+        assertTrue("Expected session expired event", events.isNotEmpty())
+        job.cancel()
     }
 
     @Test
-    fun `AdminWagesViewModel auth error on load sets sessionExpired`() = runTest(testDispatcher) {
+    fun `AdminWagesViewModel auth error on load emits session expired`() = runTest(testDispatcher) {
         val repo = object : WageRepository() {
             override suspend fun listObligations(status: String?) =
                 WageResult.Error("Unauthorized", isAuth = true)
         }
+        val events = mutableListOf<Unit>()
+        val job = launch { SessionEventBus.sessionExpired.collect { events.add(it) } }
         val vm = AdminWagesViewModel(repo)
         advanceUntilIdle()
-        assertTrue(vm.sessionExpired.value)
+        assertTrue("Expected session expired event", events.isNotEmpty())
+        job.cancel()
     }
 
     @Test
-    fun `non-auth error does NOT set sessionExpired`() = runTest(testDispatcher) {
+    fun `non-auth error does NOT emit session expired and shows error state`() = runTest(testDispatcher) {
         val repo = object : WageRepository() {
             override suspend fun listObligations(status: String?) =
                 WageResult.Error("تعذّر الاتصال بالخادم", isAuth = false)
         }
+        val events = mutableListOf<Unit>()
+        val job = launch { SessionEventBus.sessionExpired.collect { events.add(it) } }
         val vm = WagesViewModel(repo)
         advanceUntilIdle()
-        assertFalse(vm.sessionExpired.value)
+        assertTrue("Should not emit session expired for non-auth error", events.isEmpty())
         assertTrue(vm.uiState.value is WagesUiState.Error)
+        job.cancel()
     }
 }

@@ -1,12 +1,14 @@
 package com.yawmiyati.app.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.yawmiyati.app.YawmiyatiApp
+import com.yawmiyati.app.data.auth.SessionEventBus
 import com.yawmiyati.app.ui.screens.admin.AdminVerificationScreen
 import com.yawmiyati.app.ui.screens.admin.AdminWagesScreen
 import com.yawmiyati.app.ui.screens.auth.LoginScreen
@@ -35,6 +37,14 @@ fun YawmiyatiNavGraph() {
         }
     } else {
         Screen.Login.route
+    }
+
+    LaunchedEffect(Unit) {
+        SessionEventBus.sessionExpired.collect {
+            navController.navigate(Screen.Login.route) {
+                popUpTo(0) { inclusive = true }
+            }
+        }
     }
 
     NavHost(navController = navController, startDestination = startDestination) {
@@ -100,12 +110,7 @@ fun YawmiyatiNavGraph() {
 
         composable(Screen.WorkerWages.route) {
             WorkerWagesScreen(
-                onBack = { navController.popBackStack() },
-                onNavigateToLogin = {
-                    navController.navigate(Screen.Login.route) {
-                        popUpTo(0) { inclusive = true }
-                    }
-                }
+                onBack = { navController.popBackStack() }
             )
         }
 
@@ -149,12 +154,7 @@ fun YawmiyatiNavGraph() {
 
         composable(Screen.BusinessWages.route) {
             WageObligationsScreen(
-                onBack = { navController.popBackStack() },
-                onNavigateToLogin = {
-                    navController.navigate(Screen.Login.route) {
-                        popUpTo(0) { inclusive = true }
-                    }
-                }
+                onBack = { navController.popBackStack() }
             )
         }
 
@@ -201,12 +201,7 @@ fun YawmiyatiNavGraph() {
 
         composable(Screen.AdminWages.route) {
             AdminWagesScreen(
-                onBack = { navController.popBackStack() },
-                onNavigateToLogin = {
-                    navController.navigate(Screen.Login.route) {
-                        popUpTo(0) { inclusive = true }
-                    }
-                }
+                onBack = { navController.popBackStack() }
             )
         }
     }

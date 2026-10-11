@@ -50,18 +50,12 @@ import com.yawmiyati.app.viewmodels.WorkerWagesViewModel
 @Composable
 fun WorkerWagesScreen(
     onBack: () -> Unit,
-    onNavigateToLogin: () -> Unit = {},
     viewModel: WorkerWagesViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val actionState by viewModel.actionState.collectAsState()
-    val sessionExpired by viewModel.sessionExpired.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     var confirmObligation by remember { mutableStateOf<WageObligationResponse?>(null) }
-
-    LaunchedEffect(sessionExpired) {
-        if (sessionExpired) onNavigateToLogin()
-    }
 
     LaunchedEffect(actionState) {
         when (actionState) {

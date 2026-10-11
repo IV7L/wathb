@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.yawmiyati.app.data.api.DeclarePaymentRequest
 import com.yawmiyati.app.data.api.WageObligationResponse
+import com.yawmiyati.app.data.auth.SessionEventBus
 import com.yawmiyati.app.data.wages.WageRepository
 import com.yawmiyati.app.data.wages.WageResult
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,9 +35,6 @@ class WagesViewModel(
     private val _actionState = MutableStateFlow<WageActionState>(WageActionState.Idle)
     val actionState: StateFlow<WageActionState> = _actionState
 
-    private val _sessionExpired = MutableStateFlow(false)
-    val sessionExpired: StateFlow<Boolean> = _sessionExpired
-
     init { loadObligations() }
 
     fun loadObligations() {
@@ -47,7 +45,7 @@ class WagesViewModel(
                     _uiState.value = if (r.data.isEmpty()) WagesUiState.Empty
                                      else WagesUiState.Success(r.data)
                 is WageResult.Error -> {
-                    if (r.isAuth) _sessionExpired.value = true
+                    if (r.isAuth) SessionEventBus.emitSessionExpired()
                     else _uiState.value = WagesUiState.Error(r.message)
                 }
             }
@@ -78,7 +76,7 @@ class WagesViewModel(
                 is WageResult.Error -> {
                     if (r.isAuth) {
                         _actionState.value = WageActionState.Idle
-                        _sessionExpired.value = true
+                        SessionEventBus.emitSessionExpired()
                     } else {
                         _actionState.value = WageActionState.Error(r.message)
                     }

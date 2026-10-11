@@ -55,18 +55,12 @@ import java.time.LocalDate
 @Composable
 fun WageObligationsScreen(
     onBack: () -> Unit,
-    onNavigateToLogin: () -> Unit = {},
     viewModel: WagesViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val actionState by viewModel.actionState.collectAsState()
-    val sessionExpired by viewModel.sessionExpired.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     var declareDialogObligation by remember { mutableStateOf<WageObligationResponse?>(null) }
-
-    LaunchedEffect(sessionExpired) {
-        if (sessionExpired) onNavigateToLogin()
-    }
 
     LaunchedEffect(actionState) {
         when (actionState) {

@@ -15,7 +15,7 @@ data class LoginResponse(
 )
 
 data class RefreshRequest(val refresh: String)
-data class RefreshResponse(val access: String)
+data class RefreshResponse(val access: String, val refresh: String? = null)
 
 data class RegisterWorkerRequest(
     val email: String,
