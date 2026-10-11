@@ -52,6 +52,7 @@ fun RegisterScreen(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var fullName by remember { mutableStateOf("") }
+    var workerPhone by remember { mutableStateOf("") }
     var legalName by remember { mutableStateOf("") }
     var contactName by remember { mutableStateOf("") }
     var contactPhone by remember { mutableStateOf("") }
@@ -150,7 +151,19 @@ fun RegisterScreen(
                     onValueChange = { fullName = it },
                     label = { Text("الاسم الكامل") },
                     singleLine = true,
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(Modifier.height(12.dp))
+                OutlinedTextField(
+                    value = workerPhone,
+                    onValueChange = { workerPhone = it },
+                    label = { Text("رقم الهاتف *") },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Phone,
+                        imeAction = ImeAction.Done
+                    ),
                     modifier = Modifier.fillMaxWidth()
                 )
             } else {
@@ -190,7 +203,7 @@ fun RegisterScreen(
             Button(
                 onClick = {
                     if (selectedRole == "WORKER") {
-                        viewModel.registerWorker(email, password, fullName, null)
+                        viewModel.registerWorker(email, password, fullName, workerPhone.ifBlank { null })
                     } else {
                         viewModel.registerBusiness(
                             email, password, legalName, contactName, contactPhone, null

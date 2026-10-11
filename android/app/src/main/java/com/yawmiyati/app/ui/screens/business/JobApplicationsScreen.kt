@@ -130,10 +130,26 @@ private fun ApplicationCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(
-                    text = application.workerEmail,
-                    style = MaterialTheme.typography.titleSmall
-                )
+                Column(modifier = Modifier.weight(1f)) {
+                    if (!application.workerName.isNullOrBlank()) {
+                        Text(
+                            text = application.workerName,
+                            style = MaterialTheme.typography.titleSmall
+                        )
+                    }
+                    Text(
+                        text = application.workerEmail,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    if (!application.workerPhone.isNullOrBlank()) {
+                        Text(
+                            text = application.workerPhone,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
                 ApplicationStatusChip(application.status)
             }
 

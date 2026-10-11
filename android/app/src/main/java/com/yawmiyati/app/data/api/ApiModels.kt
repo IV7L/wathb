@@ -116,6 +116,8 @@ data class JobApplicationResponse(
     val job: String,
     @SerializedName("job_title") val jobTitle: String,
     @SerializedName("worker_email") val workerEmail: String,
+    @SerializedName("worker_name") val workerName: String? = null,
+    @SerializedName("worker_phone") val workerPhone: String? = null,
     val status: String,
     @SerializedName("cover_note") val coverNote: String,
     @SerializedName("applied_at") val appliedAt: String,
@@ -276,6 +278,11 @@ data class DeclarePaymentRequest(
     @SerializedName("payment_date") val paymentDate: String,
     @SerializedName("payment_method") val paymentMethod: String,
     @SerializedName("transaction_reference") val transactionReference: String = ""
+)
+
+data class DisputePaymentRequest(
+    val category: String = "PAYMENT_NOT_RECEIVED",
+    val description: String
 )
 
 // Sent to admin verify endpoint
