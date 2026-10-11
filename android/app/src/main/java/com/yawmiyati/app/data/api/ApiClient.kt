@@ -1,16 +1,11 @@
 package com.yawmiyati.app.data.api
 
 import com.yawmiyati.app.BuildConfig
-import com.yawmiyati.app.data.auth.SessionEventBus
 import com.yawmiyati.app.data.auth.TokenManager
-import kotlinx.coroutines.runBlocking
+import com.yawmiyati.app.data.auth.TokenStore
 import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
-import okhttp3.Authenticator
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.Route
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -18,6 +13,15 @@ import java.util.concurrent.TimeUnit
 
 object ApiClient {
     private var tokenManager: TokenManager? = null
+
+    // Proxy so TokenAuthenticator always reads the current tokenManager value,
+    // even if init() is called after the lazy chain has already been triggered.
+    private val tokenStore: TokenStore = object : TokenStore {
+        override fun getAccessToken() = tokenManager?.getAccessToken()
+        override fun getRefreshToken() = tokenManager?.getRefreshToken()
+        override fun saveTokens(access: String, refresh: String) { tokenManager?.saveTokens(access, refresh) }
+        override fun clear() { tokenManager?.clear() }
+    }
 
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
         level = if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.BODY
@@ -55,57 +59,12 @@ object ApiClient {
 
     private val refreshAuthApi: AuthApi by lazy { refreshRetrofit.create(AuthApi::class.java) }
 
-    private val refreshMutex = Mutex()
-
-    private val tokenAuthenticator = object : Authenticator {
-        override fun authenticate(route: Route?, response: okhttp3.Response): Request? {
-            // Extract the token that was stale so we can detect concurrent-refresh situations.
-            val staleToken = response.request.header("Authorization")
-                ?.removePrefix("Bearer ")
-                ?: return null // no token on the request — don't retry
-
-            return runBlocking {
-                refreshMutex.withLock {
-                    val currentToken = tokenManager?.getAccessToken()
-                    // Another coroutine already refreshed — retry with the new token.
-                    if (currentToken != null && currentToken != staleToken) {
-                        return@withLock response.request.newBuilder()
-                            .header("Authorization", "Bearer $currentToken")
-                            .build()
-                    }
-
-                    val refreshToken = tokenManager?.getRefreshToken()
-                    if (refreshToken.isNullOrBlank()) {
-                        signOut()
-                        return@withLock null
-                    }
-
-                    val result = try {
-                        refreshAuthApi.refreshToken(RefreshRequest(refreshToken))
-                    } catch (_: Exception) {
-                        null
-                    }
-
-                    if (result != null && result.isSuccessful) {
-                        val body = result.body()!!
-                        // ROTATE_REFRESH_TOKENS=True → backend returns a new refresh token.
-                        val newRefresh = body.refresh ?: refreshToken
-                        tokenManager?.saveTokens(body.access, newRefresh)
-                        response.request.newBuilder()
-                            .header("Authorization", "Bearer ${body.access}")
-                            .build()
-                    } else {
-                        signOut()
-                        null
-                    }
-                }
-            }
-        }
-
-        private fun signOut() {
-            tokenManager?.clear()
-            SessionEventBus.emitSessionExpired()
-        }
+    private val tokenAuthenticator by lazy {
+        TokenAuthenticator(
+            tokenStore = tokenStore,
+            refreshApi = refreshAuthApi,
+            mutex = Mutex()
+        )
     }
 
     private val okHttpClient by lazy {
