@@ -130,6 +130,42 @@ class WagesViewModelTest {
         assertEquals("VERIFIED_PAID", state.obligations.first().status)
     }
 
+    @Test
+    fun `worker disputePayment transitions obligation to DISPUTED status`() = runTest(testDispatcher) {
+        val obligation = fakeObligation("w-obl-2", "AWAITING_ACK")
+        val disputed = obligation.copy(status = "DISPUTED")
+        val repo = object : WageRepository() {
+            override suspend fun listObligations(status: String?) = WageResult.Success(listOf(obligation))
+            override suspend fun disputePayment(id: String, description: String) = WageResult.Success(disputed)
+        }
+        val vm = WorkerWagesViewModel(repo)
+        advanceUntilIdle()
+        vm.disputePayment("w-obl-2", "لم أستلم أجري حتى الآن")
+        advanceUntilIdle()
+        assertEquals(WageActionState.Success, vm.actionState.value)
+        val state = vm.uiState.value as WagesUiState.Success
+        assertEquals("DISPUTED", state.obligations.first().status)
+    }
+
+    @Test
+    fun `worker disputePayment auth error emits session expired and resets actionState`() = runTest(testDispatcher) {
+        val obligation = fakeObligation("w-obl-3", "AWAITING_ACK")
+        val repo = object : WageRepository() {
+            override suspend fun listObligations(status: String?) = WageResult.Success(listOf(obligation))
+            override suspend fun disputePayment(id: String, description: String) =
+                WageResult.Error("غير مصرح", isAuth = true)
+        }
+        val events = mutableListOf<Unit>()
+        val job = launch { SessionEventBus.sessionExpired.collect { events.add(it) } }
+        val vm = WorkerWagesViewModel(repo)
+        advanceUntilIdle()
+        vm.disputePayment("w-obl-3", "لم أستلم")
+        advanceUntilIdle()
+        assertTrue("Expected session expired event", events.isNotEmpty())
+        assertTrue(vm.actionState.value is WageActionState.Idle)
+        job.cancel()
+    }
+
     // ── AdminWagesViewModel ───────────────────────────────────────────────────
 
     @Test
