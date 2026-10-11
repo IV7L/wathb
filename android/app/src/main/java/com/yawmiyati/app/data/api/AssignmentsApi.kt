@@ -32,6 +32,12 @@ interface AssignmentsApi {
         @Path("recId") recId: String
     ): Response<AttendanceResponse>
 
+    @PATCH("assignments/{id}/attendance/{recId}/dispute/")
+    suspend fun disputeAttendance(
+        @Path("id") id: String,
+        @Path("recId") recId: String
+    ): Response<AttendanceResponse>
+
     @GET("assignments/{id}/completion/")
     suspend fun getCompletion(@Path("id") id: String): Response<CompletionResponse>
 
@@ -43,4 +49,7 @@ interface AssignmentsApi {
 
     @PATCH("assignments/{id}/completion/confirm/")
     suspend fun confirmCompletion(@Path("id") id: String): Response<CompletionResponse>
+
+    @PATCH("assignments/{id}/completion/dispute/")
+    suspend fun disputeCompletion(@Path("id") id: String): Response<CompletionResponse>
 }

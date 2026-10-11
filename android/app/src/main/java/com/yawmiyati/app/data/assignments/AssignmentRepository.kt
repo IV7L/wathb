@@ -92,6 +92,14 @@ open class AssignmentRepository {
         } catch (e: Exception) { AssignmentResult.Error(networkMessage(e)) }
     }
 
+    open suspend fun disputeAttendance(assignmentId: String, recId: String): AssignmentResult<AttendanceResponse> {
+        return try {
+            val response = api.disputeAttendance(assignmentId, recId)
+            if (response.isSuccessful) AssignmentResult.Success(response.body()!!)
+            else AssignmentResult.Error(parseError(response.errorBody()?.string()), response.code() == 401)
+        } catch (e: Exception) { AssignmentResult.Error(networkMessage(e)) }
+    }
+
     open suspend fun getCompletion(assignmentId: String): AssignmentResult<CompletionResponse> {
         return try {
             val response = api.getCompletion(assignmentId)
@@ -119,6 +127,14 @@ open class AssignmentRepository {
     open suspend fun confirmCompletion(assignmentId: String): AssignmentResult<CompletionResponse> {
         return try {
             val response = api.confirmCompletion(assignmentId)
+            if (response.isSuccessful) AssignmentResult.Success(response.body()!!)
+            else AssignmentResult.Error(parseError(response.errorBody()?.string()), response.code() == 401)
+        } catch (e: Exception) { AssignmentResult.Error(networkMessage(e)) }
+    }
+
+    open suspend fun disputeCompletion(assignmentId: String): AssignmentResult<CompletionResponse> {
+        return try {
+            val response = api.disputeCompletion(assignmentId)
             if (response.isSuccessful) AssignmentResult.Success(response.body()!!)
             else AssignmentResult.Error(parseError(response.errorBody()?.string()), response.code() == 401)
         } catch (e: Exception) { AssignmentResult.Error(networkMessage(e)) }

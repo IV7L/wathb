@@ -47,6 +47,7 @@ import com.yawmiyati.app.viewmodels.AssignmentsViewModel
 @Composable
 fun WorkerAssignmentsScreen(
     onBack: () -> Unit,
+    onManageAssignment: (assignmentId: String) -> Unit = {},
     viewModel: AssignmentsViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -97,7 +98,8 @@ fun WorkerAssignmentsScreen(
                             assignment = assignment,
                             isActionLoading = actionState is AssignmentActionState.Loading,
                             onAccept  = { viewModel.acceptAssignment(assignment.id) },
-                            onDecline = { viewModel.declineAssignment(assignment.id) }
+                            onDecline = { viewModel.declineAssignment(assignment.id) },
+                            onManage  = { onManageAssignment(assignment.id) }
                         )
                     }
                     item { Spacer(Modifier.height(16.dp)) }
@@ -112,7 +114,8 @@ private fun AssignmentCard(
     assignment: AssignmentResponse,
     isActionLoading: Boolean,
     onAccept: () -> Unit,
-    onDecline: () -> Unit
+    onDecline: () -> Unit,
+    onManage: () -> Unit = {}
 ) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(
@@ -222,6 +225,15 @@ private fun AssignmentCard(
                     ) {
                         Text("رفض")
                     }
+                }
+            }
+
+            if (assignment.status in listOf("ACCEPTED", "ACTIVE")) {
+                Button(
+                    onClick = onManage,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("تأكيد الحضور والإتمام")
                 }
             }
         }

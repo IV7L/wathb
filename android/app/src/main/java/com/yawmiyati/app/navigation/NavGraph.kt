@@ -19,6 +19,7 @@ import com.yawmiyati.app.ui.screens.business.JobApplicationsScreen
 import com.yawmiyati.app.ui.screens.business.JobCreateScreen
 import com.yawmiyati.app.ui.screens.business.WageObligationsScreen
 import com.yawmiyati.app.ui.screens.worker.JobDetailScreen
+import com.yawmiyati.app.ui.screens.worker.WorkerAssignmentDetailScreen
 import com.yawmiyati.app.ui.screens.worker.WorkerAssignmentsScreen
 import com.yawmiyati.app.ui.screens.worker.WorkerHomeScreen
 import com.yawmiyati.app.ui.screens.worker.WorkerWagesScreen
@@ -104,6 +105,20 @@ fun YawmiyatiNavGraph() {
 
         composable(Screen.WorkerAssignments.route) {
             WorkerAssignmentsScreen(
+                onBack = { navController.popBackStack() },
+                onManageAssignment = { assignmentId ->
+                    navController.navigate(Screen.WorkerAssignmentDetail.createRoute(assignmentId))
+                }
+            )
+        }
+
+        composable(
+            route = Screen.WorkerAssignmentDetail.route,
+            arguments = listOf(navArgument("assignmentId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val assignmentId = backStackEntry.arguments?.getString("assignmentId") ?: return@composable
+            WorkerAssignmentDetailScreen(
+                assignmentId = assignmentId,
                 onBack = { navController.popBackStack() }
             )
         }
