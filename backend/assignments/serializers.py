@@ -7,10 +7,26 @@ class AssignmentSerializer(serializers.ModelSerializer):
     worker_email = serializers.EmailField(source="worker.email", read_only=True)
     business_name = serializers.CharField(source="job.business.legal_name", read_only=True)
 
+    # Live job terms — shown on OFFERED cards so the worker can review before accepting.
+    job_work_date = serializers.DateField(source="job.work_date", read_only=True)
+    job_start_time = serializers.TimeField(source="job.start_time", read_only=True)
+    job_end_time = serializers.TimeField(source="job.end_time", read_only=True)
+    job_location_city = serializers.CharField(source="job.location_city", read_only=True)
+    job_location_address = serializers.CharField(source="job.location_address", read_only=True)
+    job_wage_amount = serializers.IntegerField(source="job.wage_amount", read_only=True)
+    job_wage_currency = serializers.CharField(source="job.wage_currency", read_only=True)
+    job_wage_basis = serializers.CharField(source="job.wage_basis", read_only=True)
+    job_payment_method = serializers.CharField(source="job.payment_method", read_only=True)
+    job_payment_deadline_days = serializers.IntegerField(source="job.payment_deadline_days", read_only=True)
+
     class Meta:
         model = Assignment
         fields = [
             "id", "job", "job_title", "worker_email", "business_name",
+            "job_work_date", "job_start_time", "job_end_time",
+            "job_location_city", "job_location_address",
+            "job_wage_amount", "job_wage_currency", "job_wage_basis",
+            "job_payment_method", "job_payment_deadline_days",
             "terms_snapshot", "status", "offered_at", "accepted_at",
             "cancelled_at", "cancellation_reason",
         ]

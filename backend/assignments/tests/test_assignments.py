@@ -330,3 +330,34 @@ class CompletionTests(APITestCase):
                 assignment=self.assignment, amount=10000, currency="ILS",
                 due_date=datetime.date.today() + datetime.timedelta(days=3),
             )
+
+
+class AssignmentSerializerTermsTests(APITestCase):
+    """Job terms are embedded in AssignmentSerializer for pre-acceptance review."""
+
+    def setUp(self):
+        self.biz_user, self.biz_profile = make_business()
+        self.worker = make_worker()
+        self.job = make_job(self.biz_profile)
+        self.assignment = make_assignment(self.job, self.worker)
+
+    def test_offered_assignment_list_contains_job_terms(self):
+        self.client.force_authenticate(user=self.worker)
+        response = self.client.get(reverse("assignment-list"))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        item = response.data["results"][0]
+        self.assertEqual(str(item["job_work_date"]), str(self.job.work_date))
+        self.assertEqual(item["job_wage_amount"], self.job.wage_amount)
+        self.assertEqual(item["job_wage_currency"], self.job.wage_currency)
+        self.assertEqual(item["job_payment_method"], self.job.payment_method)
+        self.assertEqual(item["job_payment_deadline_days"], self.job.payment_deadline_days)
+        self.assertEqual(item["job_location_city"], self.job.location_city)
+
+    def test_job_terms_survive_after_accept(self):
+        self.client.force_authenticate(user=self.worker)
+        self.client.post(reverse("assignment-accept", args=[self.assignment.pk]))
+        response = self.client.get(reverse("assignment-list"))
+        item = response.data["results"][0]
+        # Live fields still reflect the job (they come from the FK, not the snapshot)
+        self.assertEqual(item["job_wage_amount"], self.job.wage_amount)
+        self.assertEqual(item["status"], AssignmentStatus.ACCEPTED)

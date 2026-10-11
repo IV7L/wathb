@@ -154,6 +154,55 @@ private fun AssignmentCard(
                 )
             }
 
+            // Show job terms on OFFERED cards so worker can review before accepting
+            if (assignment.status == "OFFERED") {
+                if (!assignment.jobWorkDate.isNullOrBlank()) {
+                    Text(
+                        text = "يوم العمل: ${assignment.jobWorkDate}",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+                if (!assignment.jobStartTime.isNullOrBlank() && !assignment.jobEndTime.isNullOrBlank()) {
+                    Text(
+                        text = "الوقت: ${assignment.jobStartTime.take(5)} — ${assignment.jobEndTime.take(5)}",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+                if (!assignment.jobLocationCity.isNullOrBlank()) {
+                    Text(
+                        text = "الموقع: ${assignment.jobLocationCity}${if (!assignment.jobLocationAddress.isNullOrBlank()) "، ${assignment.jobLocationAddress}" else ""}",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+                if (assignment.jobWageAmount != null && !assignment.jobWageCurrency.isNullOrBlank()) {
+                    val major = assignment.jobWageAmount / 100
+                    val basisLabel = when (assignment.jobWageBasis) {
+                        "PER_DAY"  -> "يومي"
+                        "PER_HOUR" -> "بالساعة"
+                        "PER_TASK" -> "بالمهمة"
+                        else       -> assignment.jobWageBasis ?: ""
+                    }
+                    val methodLabel = when (assignment.jobPaymentMethod) {
+                        "CASH"          -> "نقداً"
+                        "BANK_TRANSFER" -> "تحويل بنكي"
+                        "OTHER"         -> "طريقة أخرى"
+                        else            -> assignment.jobPaymentMethod ?: ""
+                    }
+                    Text(
+                        text = "الأجر: $major ${assignment.jobWageCurrency} ($basisLabel) — $methodLabel",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+                if (assignment.jobPaymentDeadlineDays != null) {
+                    Text(
+                        text = "موعد الدفع: خلال ${assignment.jobPaymentDeadlineDays} أيام من الانتهاء",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
             if (assignment.status == "OFFERED") {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Button(
