@@ -8,3 +8,4 @@ psycopg2-binary==2.9.10
 python-decouple==3.8
 Pillow==11.0.0
 python-magic==0.4.27
+gunicorn==23.0.0
