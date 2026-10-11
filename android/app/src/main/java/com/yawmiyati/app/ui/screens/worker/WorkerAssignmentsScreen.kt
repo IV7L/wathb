@@ -206,6 +206,57 @@ private fun AssignmentCard(
                 }
             }
 
+            // Show agreed terms after acceptance — read from snapshot, not live job fields
+            val snap = assignment.termsSnapshot
+            if (snap != null && assignment.status !in listOf("OFFERED", "DECLINED")) {
+                val snapWageAmount = (snap["wage_amount"] as? Number)?.toLong()
+                val snapCurrency = snap["wage_currency"] as? String
+                val snapBasis = snap["wage_basis"] as? String
+                val snapMethod = snap["payment_method"] as? String
+                val snapDeadlineDays = (snap["payment_deadline_days"] as? Number)?.toInt()
+                val snapWorkDate = snap["work_date"] as? String
+                val snapStart = snap["start_time"] as? String
+                val snapEnd = snap["end_time"] as? String
+                val snapCity = snap["location_city"] as? String
+                val snapAddress = snap["location_address"] as? String
+
+                Text(
+                    text = "الشروط المتفق عليها",
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                if (!snapWorkDate.isNullOrBlank())
+                    Text("يوم العمل: $snapWorkDate", style = MaterialTheme.typography.bodySmall)
+                if (!snapStart.isNullOrBlank() && !snapEnd.isNullOrBlank())
+                    Text("الوقت: ${snapStart.take(5)} — ${snapEnd.take(5)}", style = MaterialTheme.typography.bodySmall)
+                if (!snapCity.isNullOrBlank())
+                    Text("الموقع: $snapCity${if (!snapAddress.isNullOrBlank()) "، $snapAddress" else ""}", style = MaterialTheme.typography.bodySmall)
+                if (snapWageAmount != null && !snapCurrency.isNullOrBlank()) {
+                    val major = snapWageAmount / 100
+                    val basisLabel = when (snapBasis) {
+                        "PER_DAY"  -> "يومي"
+                        "PER_HOUR" -> "بالساعة"
+                        "PER_TASK" -> "بالمهمة"
+                        else       -> snapBasis ?: ""
+                    }
+                    val methodLabel = when (snapMethod) {
+                        "CASH"          -> "نقداً"
+                        "BANK_TRANSFER" -> "تحويل بنكي"
+                        "OTHER"         -> "طريقة أخرى"
+                        else            -> snapMethod ?: ""
+                    }
+                    Text(
+                        "الأجر: $major $snapCurrency ($basisLabel) — $methodLabel",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+                if (snapDeadlineDays != null)
+                    Text("موعد الدفع: خلال $snapDeadlineDays أيام", style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+
             if (assignment.status == "OFFERED") {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Button(

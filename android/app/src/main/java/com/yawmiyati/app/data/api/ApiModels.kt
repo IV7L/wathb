@@ -186,6 +186,8 @@ data class AssignmentResponse(
     @SerializedName("job_payment_method") val jobPaymentMethod: String? = null,
     @SerializedName("job_payment_deadline_days") val jobPaymentDeadlineDays: Int? = null,
     val status: String,
+    // Populated by backend on accept; null on OFFERED/DECLINED
+    @SerializedName("terms_snapshot") val termsSnapshot: Map<String, Any>? = null,
     @SerializedName("offered_at") val offeredAt: String?,
     @SerializedName("accepted_at") val acceptedAt: String?,
     @SerializedName("cancelled_at") val cancelledAt: String?,
