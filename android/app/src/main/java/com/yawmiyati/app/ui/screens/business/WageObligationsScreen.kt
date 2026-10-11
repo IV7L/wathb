@@ -194,7 +194,7 @@ private fun DeclarePaymentDialog(
     onDismiss: () -> Unit,
     onConfirm: (amount: Long, method: String, date: String, ref: String) -> Unit
 ) {
-    val paymentMethods = listOf("CASH" to "نقداً", "BANK_TRANSFER" to "تحويل بنكي")
+    val paymentMethods = listOf("CASH" to "نقداً", "BANK_TRANSFER" to "تحويل بنكي", "OTHER" to "طريقة أخرى")
     var selectedMethod by rememberSaveable { mutableStateOf("CASH") }
     var transactionRef by rememberSaveable { mutableStateOf("") }
     val today = LocalDate.now().toString()
@@ -236,7 +236,7 @@ private fun DeclarePaymentDialog(
                 onClick = {
                     onConfirm(obligation.amount, selectedMethod, today, transactionRef)
                 },
-                enabled = !isLoading && (selectedMethod == "CASH" || transactionRef.isNotBlank())
+                enabled = !isLoading && (selectedMethod != "BANK_TRANSFER" || transactionRef.isNotBlank())
             ) {
                 Text("تأكيد")
             }

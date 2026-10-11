@@ -300,5 +300,6 @@ private fun AdminWageStatusBadge(status: String) {
 private fun paymentMethodLabel(method: String): String = when (method) {
     "CASH"          -> "نقداً"
     "BANK_TRANSFER" -> "تحويل بنكي"
+    "OTHER"         -> "طريقة أخرى"
     else            -> method
 }
