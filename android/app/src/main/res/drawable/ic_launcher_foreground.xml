@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Gold sun (upper right) -->
+    <path
+        android:fillColor="#F4B432"
+        android:pathData="M66,28 a12,12 0 1,0 24,0 a12,12 0 1,0 -24,0 Z"/>
+
+    <!-- Leaping figure — head -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M41,32 a7,7 0 1,0 14,0 a7,7 0 1,0 -14,0 Z"/>
+
+    <!-- Torso (forward-angled) -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="6"
+        android:strokeLineCap="round"
+        android:pathData="M48,39 L54,56"/>
+
+    <!-- Right arm — raised forward -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="5"
+        android:strokeLineCap="round"
+        android:pathData="M50,44 L66,34"/>
+
+    <!-- Left arm — trailing back -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="5"
+        android:strokeLineCap="round"
+        android:pathData="M50,44 L36,50"/>
+
+    <!-- Right leg — extending forward -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="6"
+        android:strokeLineCap="round"
+        android:pathData="M54,56 L72,64"/>
+
+    <!-- Left leg — trailing back -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="6"
+        android:strokeLineCap="round"
+        android:pathData="M54,56 L40,70"/>
+
+    <!-- Teal wave at base -->
+    <path
+        android:fillColor="#0EA5A3"
+        android:pathData="M18,78 C28,71 40,83 52,76 C64,69 76,80 90,75 L90,92 L18,92 Z"/>
+</vector>

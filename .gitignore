@@ -3,12 +3,27 @@
 venv/
 __pycache__/
 *.py[cod]
+*.pyo
+*.pyd
+*.so
 db.sqlite3
 .env
 .env.*
 !.env.example
 staticfiles/
 media/
+*.log
+*.pot
+*.pyc
+dist/
+build/
+*.egg-info/
+.eggs/
+.mypy_cache/
+.pytest_cache/
+htmlcov/
+.coverage
+coverage.xml
 
 # Android / Gradle
 .gradle/
@@ -18,8 +33,41 @@ local.properties
 .idea/
 .cxx/
 .externalNativeBuild/
+captures/
+*.apk
+*.aab
+*.ap_
+*.dex
+*.class
+gen/
+out/
+release/
+keystore/
+*.jks
+*.keystore
 
-# Secrets and local files
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Secrets and private files
 *.pem
 *.key
-.DS_Store
+*.p12
+*.pfx
+secrets/
+credentials.json
+
+# Editor
+*.swp
+*.swo
+*.orig
+*.bak
+.vscode/
+*.sublime-project
+*.sublime-workspace

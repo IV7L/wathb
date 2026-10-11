@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">وَثْب</string>
+    <string name="app_tagline">خطوتك للشغل الجاي.</string>
+    <string name="login_title">تسجيل الدخول</string>
+    <string name="login_email_hint">البريد الإلكتروني</string>
+    <string name="login_password_hint">كلمة المرور</string>
+    <string name="login_button">دخول</string>
+    <string name="login_no_account">ليس لديك حساب؟ سجّل الآن</string>
+    <string name="register_title">إنشاء حساب</string>
+    <string name="register_as_worker">عامل</string>
+    <string name="register_as_business">منشأة</string>
+    <string name="register_full_name_hint">الاسم الكامل</string>
+    <string name="register_legal_name_hint">الاسم التجاري الرسمي</string>
+    <string name="register_contact_name_hint">اسم جهة الاتصال</string>
+    <string name="register_contact_phone_hint">رقم الهاتف</string>
+    <string name="register_button">تسجيل</string>
+    <string name="register_have_account">لديك حساب بالفعل؟ سجّل الدخول</string>
+    <string name="worker_home_title">الوظائف المتاحة</string>
+    <string name="business_home_title">إدارة الوظائف</string>
+    <string name="loading">جارٍ التحميل…</string>
+    <string name="error_generic">حدث خطأ، يرجى المحاولة مجدداً</string>
+    <string name="error_no_connection">لا يوجد اتصال بالإنترنت</string>
+    <string name="error_session_expired">انتهت الجلسة، يرجى تسجيل الدخول مجدداً</string>
+    <string name="empty_jobs">لا توجد وظائف متاحة حالياً</string>
+    <string name="logout">تسجيل الخروج</string>
+    <string name="job_wage">الأجر</string>
+    <string name="job_location">الموقع</string>
+    <string name="job_date">التاريخ</string>
+    <string name="job_apply">تقدّم للوظيفة</string>
+    <string name="status_pending">قيد الانتظار</string>
+    <string name="status_offered">تم التقديم</string>
+    <string name="status_accepted">مقبول</string>
+    <string name="status_rejected">مرفوض</string>
+    <string name="status_completed">مكتمل</string>
+    <string name="status_cancelled">ملغى</string>
+    <string name="payment_pending">أجر معلّق</string>
+    <string name="payment_verified">تم التحقق من الدفع</string>
+    <string name="payment_disputed">أجر متنازع عليه</string>
+    <string name="retry">إعادة المحاولة</string>
+    <string name="back">رجوع</string>
+</resources>
