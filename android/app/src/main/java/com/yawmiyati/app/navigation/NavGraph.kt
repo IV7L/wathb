@@ -106,19 +106,24 @@ fun YawmiyatiNavGraph() {
         composable(Screen.WorkerAssignments.route) {
             WorkerAssignmentsScreen(
                 onBack = { navController.popBackStack() },
-                onManageAssignment = { assignmentId ->
-                    navController.navigate(Screen.WorkerAssignmentDetail.createRoute(assignmentId))
+                onManageAssignment = { assignmentId, workerEmail ->
+                    navController.navigate(Screen.WorkerAssignmentDetail.createRoute(assignmentId, workerEmail))
                 }
             )
         }
 
         composable(
             route = Screen.WorkerAssignmentDetail.route,
-            arguments = listOf(navArgument("assignmentId") { type = NavType.StringType })
+            arguments = listOf(
+                navArgument("assignmentId") { type = NavType.StringType },
+                navArgument("workerEmail") { type = NavType.StringType }
+            )
         ) { backStackEntry ->
             val assignmentId = backStackEntry.arguments?.getString("assignmentId") ?: return@composable
+            val workerEmail = backStackEntry.arguments?.getString("workerEmail") ?: ""
             WorkerAssignmentDetailScreen(
                 assignmentId = assignmentId,
+                workerEmail = workerEmail,
                 onBack = { navController.popBackStack() }
             )
         }

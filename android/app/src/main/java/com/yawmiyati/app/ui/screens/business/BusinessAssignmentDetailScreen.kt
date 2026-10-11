@@ -122,6 +122,7 @@ fun BusinessAssignmentDetailScreen(
                     AttendanceCard(
                         record = record,
                         isLoading = isActionLoading,
+                        businessIsSubmitter = record.submittedByEmail != workerEmail,
                         onConfirm = { viewModel.confirmAttendance(assignmentId, record.id) }
                     )
                 }
@@ -195,6 +196,7 @@ fun BusinessAssignmentDetailScreen(
                     CompletionCard(
                         record = comp.record,
                         isLoading = isActionLoading,
+                        businessIsSubmitter = comp.record.submittedByEmail != workerEmail,
                         onConfirm = { viewModel.confirmCompletion(assignmentId) }
                     )
                 }
@@ -210,6 +212,7 @@ fun BusinessAssignmentDetailScreen(
 private fun AttendanceCard(
     record: AttendanceResponse,
     isLoading: Boolean,
+    businessIsSubmitter: Boolean,
     onConfirm: () -> Unit
 ) {
     Card(
@@ -227,12 +230,20 @@ private fun AttendanceCard(
                 Text(record.notes, style = MaterialTheme.typography.bodySmall)
             }
             if (record.status == "SUBMITTED") {
-                Button(
-                    onClick = onConfirm,
-                    enabled = !isLoading,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("تأكيد الحضور")
+                if (businessIsSubmitter) {
+                    Text(
+                        "بانتظار تأكيد الطرف الآخر",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                } else {
+                    Button(
+                        onClick = onConfirm,
+                        enabled = !isLoading,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("تأكيد الحضور")
+                    }
                 }
             }
         }
@@ -243,6 +254,7 @@ private fun AttendanceCard(
 private fun CompletionCard(
     record: CompletionResponse,
     isLoading: Boolean,
+    businessIsSubmitter: Boolean,
     onConfirm: () -> Unit
 ) {
     Card(
@@ -263,12 +275,20 @@ private fun CompletionCard(
                 Text(record.notes, style = MaterialTheme.typography.bodySmall)
             }
             if (record.status == "SUBMITTED") {
-                Button(
-                    onClick = onConfirm,
-                    enabled = !isLoading,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("تأكيد الإتمام")
+                if (businessIsSubmitter) {
+                    Text(
+                        "بانتظار تأكيد الطرف الآخر",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                } else {
+                    Button(
+                        onClick = onConfirm,
+                        enabled = !isLoading,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("تأكيد الإتمام")
+                    }
                 }
             }
         }

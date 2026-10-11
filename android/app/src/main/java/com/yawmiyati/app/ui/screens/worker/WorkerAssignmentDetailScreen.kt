@@ -50,6 +50,7 @@ import com.yawmiyati.app.viewmodels.WorkerCompletionUiState
 @Composable
 fun WorkerAssignmentDetailScreen(
     assignmentId: String,
+    workerEmail: String = "",
     onBack: () -> Unit,
     viewModel: WorkerAssignmentDetailViewModel = viewModel()
 ) {
@@ -114,6 +115,7 @@ fun WorkerAssignmentDetailScreen(
                     WorkerAttendanceCard(
                         record = record,
                         isLoading = isActionLoading,
+                        workerIsSubmitter = record.submittedByEmail == workerEmail,
                         onConfirm = { viewModel.confirmAttendance(assignmentId, record.id) },
                         onDispute = { viewModel.disputeAttendance(assignmentId, record.id) }
                     )
@@ -137,6 +139,7 @@ fun WorkerAssignmentDetailScreen(
                     WorkerCompletionCard(
                         record = comp.record,
                         isLoading = isActionLoading,
+                        workerIsSubmitter = comp.record.submittedByEmail == workerEmail,
                         onConfirm = { viewModel.confirmCompletion(assignmentId) },
                         onDispute = { viewModel.disputeCompletion(assignmentId) }
                     )
@@ -153,6 +156,7 @@ fun WorkerAssignmentDetailScreen(
 private fun WorkerAttendanceCard(
     record: AttendanceResponse,
     isLoading: Boolean,
+    workerIsSubmitter: Boolean,
     onConfirm: () -> Unit,
     onDispute: () -> Unit
 ) {
@@ -174,20 +178,28 @@ private fun WorkerAttendanceCard(
                 Text(record.notes, style = MaterialTheme.typography.bodySmall)
             }
             if (record.status == "SUBMITTED") {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button(
-                        onClick = onConfirm,
-                        enabled = !isLoading,
-                        modifier = Modifier.weight(1f)
-                    ) { Text("تأكيد الحضور") }
-                    OutlinedButton(
-                        onClick = onDispute,
-                        enabled = !isLoading,
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = MaterialTheme.colorScheme.error
-                        ),
-                        modifier = Modifier.weight(1f)
-                    ) { Text("الاعتراض") }
+                if (workerIsSubmitter) {
+                    Text(
+                        "بانتظار تأكيد الطرف الآخر",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                } else {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Button(
+                            onClick = onConfirm,
+                            enabled = !isLoading,
+                            modifier = Modifier.weight(1f)
+                        ) { Text("تأكيد الحضور") }
+                        OutlinedButton(
+                            onClick = onDispute,
+                            enabled = !isLoading,
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = MaterialTheme.colorScheme.error
+                            ),
+                            modifier = Modifier.weight(1f)
+                        ) { Text("الاعتراض") }
+                    }
                 }
             }
         }
@@ -198,6 +210,7 @@ private fun WorkerAttendanceCard(
 private fun WorkerCompletionCard(
     record: CompletionResponse,
     isLoading: Boolean,
+    workerIsSubmitter: Boolean,
     onConfirm: () -> Unit,
     onDispute: () -> Unit
 ) {
@@ -225,20 +238,28 @@ private fun WorkerCompletionCard(
                 Text(record.notes, style = MaterialTheme.typography.bodySmall)
             }
             if (record.status == "SUBMITTED") {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button(
-                        onClick = onConfirm,
-                        enabled = !isLoading,
-                        modifier = Modifier.weight(1f)
-                    ) { Text("تأكيد الإتمام") }
-                    OutlinedButton(
-                        onClick = onDispute,
-                        enabled = !isLoading,
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = MaterialTheme.colorScheme.error
-                        ),
-                        modifier = Modifier.weight(1f)
-                    ) { Text("الاعتراض") }
+                if (workerIsSubmitter) {
+                    Text(
+                        "بانتظار تأكيد الطرف الآخر",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                } else {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Button(
+                            onClick = onConfirm,
+                            enabled = !isLoading,
+                            modifier = Modifier.weight(1f)
+                        ) { Text("تأكيد الإتمام") }
+                        OutlinedButton(
+                            onClick = onDispute,
+                            enabled = !isLoading,
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = MaterialTheme.colorScheme.error
+                            ),
+                            modifier = Modifier.weight(1f)
+                        ) { Text("الاعتراض") }
+                    }
                 }
             }
         }
