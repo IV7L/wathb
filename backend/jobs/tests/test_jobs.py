@@ -342,3 +342,13 @@ class ApplicationAssignmentIdTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         app_data = response.data["results"][0]
         self.assertEqual(app_data["assignment_id"], str(assign.pk))
+
+    def test_worker_name_and_phone_in_application_response(self):
+        self.worker.phone = "0599123456"
+        self.worker.save(update_fields=["phone"])
+        self.client.force_authenticate(user=self.biz_user)
+        response = self.client.get(self._list_url())
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        app_data = response.data["results"][0]
+        self.assertEqual(app_data["worker_name"], "Id Worker")
+        self.assertEqual(app_data["worker_phone"], "0599123456")

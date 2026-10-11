@@ -13,6 +13,7 @@ class RegistrationTests(APITestCase):
             "password": "StrongPass123!",
             "role": Role.WORKER,
             "full_name": "Test Worker",
+            "phone": "0599000001",
         })
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertIn("access", response.data)
@@ -40,6 +41,7 @@ class RegistrationTests(APITestCase):
             "password": "P@ss1234",
             "role": Role.WORKER,
             "full_name": "Dup",
+            "phone": "0599000002",
         })
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
@@ -48,8 +50,19 @@ class RegistrationTests(APITestCase):
             "email": "noname@test.com",
             "password": "StrongPass123!",
             "role": Role.WORKER,
+            "phone": "0599000003",
         })
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_register_worker_missing_phone(self):
+        response = self.client.post(reverse("auth-register"), {
+            "email": "nophone@test.com",
+            "password": "StrongPass123!",
+            "role": Role.WORKER,
+            "full_name": "No Phone",
+        })
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("phone", response.data.get("fields", response.data))
 
     def test_register_admin_not_allowed(self):
         response = self.client.post(reverse("auth-register"), {

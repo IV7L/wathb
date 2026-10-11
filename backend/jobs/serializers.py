@@ -52,13 +52,29 @@ class JobListingCreateSerializer(serializers.ModelSerializer):
 
 class JobApplicationSerializer(serializers.ModelSerializer):
     worker_email = serializers.EmailField(source="worker.email", read_only=True)
+    worker_name = serializers.SerializerMethodField()
+    worker_phone = serializers.CharField(source="worker.phone", read_only=True)
     job_title = serializers.CharField(source="job.title", read_only=True)
     assignment_id = serializers.SerializerMethodField()
 
     class Meta:
         model = JobApplication
-        fields = ["id", "job", "job_title", "worker_email", "status", "cover_note", "applied_at", "reviewed_at", "assignment_id"]
-        read_only_fields = ["id", "job", "job_title", "worker_email", "status", "applied_at", "reviewed_at", "assignment_id"]
+        fields = [
+            "id", "job", "job_title",
+            "worker_email", "worker_name", "worker_phone",
+            "status", "cover_note", "applied_at", "reviewed_at", "assignment_id",
+        ]
+        read_only_fields = [
+            "id", "job", "job_title",
+            "worker_email", "worker_name", "worker_phone",
+            "status", "applied_at", "reviewed_at", "assignment_id",
+        ]
+
+    def get_worker_name(self, obj):
+        try:
+            return obj.worker.worker_profile.full_name
+        except Exception:
+            return None
 
     def get_assignment_id(self, obj):
         try:

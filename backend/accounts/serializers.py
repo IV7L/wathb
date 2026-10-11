@@ -18,6 +18,8 @@ class RegisterSerializer(serializers.ModelSerializer):
         role = attrs.get("role")
         if role == Role.WORKER and not attrs.get("full_name"):
             raise serializers.ValidationError({"full_name": "Required for workers."})
+        if role == Role.WORKER and not attrs.get("phone"):
+            raise serializers.ValidationError({"phone": "Required for workers."})
         if role == Role.BUSINESS and not attrs.get("legal_name"):
             raise serializers.ValidationError({"legal_name": "Required for businesses."})
         if role == Role.BUSINESS and not attrs.get("contact_name"):
