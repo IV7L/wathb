@@ -282,7 +282,7 @@ private fun AttendanceStatusBadge(status: String) {
         "CONFIRMED"  -> "مؤكد"       to MaterialTheme.colorScheme.tertiary
         "DISPUTED"   -> "متنازع عليه" to MaterialTheme.colorScheme.error
         "CANCELLED"  -> "ملغى"       to MaterialTheme.colorScheme.error
-        else         -> status        to MaterialTheme.colorScheme.onSurfaceVariant
+        else         -> "حالة غير معروفة" to MaterialTheme.colorScheme.onSurfaceVariant
     }
     Surface(color = color.copy(alpha = 0.12f), shape = MaterialTheme.shapes.small) {
         Text(label, style = MaterialTheme.typography.labelSmall, color = color,
@@ -296,7 +296,7 @@ private fun CompletionStatusBadge(status: String) {
         "SUBMITTED"  -> "مقدّم"    to MaterialTheme.colorScheme.secondary
         "CONFIRMED"  -> "مؤكد"     to MaterialTheme.colorScheme.tertiary
         "DISPUTED"   -> "متنازع عليه" to MaterialTheme.colorScheme.error
-        else         -> status      to MaterialTheme.colorScheme.onSurfaceVariant
+        else         -> "حالة غير معروفة" to MaterialTheme.colorScheme.onSurfaceVariant
     }
     Surface(color = color.copy(alpha = 0.12f), shape = MaterialTheme.shapes.small) {
         Text(label, style = MaterialTheme.typography.labelSmall, color = color,

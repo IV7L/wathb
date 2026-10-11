@@ -259,7 +259,7 @@ private fun WageStatusBadge(status: String) {
         "REJECTED"      -> "مرفوض"             to MaterialTheme.colorScheme.error
         "DISPUTED"      -> "متنازع عليه"       to MaterialTheme.colorScheme.error
         "CANCELLED"     -> "ملغى"              to MaterialTheme.colorScheme.error
-        else            -> status               to MaterialTheme.colorScheme.onSurfaceVariant
+        else            -> "حالة غير معروفة"   to MaterialTheme.colorScheme.onSurfaceVariant
     }
     Surface(color = color.copy(alpha = 0.12f), shape = MaterialTheme.shapes.small) {
         Text(label, style = MaterialTheme.typography.labelSmall, color = color,

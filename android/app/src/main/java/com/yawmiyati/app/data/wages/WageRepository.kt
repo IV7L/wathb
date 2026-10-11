@@ -5,6 +5,7 @@ import com.google.gson.JsonObject
 import com.yawmiyati.app.data.api.AdminVerifyDeclarationRequest
 import com.yawmiyati.app.data.api.ApiClient
 import com.yawmiyati.app.data.api.DeclarePaymentRequest
+import com.yawmiyati.app.data.api.DisputePaymentRequest
 import com.yawmiyati.app.data.api.PaymentDeclarationResponse
 import com.yawmiyati.app.data.api.WageObligationResponse
 
@@ -48,6 +49,14 @@ open class WageRepository {
         } catch (e: Exception) { WageResult.Error(networkMessage(e)) }
     }
 
+    open suspend fun disputePayment(id: String, description: String): WageResult<WageObligationResponse> {
+        return try {
+            val response = api.disputePayment(id, DisputePaymentRequest(description = description))
+            if (response.isSuccessful) WageResult.Success(response.body()!!)
+            else WageResult.Error(parseError(response.errorBody()?.string()), response.code() == 401)
+        } catch (e: Exception) { WageResult.Error(networkMessage(e)) }
+    }
+
     open suspend fun verifyDeclaration(
         obligationId: String,
         declarationId: String,
@@ -73,9 +82,10 @@ open class WageRepository {
         } catch (_: Exception) { "فشل الطلب" }
     }
 
-    private fun networkMessage(e: Exception): String =
-        if (e.message?.contains("Unable to resolve host") == true ||
-            e.message?.contains("Failed to connect") == true)
-            "تعذّر الاتصال بالخادم"
-        else e.localizedMessage ?: "خطأ في الشبكة"
+    private fun networkMessage(e: Exception): String = when {
+        e is java.net.SocketTimeoutException -> "انتهت مهلة الاتصال بالخادم"
+        e.message?.contains("Unable to resolve host") == true ||
+            e.message?.contains("Failed to connect") == true -> "تعذّر الاتصال بالخادم"
+        else -> e.localizedMessage ?: "خطأ في الشبكة"
+    }
 }

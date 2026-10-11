@@ -153,9 +153,10 @@ open class AssignmentRepository {
         } catch (_: Exception) { "فشل الطلب" }
     }
 
-    private fun networkMessage(e: Exception): String =
-        if (e.message?.contains("Unable to resolve host") == true ||
-            e.message?.contains("Failed to connect") == true)
-            "تعذّر الاتصال بالخادم"
-        else e.localizedMessage ?: "خطأ في الشبكة"
+    private fun networkMessage(e: Exception): String = when {
+        e is java.net.SocketTimeoutException -> "انتهت مهلة الاتصال بالخادم"
+        e.message?.contains("Unable to resolve host") == true ||
+            e.message?.contains("Failed to connect") == true -> "تعذّر الاتصال بالخادم"
+        else -> e.localizedMessage ?: "خطأ في الشبكة"
+    }
 }

@@ -233,7 +233,7 @@ private fun StatusBadge(status: String) {
         "PENDING_REVIEW" -> "قيد المراجعة" to MaterialTheme.colorScheme.secondary
         "FILLED"         -> "مكتمل" to MaterialTheme.colorScheme.tertiary
         "CANCELLED"      -> "ملغى" to MaterialTheme.colorScheme.error
-        else             -> status to MaterialTheme.colorScheme.onSurfaceVariant
+        else             -> "حالة غير معروفة" to MaterialTheme.colorScheme.onSurfaceVariant
     }
     Surface(
         color = color.copy(alpha = 0.12f),

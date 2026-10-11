@@ -289,7 +289,7 @@ private fun AdminWageStatusBadge(status: String) {
     val (label, color) = when (status) {
         "AWAITING_ACK"  -> "بانتظار التأكيد" to MaterialTheme.colorScheme.primary
         "UNDER_REVIEW"  -> "قيد المراجعة"    to MaterialTheme.colorScheme.secondary
-        else            -> status              to MaterialTheme.colorScheme.onSurfaceVariant
+        else            -> "حالة غير معروفة"  to MaterialTheme.colorScheme.onSurfaceVariant
     }
     Surface(color = color.copy(alpha = 0.12f), shape = MaterialTheme.shapes.small) {
         Text(label, style = MaterialTheme.typography.labelSmall, color = color,

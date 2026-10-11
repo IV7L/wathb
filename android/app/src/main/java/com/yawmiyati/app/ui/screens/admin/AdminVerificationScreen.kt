@@ -207,7 +207,7 @@ private fun StatusBadge(status: String) {
         "APPROVED"  -> "موافق"
         "REJECTED"  -> "مرفوض"
         "SUSPENDED" -> "موقوف"
-        else        -> status
+        else        -> "حالة غير معروفة"
     }
     val color = when (status) {
         "APPROVED"  -> MaterialTheme.colorScheme.primary
@@ -302,5 +302,5 @@ private fun statusLabel(status: String): String = when (status) {
     "APPROVED"  -> "موافق عليه"
     "REJECTED"  -> "مرفوض"
     "SUSPENDED" -> "موقوف"
-    else        -> status
+    else        -> "حالة غير معروفة"
 }

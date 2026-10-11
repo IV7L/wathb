@@ -218,7 +218,7 @@ private fun ApplicationStatusChip(status: String) {
         "ACCEPTED"  -> "قبل"      to MaterialTheme.colorScheme.tertiary
         "REJECTED"  -> "مرفوض"   to MaterialTheme.colorScheme.error
         "WITHDRAWN" -> "انسحب"   to MaterialTheme.colorScheme.onSurfaceVariant
-        else        -> status     to MaterialTheme.colorScheme.onSurfaceVariant
+        else        -> "حالة غير معروفة" to MaterialTheme.colorScheme.onSurfaceVariant
     }
     Text(
         text = label,
