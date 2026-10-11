@@ -23,13 +23,13 @@ android {
         // The emulator's eth0/wlan0 are DOWN in this environment; adb reverse tunnels
         // localhost:8000 on the device to the Mac's localhost:8000.
         // The release build uses HTTPS and never needs cleartext.
-        buildConfigField("String", "API_BASE_URL", "\"http://localhost:8000/api/v1/\"")
+        buildConfigField("String", "API_BASE_URL", "\"https://wathb-api2.onrender.com/api/v1/\"")
     }
 
     buildTypes {
         debug {
             isDebuggable = true
-            buildConfigField("String", "API_BASE_URL", "\"http://localhost:8000/api/v1/\"")
+            buildConfigField("String", "API_BASE_URL", "\"https://wathb-api2.onrender.com/api/v1/\"")
         }
         release {
             isMinifyEnabled = true

@@ -37,6 +37,27 @@ class WorkerWagesViewModel(
         }
     }
 
+    fun disputePayment(obligationId: String, reason: String) {
+        if (_actionState.value is WageActionState.Loading) return
+        viewModelScope.launch {
+            _actionState.value = WageActionState.Loading
+            when (val r = repository.disputePayment(obligationId, reason)) {
+                is WageResult.Success -> {
+                    _actionState.value = WageActionState.Success
+                    replaceObligation(r.data)
+                }
+                is WageResult.Error -> {
+                    if (r.isAuth) {
+                        _actionState.value = WageActionState.Idle
+                        SessionEventBus.emitSessionExpired()
+                    } else {
+                        _actionState.value = WageActionState.Error(r.message)
+                    }
+                }
+            }
+        }
+    }
+
     fun acknowledgePayment(obligationId: String) {
         if (_actionState.value is WageActionState.Loading) return
         viewModelScope.launch {

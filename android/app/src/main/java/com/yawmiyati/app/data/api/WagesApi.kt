@@ -25,6 +25,12 @@ interface WagesApi {
     @POST("wages/{id}/acknowledge/")
     suspend fun acknowledgePayment(@Path("id") id: String): Response<WageObligationResponse>
 
+    @POST("wages/{id}/dispute-payment/")
+    suspend fun disputePayment(
+        @Path("id") id: String,
+        @Body request: DisputePaymentRequest
+    ): Response<WageObligationResponse>
+
     @POST("wages/{id}/declarations/{decId}/verify/")
     suspend fun verifyDeclaration(
         @Path("id") id: String,
