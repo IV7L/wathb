@@ -2,6 +2,7 @@ import uuid
 import os
 from django.db import models
 from django.conf import settings
+from jobs.models import PaymentMethod  # noqa: F401 — re-exported for wages domain
 
 
 class WageObligationStatus(models.TextChoices):
@@ -64,7 +65,7 @@ class PaymentDeclaration(models.Model):
     declared_amount = models.PositiveBigIntegerField(help_text="Amount in minor currency units")
     currency = models.CharField(max_length=3)
     payment_date = models.DateField()
-    payment_method = models.CharField(max_length=100)
+    payment_method = models.CharField(max_length=30, choices=PaymentMethod.choices)
     transaction_reference = models.CharField(max_length=200, blank=True)
     declared_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,

@@ -156,6 +156,36 @@ class PaymentDeclarationTests(APITestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
+    def test_invalid_payment_method_returns_400(self):
+        """payment_method must be one of CASH / BANK_TRANSFER / OTHER."""
+        self.client.force_authenticate(user=self.biz_user)
+        body = self._decl_body()
+        body["payment_method"] = "BITCOIN"
+        response = self.client.post(
+            reverse("wage-declare-payment", args=[self.obligation.pk]),
+            body,
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_all_valid_payment_methods_accepted(self):
+        for method in ("CASH", "BANK_TRANSFER", "OTHER"):
+            # Re-create an obligation for each variant (tearDown not available here,
+            # so we just chain a new obligation on a new assignment).
+            _, assign = make_job_and_assignment(
+                self.biz_profile, self.worker,
+                wage_amount=5000 + list(("CASH", "BANK_TRANSFER", "OTHER")).index(method)
+            )
+            obl = make_obligation(assign)
+            self.client.force_authenticate(user=self.biz_user)
+            body = {
+                "declared_amount": obl.amount,
+                "currency": "ILS",
+                "payment_date": str(__import__("datetime").date.today()),
+                "payment_method": method,
+            }
+            resp = self.client.post(reverse("wage-declare-payment", args=[obl.pk]), body)
+            self.assertEqual(resp.status_code, status.HTTP_201_CREATED, msg=f"method={method}")
+
 
 class PaymentAcknowledgmentTests(APITestCase):
 
