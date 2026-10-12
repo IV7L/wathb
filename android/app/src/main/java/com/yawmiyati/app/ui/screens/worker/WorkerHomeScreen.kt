@@ -14,6 +14,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -54,6 +57,8 @@ fun WorkerHomeScreen(
     onMyWages: () -> Unit,
     onProfile: () -> Unit,
     onLogout: () -> Unit,
+    onNotifications: () -> Unit = {},
+    unreadCount: Int = 0,
     jobsViewModel: JobsViewModel = viewModel(),
     authViewModel: AuthViewModel = viewModel()
 ) {
@@ -65,6 +70,13 @@ fun WorkerHomeScreen(
             CenterAlignedTopAppBar(
                 title = { Text("الوظائف المتاحة", style = MaterialTheme.typography.titleLarge) },
                 actions = {
+                    IconButton(onClick = onNotifications) {
+                        BadgedBox(badge = {
+                            if (unreadCount > 0) Badge { Text(unreadCount.toString()) }
+                        }) {
+                            Icon(Icons.Filled.Notifications, contentDescription = "الإشعارات")
+                        }
+                    }
                     IconButton(onClick = {
                         authViewModel.logout()
                         onLogout()

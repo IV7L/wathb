@@ -13,7 +13,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Payments
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -55,6 +58,8 @@ fun BusinessHomeScreen(
     onViewApplications: (jobId: String) -> Unit,
     onWages: () -> Unit,
     onLogout: () -> Unit,
+    onNotifications: () -> Unit = {},
+    unreadCount: Int = 0,
     jobsViewModel: JobsViewModel = viewModel(),
     authViewModel: AuthViewModel = viewModel()
 ) {
@@ -75,8 +80,12 @@ fun BusinessHomeScreen(
             CenterAlignedTopAppBar(
                 title = { Text("وظائفي", style = MaterialTheme.typography.titleLarge) },
                 actions = {
-                    IconButton(onClick = onWages) {
-                        Icon(Icons.Filled.Payments, contentDescription = "الالتزامات المالية")
+                    IconButton(onClick = onNotifications) {
+                        BadgedBox(badge = {
+                            if (unreadCount > 0) Badge { Text(unreadCount.toString()) }
+                        }) {
+                            Icon(Icons.Filled.Notifications, contentDescription = "الإشعارات")
+                        }
                     }
                     IconButton(onClick = {
                         authViewModel.logout()

@@ -6,12 +6,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Assignment
 import androidx.compose.material.icons.filled.DateRange
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Work
-import androidx.compose.material3.Badge
-import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -62,6 +59,8 @@ fun WorkerMainScreen(
                     onMyWages        = { selectedTab = 3 },
                     onProfile        = { selectedTab = 4 },
                     onLogout         = onLogout,
+                    onNotifications  = onNotifications,
+                    unreadCount      = unreadCount,
                 )
                 1 -> WorkerApplicationsScreen()
                 2 -> WorkerAssignmentsScreen(onManageAssignment = onManageAssignment)
@@ -79,18 +78,6 @@ fun WorkerMainScreen(
                     label     = { Text(tab.label) }
                 )
             }
-            NavigationBarItem(
-                selected = false,
-                onClick  = onNotifications,
-                icon = {
-                    BadgedBox(badge = {
-                        if (unreadCount > 0) Badge { Text(unreadCount.toString()) }
-                    }) {
-                        Icon(Icons.Filled.Notifications, contentDescription = "الإشعارات")
-                    }
-                },
-                label = { Text("إشعارات") }
-            )
         }
     }
 }

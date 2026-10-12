@@ -4,11 +4,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material.icons.filled.Work
-import androidx.compose.material3.Badge
-import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -44,6 +41,8 @@ fun BusinessMainScreen(
                     onViewApplications = onViewApplications,
                     onWages            = { selectedTab = 1 },
                     onLogout           = onLogout,
+                    onNotifications    = onNotifications,
+                    unreadCount        = unreadCount,
                 )
                 1 -> WageObligationsScreen()
             }
@@ -61,18 +60,6 @@ fun BusinessMainScreen(
                 onClick  = { selectedTab = 1 },
                 icon     = { Icon(Icons.Filled.Payments, contentDescription = "الأجور") },
                 label    = { Text("الأجور") }
-            )
-            NavigationBarItem(
-                selected = false,
-                onClick  = onNotifications,
-                icon = {
-                    BadgedBox(badge = {
-                        if (unreadCount > 0) Badge { Text(unreadCount.toString()) }
-                    }) {
-                        Icon(Icons.Filled.Notifications, contentDescription = "الإشعارات")
-                    }
-                },
-                label = { Text("إشعارات") }
             )
         }
     }
