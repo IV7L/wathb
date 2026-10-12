@@ -11,6 +11,7 @@ import com.yawmiyati.app.YawmiyatiApp
 import com.yawmiyati.app.data.auth.SessionEventBus
 import com.yawmiyati.app.ui.screens.admin.AdminVerificationScreen
 import com.yawmiyati.app.ui.screens.admin.AdminWagesScreen
+import com.yawmiyati.app.ui.screens.auth.ConsentScreen
 import com.yawmiyati.app.ui.screens.auth.LoginScreen
 import com.yawmiyati.app.ui.screens.auth.RegisterScreen
 import com.yawmiyati.app.ui.screens.business.BusinessAssignmentDetailScreen
@@ -63,12 +64,26 @@ fun YawmiyatiNavGraph() {
                         popUpTo(Screen.Login.route) { inclusive = true }
                     }
                 },
-                onNavigateToRegister = { navController.navigate(Screen.Register.route) }
+                onNavigateToRegister = { navController.navigate(Screen.Consent.route) }
             )
         }
 
-        composable(Screen.Register.route) {
+        composable(Screen.Consent.route) {
+            ConsentScreen(
+                onAccepted = { consentVersion ->
+                    navController.navigate("${Screen.Register.route}?cv=$consentVersion")
+                },
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = "${Screen.Register.route}?cv={cv}",
+            arguments = listOf(navArgument("cv") { type = NavType.IntType; defaultValue = 1 })
+        ) { backStackEntry ->
+            val consentVersion = backStackEntry.arguments?.getInt("cv") ?: 1
             RegisterScreen(
+                consentVersion = consentVersion,
                 onRegisterSuccess = { role ->
                     val dest = when (role) {
                         "WORKER"   -> Screen.WorkerHome.route
@@ -77,10 +92,12 @@ fun YawmiyatiNavGraph() {
                         else       -> Screen.Login.route
                     }
                     navController.navigate(dest) {
-                        popUpTo(Screen.Register.route) { inclusive = true }
+                        popUpTo(Screen.Consent.route) { inclusive = true }
                     }
                 },
-                onNavigateToLogin = { navController.popBackStack() }
+                onNavigateToLogin = {
+                    navController.popBackStack(Screen.Login.route, inclusive = false)
+                }
             )
         }
 

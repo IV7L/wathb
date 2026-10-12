@@ -41,6 +41,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     date_joined = models.DateTimeField(auto_now_add=True)
+    consent_version = models.IntegerField(null=True, blank=True)
+    accepted_at = models.DateTimeField(null=True, blank=True)
 
     USERNAME_FIELD = "phone"
     REQUIRED_FIELDS = ["role"]

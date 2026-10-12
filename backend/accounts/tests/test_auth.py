@@ -12,6 +12,7 @@ class RegistrationTests(APITestCase):
             "password": "StrongPass123!",
             "role": Role.WORKER,
             "full_name": "Test Worker",
+            "consent_version": 1,
         })
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertIn("access", response.data)
@@ -28,6 +29,7 @@ class RegistrationTests(APITestCase):
             "legal_name": "Test Biz",
             "contact_name": "Owner",
             "contact_phone": "0599001002",
+            "consent_version": 1,
         })
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertTrue(BusinessProfile.objects.filter(legal_name="Test Biz").exists())
@@ -39,6 +41,7 @@ class RegistrationTests(APITestCase):
             "password": "P@ss1234",
             "role": Role.WORKER,
             "full_name": "Dup",
+            "consent_version": 1,
         })
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
@@ -47,6 +50,7 @@ class RegistrationTests(APITestCase):
             "phone": "0599001004",
             "password": "StrongPass123!",
             "role": Role.WORKER,
+            "consent_version": 1,
         })
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
@@ -55,6 +59,7 @@ class RegistrationTests(APITestCase):
             "password": "StrongPass123!",
             "role": Role.WORKER,
             "full_name": "No Phone",
+            "consent_version": 1,
         })
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("phone", response.data.get("fields", response.data))
@@ -74,6 +79,38 @@ class RegistrationTests(APITestCase):
             "role": Role.FUNDER,
         })
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_register_without_consent_version_returns_400(self):
+        response = self.client.post(reverse("auth-register"), {
+            "phone": "0599001007",
+            "password": "StrongPass123!",
+            "role": Role.WORKER,
+            "full_name": "No Consent",
+        })
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_register_wrong_consent_version_returns_400(self):
+        response = self.client.post(reverse("auth-register"), {
+            "phone": "0599001008",
+            "password": "StrongPass123!",
+            "role": Role.WORKER,
+            "full_name": "Wrong Consent",
+            "consent_version": 999,
+        })
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_register_stores_consent_version_and_accepted_at(self):
+        response = self.client.post(reverse("auth-register"), {
+            "phone": "0599001009",
+            "password": "StrongPass123!",
+            "role": Role.WORKER,
+            "full_name": "Consenting Worker",
+            "consent_version": 1,
+        })
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        user = User.objects.get(phone="+970599001009")
+        self.assertEqual(user.consent_version, 1)
+        self.assertIsNotNone(user.accepted_at)
 
 
 class LoginTests(APITestCase):

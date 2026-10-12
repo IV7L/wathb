@@ -1,6 +1,8 @@
 from django.contrib.auth.password_validation import validate_password
+from django.utils import timezone
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from accounts.consent import CONSENT_VERSION
 from accounts.models import User, WorkerProfile, BusinessProfile, Role
 
 
@@ -27,6 +29,7 @@ class PhoneTokenObtainPairSerializer(TokenObtainPairSerializer):
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, validators=[validate_password])
+    consent_version = serializers.IntegerField(write_only=True)
     full_name = serializers.CharField(write_only=True, required=False)
     legal_name = serializers.CharField(write_only=True, required=False)
     contact_name = serializers.CharField(write_only=True, required=False)
@@ -35,7 +38,7 @@ class RegisterSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = [
-            "phone", "email", "password", "role",
+            "phone", "email", "password", "role", "consent_version",
             "full_name", "legal_name", "contact_name", "contact_phone",
         ]
         extra_kwargs = {"email": {"required": False, "allow_null": True}}
@@ -49,6 +52,13 @@ class RegisterSerializer(serializers.ModelSerializer):
     def validate_email(self, value):
         if value == "":
             return None
+        return value
+
+    def validate_consent_version(self, value):
+        if value != CONSENT_VERSION:
+            raise serializers.ValidationError(
+                f"يجب الموافقة على الشروط الحالية (الإصدار {CONSENT_VERSION})."
+            )
         return value
 
     def validate(self, attrs):
@@ -74,9 +84,12 @@ class RegisterSerializer(serializers.ModelSerializer):
         contact_phone = validated_data.pop("contact_phone", "")
         password = validated_data.pop("password")
         email = validated_data.pop("email", None) or None
+        validated_data.pop("consent_version", None)  # already validated; stored explicitly below
 
         user = User(**validated_data)
         user.email = email
+        user.consent_version = CONSENT_VERSION
+        user.accepted_at = timezone.now()
         user.set_password(password)
         user.save()
 
@@ -95,8 +108,10 @@ class RegisterSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ["id", "phone", "email", "role", "is_verified", "date_joined"]
-        read_only_fields = ["id", "role", "is_verified", "date_joined"]
+        fields = ["id", "phone", "email", "role", "is_verified", "date_joined",
+                  "consent_version", "accepted_at"]
+        read_only_fields = ["id", "role", "is_verified", "date_joined",
+                            "consent_version", "accepted_at"]
 
 
 class WorkerProfileSerializer(serializers.ModelSerializer):

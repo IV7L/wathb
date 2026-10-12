@@ -22,6 +22,7 @@ data class RegisterWorkerRequest(
     val password: String,
     val role: String = "WORKER",
     @SerializedName("full_name") val fullName: String,
+    @SerializedName("consent_version") val consentVersion: Int,
 )
 
 data class RegisterBusinessRequest(
@@ -31,7 +32,8 @@ data class RegisterBusinessRequest(
     @SerializedName("legal_name") val legalName: String,
     @SerializedName("contact_name") val contactName: String,
     @SerializedName("contact_phone") val contactPhone: String,
-    val email: String? = null
+    val email: String? = null,
+    @SerializedName("consent_version") val consentVersion: Int,
 )
 
 // RegisterView returns {user, access, refresh} on 201

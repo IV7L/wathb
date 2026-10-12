@@ -40,11 +40,12 @@ class AuthRepository(private val tokenManager: TokenManager) {
     }
 
     suspend fun registerWorker(
-        phone: String, password: String, fullName: String
+        phone: String, password: String, fullName: String, consentVersion: Int
     ): AuthResult<UserResponse> {
         return try {
             val response = api.registerWorker(
-                RegisterWorkerRequest(phone, password, fullName = fullName)
+                RegisterWorkerRequest(phone, password, fullName = fullName,
+                    consentVersion = consentVersion)
             )
             if (response.isSuccessful) {
                 val body = response.body()!!
@@ -62,7 +63,7 @@ class AuthRepository(private val tokenManager: TokenManager) {
 
     suspend fun registerBusiness(
         phone: String, password: String,
-        legalName: String, contactName: String, contactPhone: String
+        legalName: String, contactName: String, contactPhone: String, consentVersion: Int
     ): AuthResult<UserResponse> {
         return try {
             val response = api.registerBusiness(
@@ -70,7 +71,8 @@ class AuthRepository(private val tokenManager: TokenManager) {
                     phone, password,
                     legalName = legalName,
                     contactName = contactName,
-                    contactPhone = contactPhone
+                    contactPhone = contactPhone,
+                    consentVersion = consentVersion
                 )
             )
             if (response.isSuccessful) {

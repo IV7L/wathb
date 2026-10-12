@@ -2,6 +2,7 @@ package com.yawmiyati.app.navigation
 
 sealed class Screen(val route: String) {
     object Login              : Screen("login")
+    object Consent            : Screen("consent")
     object Register           : Screen("register")
     object WorkerHome         : Screen("worker_home")
     object WorkerAssignments  : Screen("worker_assignments")

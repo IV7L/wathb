@@ -41,6 +41,7 @@ import com.yawmiyati.app.viewmodels.AuthViewModel
 
 @Composable
 fun RegisterScreen(
+    consentVersion: Int,
     onRegisterSuccess: (role: String) -> Unit,
     onNavigateToLogin: () -> Unit,
     viewModel: AuthViewModel = viewModel()
@@ -190,10 +191,10 @@ fun RegisterScreen(
             Button(
                 onClick = {
                     if (selectedRole == "WORKER") {
-                        viewModel.registerWorker(phone, password, fullName)
+                        viewModel.registerWorker(phone, password, fullName, consentVersion)
                     } else {
                         viewModel.registerBusiness(
-                            phone, password, legalName, contactName, contactPhone
+                            phone, password, legalName, contactName, contactPhone, consentVersion
                         )
                     }
                 },

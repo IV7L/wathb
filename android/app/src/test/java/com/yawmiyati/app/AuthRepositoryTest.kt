@@ -31,7 +31,8 @@ class AuthRepositoryTest {
         val request = com.yawmiyati.app.data.api.RegisterWorkerRequest(
             phone = "0599000001",
             password = "pass",
-            fullName = "Test User"
+            fullName = "Test User",
+            consentVersion = 1,
         )
         assertEquals("WORKER", request.role)
     }
@@ -43,7 +44,8 @@ class AuthRepositoryTest {
             password = "pass",
             legalName = "Test Co",
             contactName = "Owner",
-            contactPhone = "0599000000"
+            contactPhone = "0599000000",
+            consentVersion = 1,
         )
         assertEquals("BUSINESS", request.role)
     }
