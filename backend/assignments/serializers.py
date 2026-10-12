@@ -7,6 +7,8 @@ class AssignmentSerializer(serializers.ModelSerializer):
     worker_phone = serializers.CharField(source="worker.phone", read_only=True)
     worker_name = serializers.SerializerMethodField()
     business_name = serializers.CharField(source="job.business.legal_name", read_only=True)
+    # Normalized E.164 phone of the business user — ready for tel: and wa.me links.
+    business_phone = serializers.CharField(source="job.business.user.phone", read_only=True)
 
     # Live job terms — shown on OFFERED cards so the worker can review before accepting.
     job_work_date = serializers.DateField(source="job.work_date", read_only=True)
@@ -29,7 +31,7 @@ class AssignmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Assignment
         fields = [
-            "id", "job", "job_title", "worker_phone", "worker_name", "business_name",
+            "id", "job", "job_title", "worker_phone", "worker_name", "business_name", "business_phone",
             "job_work_date", "job_start_time", "job_end_time",
             "job_location_city", "job_location_address",
             "job_wage_amount", "job_wage_currency", "job_wage_basis",
