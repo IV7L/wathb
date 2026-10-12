@@ -18,6 +18,10 @@ import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Button
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.ui.graphics.Color
+import com.yawmiyati.app.ui.theme.WathbDeepTeal
+import com.yawmiyati.app.ui.theme.WathbGold
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -78,27 +82,36 @@ fun BusinessHomeScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("وظائفي", style = MaterialTheme.typography.titleLarge) },
+                title = {
+                    Text("وَثْب", style = MaterialTheme.typography.titleLarge, color = WathbGold)
+                },
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = WathbDeepTeal,
+                    actionIconContentColor = Color.White
+                ),
                 actions = {
                     IconButton(onClick = onNotifications) {
                         BadgedBox(badge = {
                             if (unreadCount > 0) Badge { Text(unreadCount.toString()) }
                         }) {
-                            Icon(Icons.Filled.Notifications, contentDescription = "الإشعارات")
+                            Icon(Icons.Filled.Notifications, contentDescription = "الإشعارات", tint = Color.White)
                         }
                     }
                     IconButton(onClick = {
                         authViewModel.logout()
                         onLogout()
                     }) {
-                        Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = "تسجيل الخروج")
+                        Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = "تسجيل الخروج", tint = Color.White)
                     }
                 }
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = onCreateJob) {
-                Icon(Icons.Filled.Add, contentDescription = "نشر وظيفة")
+            FloatingActionButton(
+                onClick = onCreateJob,
+                containerColor = WathbDeepTeal
+            ) {
+                Icon(Icons.Filled.Add, contentDescription = "نشر وظيفة", tint = Color.White)
             }
         }
     ) { padding ->

@@ -86,6 +86,7 @@ data class JobListingResponse(
     @SerializedName("additional_conditions") val additionalConditions: String,
     val category: String? = null,
     @SerializedName("is_new") val isNew: Boolean = false,
+    @SerializedName("thumbnail_url") val thumbnailUrl: String? = null,
     val status: String,
     @SerializedName("is_funded") val isFunded: Boolean,
     @SerializedName("published_at") val publishedAt: String?,

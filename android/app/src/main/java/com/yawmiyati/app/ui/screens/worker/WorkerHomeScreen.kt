@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Card
@@ -28,7 +29,14 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import coil.compose.AsyncImage
+import com.yawmiyati.app.ui.theme.WathbDeepTeal
+import com.yawmiyati.app.ui.theme.WathbGold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -68,20 +76,30 @@ fun WorkerHomeScreen(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("الوظائف المتاحة", style = MaterialTheme.typography.titleLarge) },
+                title = {
+                    Text(
+                        "وَثْب",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = WathbGold
+                    )
+                },
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = WathbDeepTeal,
+                    actionIconContentColor = Color.White
+                ),
                 actions = {
                     IconButton(onClick = onNotifications) {
                         BadgedBox(badge = {
                             if (unreadCount > 0) Badge { Text(unreadCount.toString()) }
                         }) {
-                            Icon(Icons.Filled.Notifications, contentDescription = "الإشعارات")
+                            Icon(Icons.Filled.Notifications, contentDescription = "الإشعارات", tint = Color.White)
                         }
                     }
                     IconButton(onClick = {
                         authViewModel.logout()
                         onLogout()
                     }) {
-                        Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = "تسجيل الخروج")
+                        Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = "تسجيل الخروج", tint = Color.White)
                     }
                 }
             )
@@ -163,6 +181,18 @@ private fun JobCard(job: JobListingResponse, onClick: () -> Unit) {
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
+        // Thumbnail image
+        if (!job.thumbnailUrl.isNullOrBlank()) {
+            AsyncImage(
+                model = job.thumbnailUrl,
+                contentDescription = job.title,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(160.dp)
+                    .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
+            )
+        }
         Column(modifier = Modifier.padding(16.dp)) {
             // Top row: category badge + NEW tag
             if (!job.category.isNullOrBlank() || job.isNew) {

@@ -21,6 +21,7 @@ class JobListingSerializer(serializers.ModelSerializer):
             "required_skills", "wage_amount", "wage_currency", "wage_basis",
             "wage_display", "payment_method", "payment_deadline_days",
             "attendance_requirements", "cancellation_policy", "additional_conditions",
+            "thumbnail_url",
             "status", "is_funded", "is_new", "published_at", "version", "created_at",
         ]
         read_only_fields = ["id", "business_name", "business_verification_status",

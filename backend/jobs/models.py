@@ -93,6 +93,7 @@ class JobListing(models.Model):
         choices=JobListingStatus.choices,
         default=JobListingStatus.DRAFT,
     )
+    thumbnail_url = models.URLField(max_length=500, blank=True, default="")
     is_funded = models.BooleanField(default=False)
     published_at = models.DateTimeField(null=True, blank=True)
     version = models.PositiveIntegerField(default=1)
