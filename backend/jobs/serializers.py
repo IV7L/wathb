@@ -1,3 +1,4 @@
+from django.db.models import Count, F, Q
 from rest_framework import serializers
 from jobs.models import JobListing, JobApplication
 
@@ -5,12 +6,13 @@ from jobs.models import JobListing, JobApplication
 class JobListingSerializer(serializers.ModelSerializer):
     business_name = serializers.CharField(source="business.legal_name", read_only=True)
     business_verification_status = serializers.CharField(source="business.verification_status", read_only=True)
+    business_track_record = serializers.SerializerMethodField()
     wage_display = serializers.SerializerMethodField()
 
     class Meta:
         model = JobListing
         fields = [
-            "id", "business_name", "business_verification_status",
+            "id", "business_name", "business_verification_status", "business_track_record",
             "title", "description", "location_address", "location_city",
             "work_date", "start_time", "end_time", "num_workers_needed",
             "required_skills", "wage_amount", "wage_currency", "wage_basis",
@@ -18,11 +20,30 @@ class JobListingSerializer(serializers.ModelSerializer):
             "attendance_requirements", "cancellation_policy", "additional_conditions",
             "status", "is_funded", "published_at", "version", "created_at",
         ]
-        read_only_fields = ["id", "business_name", "business_verification_status", "status", "published_at", "version", "created_at"]
+        read_only_fields = ["id", "business_name", "business_verification_status",
+                            "business_track_record", "status", "published_at", "version", "created_at"]
 
     def get_wage_display(self, obj):
         major = obj.wage_amount / 100
         return f"{major:.0f} {obj.wage_currency} / {obj.get_wage_basis_display()}"
+
+    def get_business_track_record(self, obj):
+        from wages.models import WageObligation, WageObligationStatus
+        agg = WageObligation.objects.filter(
+            assignment__job__business=obj.business,
+            status=WageObligationStatus.VERIFIED_PAID,
+        ).aggregate(
+            total_paid=Count("id"),
+            on_time=Count("id", filter=Q(updated_at__date__lte=F("due_date"))),
+        )
+        total = agg["total_paid"]
+        if total == 0:
+            return {"label": "منشأة جديدة", "total_paid_days": 0, "on_time_days": 0}
+        return {
+            "label": f"دفعت {total} يوم · {agg['on_time']} في الوقت",
+            "total_paid_days": total,
+            "on_time_days": agg["on_time"],
+        }
 
 
 class JobListingCreateSerializer(serializers.ModelSerializer):
