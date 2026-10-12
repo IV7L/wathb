@@ -47,7 +47,7 @@ import com.yawmiyati.app.viewmodels.AssignmentsViewModel
 @Composable
 fun WorkerAssignmentsScreen(
     onBack: () -> Unit,
-    onManageAssignment: (assignmentId: String, workerPhone: String) -> Unit = { _, _ -> },
+    onManageAssignment: (assignmentId: String, workerPhone: String, businessPhone: String) -> Unit = { _, _, _ -> },
     viewModel: AssignmentsViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -99,7 +99,7 @@ fun WorkerAssignmentsScreen(
                             isActionLoading = actionState is AssignmentActionState.Loading,
                             onAccept  = { viewModel.acceptAssignment(assignment.id) },
                             onDecline = { viewModel.declineAssignment(assignment.id) },
-                            onManage  = { onManageAssignment(assignment.id, assignment.workerPhone) }
+                            onManage  = { onManageAssignment(assignment.id, assignment.workerPhone, assignment.businessPhone ?: "") }
                         )
                     }
                     item { Spacer(Modifier.height(16.dp)) }

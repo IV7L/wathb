@@ -12,6 +12,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -34,6 +36,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.yawmiyati.app.data.api.AttendanceResponse
@@ -51,9 +54,11 @@ import com.yawmiyati.app.viewmodels.WorkerCompletionUiState
 fun WorkerAssignmentDetailScreen(
     assignmentId: String,
     workerPhone: String = "",
+    businessPhone: String = "",
     onBack: () -> Unit,
     viewModel: WorkerAssignmentDetailViewModel = viewModel()
 ) {
+    val context = LocalContext.current
     val attendanceState by viewModel.attendanceState.collectAsState()
     val completionState by viewModel.completionState.collectAsState()
     val actionState by viewModel.actionState.collectAsState()
@@ -98,6 +103,38 @@ fun WorkerAssignmentDetailScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             item { Spacer(Modifier.height(4.dp)) }
+
+            // ── Contact business ──────────────────────────────────────────────
+            if (businessPhone.isNotBlank()) {
+                item {
+                    val localPhone = if (businessPhone.startsWith("+970"))
+                        "0" + businessPhone.removePrefix("+970")
+                    else businessPhone
+                    val waPhone = businessPhone.replace("+", "")
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Button(
+                            onClick = {
+                                context.startActivity(
+                                    Intent(Intent.ACTION_DIAL, Uri.parse("tel:$localPhone"))
+                                )
+                            },
+                            modifier = Modifier.weight(1f)
+                        ) { Text("اتصل بصاحب العمل") }
+                        OutlinedButton(
+                            onClick = {
+                                context.startActivity(
+                                    Intent(Intent.ACTION_VIEW, Uri.parse("https://wa.me/$waPhone"))
+                                )
+                            },
+                            modifier = Modifier.weight(1f)
+                        ) { Text("واتساب") }
+                    }
+                }
+                item { HorizontalDivider() }
+            }
 
             // ── Attendance ────────────────────────────────────────────────────
             item { Text("سجلات الحضور", style = MaterialTheme.typography.titleMedium) }

@@ -54,6 +54,12 @@ data class UserResponse(
 
 // ── Jobs ──────────────────────────────────────────────────────────────────────
 
+data class BusinessTrackRecord(
+    val label: String,
+    @SerializedName("total_paid_days") val totalPaidDays: Int,
+    @SerializedName("on_time_days") val onTimeDays: Int,
+)
+
 // Matches JobListingSerializer fields exactly
 data class JobListingResponse(
     val id: String,
@@ -61,6 +67,7 @@ data class JobListingResponse(
     val description: String,
     @SerializedName("business_name") val businessName: String,
     @SerializedName("business_verification_status") val businessVerificationStatus: String,
+    @SerializedName("business_track_record") val businessTrackRecord: BusinessTrackRecord? = null,
     @SerializedName("location_city") val locationCity: String,
     @SerializedName("location_address") val locationAddress: String,
     @SerializedName("work_date") val workDate: String,
@@ -82,6 +89,28 @@ data class JobListingResponse(
     @SerializedName("published_at") val publishedAt: String?,
     val version: Int,
     @SerializedName("created_at") val createdAt: String
+)
+
+// ── Worker profile ────────────────────────────────────────────────────────────
+
+data class WorkerProfileResponse(
+    val id: Int,
+    val phone: String,
+    val email: String? = null,
+    @SerializedName("is_verified") val isVerified: Boolean,
+    @SerializedName("full_name") val fullName: String,
+    @SerializedName("location_city") val locationCity: String,
+    @SerializedName("location_region") val locationRegion: String,
+    val skills: String,
+    @SerializedName("experience_summary") val experienceSummary: String,
+    @SerializedName("is_available") val isAvailable: Boolean,
+)
+
+data class WorkerProfileUpdateRequest(
+    @SerializedName("full_name") val fullName: String? = null,
+    @SerializedName("location_city") val locationCity: String? = null,
+    @SerializedName("location_region") val locationRegion: String? = null,
+    @SerializedName("is_available") val isAvailable: Boolean? = null,
 )
 
 // Matches JobListingCreateSerializer — wage_amount in minor units (agorot/cents)
@@ -175,6 +204,8 @@ data class AssignmentResponse(
     @SerializedName("job_title") val jobTitle: String,
     @SerializedName("worker_phone") val workerPhone: String,
     @SerializedName("business_name") val businessName: String,
+    // Normalized E.164 phone of the business user, ready for tel: and wa.me links.
+    @SerializedName("business_phone") val businessPhone: String? = null,
     // Live job terms — populated on every response for pre-acceptance review
     @SerializedName("job_work_date") val jobWorkDate: String? = null,
     @SerializedName("job_start_time") val jobStartTime: String? = null,

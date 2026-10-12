@@ -20,9 +20,11 @@ import com.yawmiyati.app.ui.screens.business.JobApplicationsScreen
 import com.yawmiyati.app.ui.screens.business.JobCreateScreen
 import com.yawmiyati.app.ui.screens.business.WageObligationsScreen
 import com.yawmiyati.app.ui.screens.worker.JobDetailScreen
+import com.yawmiyati.app.ui.screens.worker.WorkerApplicationsScreen
 import com.yawmiyati.app.ui.screens.worker.WorkerAssignmentDetailScreen
 import com.yawmiyati.app.ui.screens.worker.WorkerAssignmentsScreen
 import com.yawmiyati.app.ui.screens.worker.WorkerHomeScreen
+import com.yawmiyati.app.ui.screens.worker.WorkerProfileScreen
 import com.yawmiyati.app.ui.screens.worker.WorkerWagesScreen
 
 @Composable
@@ -106,11 +108,17 @@ fun YawmiyatiNavGraph() {
                 onJobClick = { jobId ->
                     navController.navigate(Screen.JobDetail.createRoute(jobId))
                 },
+                onMyApplications = {
+                    navController.navigate(Screen.WorkerApplications.route)
+                },
                 onMyAssignments = {
                     navController.navigate(Screen.WorkerAssignments.route)
                 },
                 onMyWages = {
                     navController.navigate(Screen.WorkerWages.route)
+                },
+                onProfile = {
+                    navController.navigate(Screen.WorkerProfile.route)
                 },
                 onLogout = {
                     navController.navigate(Screen.Login.route) {
@@ -120,11 +128,25 @@ fun YawmiyatiNavGraph() {
             )
         }
 
+        composable(Screen.WorkerProfile.route) {
+            WorkerProfileScreen(
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.WorkerApplications.route) {
+            WorkerApplicationsScreen(
+                onBack = { navController.popBackStack() }
+            )
+        }
+
         composable(Screen.WorkerAssignments.route) {
             WorkerAssignmentsScreen(
                 onBack = { navController.popBackStack() },
-                onManageAssignment = { assignmentId, workerPhone ->
-                    navController.navigate(Screen.WorkerAssignmentDetail.createRoute(assignmentId, workerPhone))
+                onManageAssignment = { assignmentId, workerPhone, businessPhone ->
+                    navController.navigate(
+                        Screen.WorkerAssignmentDetail.createRoute(assignmentId, workerPhone, businessPhone)
+                    )
                 }
             )
         }
@@ -133,14 +155,17 @@ fun YawmiyatiNavGraph() {
             route = Screen.WorkerAssignmentDetail.route,
             arguments = listOf(
                 navArgument("assignmentId") { type = NavType.StringType },
-                navArgument("workerPhone") { type = NavType.StringType }
+                navArgument("workerPhone") { type = NavType.StringType },
+                navArgument("businessPhone") { type = NavType.StringType }
             )
         ) { backStackEntry ->
             val assignmentId = backStackEntry.arguments?.getString("assignmentId") ?: return@composable
             val workerPhone = backStackEntry.arguments?.getString("workerPhone") ?: ""
+            val businessPhone = backStackEntry.arguments?.getString("businessPhone") ?: ""
             WorkerAssignmentDetailScreen(
                 assignmentId = assignmentId,
                 workerPhone = workerPhone,
+                businessPhone = businessPhone,
                 onBack = { navController.popBackStack() }
             )
         }

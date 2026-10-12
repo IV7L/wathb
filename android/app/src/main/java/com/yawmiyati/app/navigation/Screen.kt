@@ -5,6 +5,8 @@ sealed class Screen(val route: String) {
     object Consent            : Screen("consent")
     object Register           : Screen("register")
     object WorkerHome         : Screen("worker_home")
+    object WorkerProfile      : Screen("worker_profile")
+    object WorkerApplications : Screen("worker_applications")
     object WorkerAssignments  : Screen("worker_assignments")
     object WorkerWages        : Screen("worker_wages")
     object BusinessHome       : Screen("business_home")
@@ -22,8 +24,8 @@ sealed class Screen(val route: String) {
         fun createRoute(assignmentId: String, workerPhone: String) =
             "business_assignment/$assignmentId/${workerPhone.replace("/", "%2F")}"
     }
-    object WorkerAssignmentDetail : Screen("worker_assignment/{assignmentId}/{workerPhone}") {
-        fun createRoute(assignmentId: String, workerPhone: String) =
-            "worker_assignment/$assignmentId/${workerPhone.replace("/", "%2F")}"
+    object WorkerAssignmentDetail : Screen("worker_assignment/{assignmentId}/{workerPhone}/{businessPhone}") {
+        fun createRoute(assignmentId: String, workerPhone: String, businessPhone: String) =
+            "worker_assignment/$assignmentId/${workerPhone.replace("/", "%2F")}/${businessPhone.replace("/", "%2F").replace("+", "%2B")}"
     }
 }

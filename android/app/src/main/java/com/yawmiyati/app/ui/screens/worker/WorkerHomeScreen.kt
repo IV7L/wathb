@@ -14,8 +14,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.automirrored.filled.Assignment
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Payments
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -50,8 +52,10 @@ import com.yawmiyati.app.viewmodels.JobsViewModel
 @Composable
 fun WorkerHomeScreen(
     onJobClick: (jobId: String) -> Unit,
+    onMyApplications: () -> Unit,
     onMyAssignments: () -> Unit,
     onMyWages: () -> Unit,
+    onProfile: () -> Unit,
     onLogout: () -> Unit,
     jobsViewModel: JobsViewModel = viewModel(),
     authViewModel: AuthViewModel = viewModel()
@@ -64,11 +68,17 @@ fun WorkerHomeScreen(
             CenterAlignedTopAppBar(
                 title = { Text("الوظائف المتاحة", style = MaterialTheme.typography.titleLarge) },
                 actions = {
+                    IconButton(onClick = onMyApplications) {
+                        Icon(Icons.AutoMirrored.Filled.Assignment, contentDescription = "طلباتي")
+                    }
                     IconButton(onClick = onMyAssignments) {
                         Icon(Icons.Filled.DateRange, contentDescription = "مهامي")
                     }
                     IconButton(onClick = onMyWages) {
                         Icon(Icons.Filled.Payments, contentDescription = "أجوري")
+                    }
+                    IconButton(onClick = onProfile) {
+                        Icon(Icons.Filled.Person, contentDescription = "ملفي")
                     }
                     IconButton(onClick = {
                         authViewModel.logout()
@@ -191,6 +201,15 @@ private fun JobCard(job: JobListingResponse, onClick: () -> Unit) {
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.primary
             )
+            val trackLabel = job.businessTrackRecord?.label
+            if (!trackLabel.isNullOrBlank()) {
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    text = trackLabel,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
             if (job.isFunded) {
                 Spacer(Modifier.height(4.dp))
                 Text(
