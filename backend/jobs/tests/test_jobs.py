@@ -369,3 +369,91 @@ class ApplicationAssignmentIdTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         app_data = response.data["results"][0]
         self.assertTrue(app_data["worker_is_verified"])
+
+
+class WorkerApplicationsListTests(APITestCase):
+    """GET /workers/applications/ — worker sees own applications."""
+
+    def setUp(self):
+        self.biz_user, self.biz_profile = make_business("+970599015001")
+        self.worker = make_worker("+970599015002")
+        self.other_worker = make_worker("+970599015003")
+        self.job = make_job(self.biz_profile, status=JobListingStatus.PUBLISHED)
+        self.app = JobApplication.objects.create(
+            job=self.job, worker=self.worker, status=ApplicationStatus.PENDING
+        )
+
+    def _url(self):
+        return reverse("worker-applications")
+
+    def test_worker_sees_own_applications(self):
+        self.client.force_authenticate(user=self.worker)
+        response = self.client.get(self._url())
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["count"], 1)
+        self.assertEqual(response.data["results"][0]["id"], str(self.app.pk))
+
+    def test_worker_does_not_see_other_workers_applications(self):
+        JobApplication.objects.create(
+            job=self.job, worker=self.other_worker, status=ApplicationStatus.PENDING
+        )
+        self.client.force_authenticate(user=self.worker)
+        response = self.client.get(self._url())
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["count"], 1)
+
+    def test_business_cannot_access_worker_applications(self):
+        self.client.force_authenticate(user=self.biz_user)
+        response = self.client.get(self._url())
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_status_field_present(self):
+        self.client.force_authenticate(user=self.worker)
+        response = self.client.get(self._url())
+        self.assertIn("status", response.data["results"][0])
+        self.assertEqual(response.data["results"][0]["status"], "PENDING")
+
+
+class BusinessTrackRecordTests(APITestCase):
+    """business_track_record on JobListingSerializer."""
+
+    def setUp(self):
+        self.biz_user, self.biz_profile = make_business("+970599016001")
+        self.worker = make_worker("+970599016002")
+        self.job = make_job(self.biz_profile, status=JobListingStatus.PUBLISHED)
+
+    def _detail_url(self):
+        return reverse("job-detail", args=[self.job.pk])
+
+    def test_new_business_returns_new_label(self):
+        self.client.force_authenticate(user=self.worker)
+        response = self.client.get(self._detail_url())
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        track = response.data["business_track_record"]
+        self.assertEqual(track["label"], "منشأة جديدة")
+        self.assertEqual(track["total_paid_days"], 0)
+
+    def test_paid_days_shown_after_verified_payment(self):
+        import datetime
+        from assignments.models import Assignment, AssignmentStatus
+        from wages.models import WageObligation, WageObligationStatus
+        app = JobApplication.objects.create(
+            job=self.job, worker=self.worker, status=ApplicationStatus.PENDING
+        )
+        assignment = Assignment.objects.create(
+            job=self.job, worker=self.worker, application=app,
+            terms_snapshot={}, status=AssignmentStatus.COMPLETED,
+        )
+        WageObligation.objects.create(
+            assignment=assignment,
+            amount=10000,
+            currency="ILS",
+            due_date=datetime.date.today() + datetime.timedelta(days=3),
+            status=WageObligationStatus.VERIFIED_PAID,
+        )
+        self.client.force_authenticate(user=self.worker)
+        response = self.client.get(self._detail_url())
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        track = response.data["business_track_record"]
+        self.assertEqual(track["total_paid_days"], 1)
+        self.assertIn("دفعت", track["label"])

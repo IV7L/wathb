@@ -172,6 +172,20 @@ class JobApplicationListView(generics.ListAPIView):
         return JobApplication.objects.filter(job=job).select_related("worker")
 
 
+class WorkerApplicationListView(generics.ListAPIView):
+    """Worker's own applications across all jobs."""
+    permission_classes = [IsWorker]
+    serializer_class = JobApplicationSerializer
+
+    def get_queryset(self):
+        return (
+            JobApplication.objects
+            .filter(worker=self.request.user)
+            .select_related("worker", "job")
+            .order_by("-applied_at")
+        )
+
+
 class JobApplyView(APIView):
     permission_classes = [IsWorker]
 
