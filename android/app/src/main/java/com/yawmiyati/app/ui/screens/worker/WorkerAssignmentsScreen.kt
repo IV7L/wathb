@@ -39,6 +39,10 @@ import com.yawmiyati.app.data.api.AssignmentResponse
 import com.yawmiyati.app.ui.components.EmptyState
 import com.yawmiyati.app.ui.components.ErrorMessage
 import com.yawmiyati.app.ui.components.LoadingIndicator
+import com.yawmiyati.app.ui.utils.formatArabicDate
+import com.yawmiyati.app.ui.utils.formatArabicTime
+import com.yawmiyati.app.ui.utils.formatArabicWage
+import com.yawmiyati.app.ui.utils.toArabic
 import com.yawmiyati.app.viewmodels.AssignmentActionState
 import com.yawmiyati.app.viewmodels.AssignmentsUiState
 import com.yawmiyati.app.viewmodels.AssignmentsViewModel
@@ -143,7 +147,7 @@ private fun AssignmentCard(
 
             if (!assignment.offeredAt.isNullOrBlank()) {
                 Text(
-                    text = "تاريخ العرض: ${assignment.offeredAt.take(10)}",
+                    text = "تاريخ العرض: ${formatArabicDate(assignment.offeredAt)}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -151,7 +155,7 @@ private fun AssignmentCard(
 
             if (!assignment.acceptedAt.isNullOrBlank()) {
                 Text(
-                    text = "تاريخ القبول: ${assignment.acceptedAt.take(10)}",
+                    text = "تاريخ القبول: ${formatArabicDate(assignment.acceptedAt)}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -161,13 +165,13 @@ private fun AssignmentCard(
             if (assignment.status == "OFFERED") {
                 if (!assignment.jobWorkDate.isNullOrBlank()) {
                     Text(
-                        text = "يوم العمل: ${assignment.jobWorkDate}",
+                        text = "يوم العمل: ${formatArabicDate(assignment.jobWorkDate)}",
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
                 if (!assignment.jobStartTime.isNullOrBlank() && !assignment.jobEndTime.isNullOrBlank()) {
                     Text(
-                        text = "الوقت: ${assignment.jobStartTime.take(5)} — ${assignment.jobEndTime.take(5)}",
+                        text = "الوقت: ${formatArabicTime(assignment.jobStartTime)} — ${formatArabicTime(assignment.jobEndTime)}",
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
@@ -178,7 +182,6 @@ private fun AssignmentCard(
                     )
                 }
                 if (assignment.jobWageAmount != null && !assignment.jobWageCurrency.isNullOrBlank()) {
-                    val major = assignment.jobWageAmount / 100
                     val basisLabel = when (assignment.jobWageBasis) {
                         "PER_DAY"  -> "يومي"
                         "PER_HOUR" -> "بالساعة"
@@ -191,15 +194,20 @@ private fun AssignmentCard(
                         "OTHER"         -> "طريقة أخرى"
                         else            -> assignment.jobPaymentMethod ?: ""
                     }
+                    val wageStr = formatArabicWage(
+                        assignment.jobWageAmount,
+                        assignment.jobWageCurrency ?: "ILS",
+                        assignment.jobWageBasis ?: ""
+                    )
                     Text(
-                        text = "الأجر: $major ${assignment.jobWageCurrency} ($basisLabel) — $methodLabel",
+                        text = "الأجر: $wageStr ($basisLabel) — $methodLabel",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.primary
                     )
                 }
                 if (assignment.jobPaymentDeadlineDays != null) {
                     Text(
-                        text = "موعد الدفع: خلال ${assignment.jobPaymentDeadlineDays} أيام من الانتهاء",
+                        text = "موعد الدفع: خلال ${assignment.jobPaymentDeadlineDays.toArabic()} أيام من الانتهاء",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -227,13 +235,12 @@ private fun AssignmentCard(
                     color = MaterialTheme.colorScheme.primary
                 )
                 if (!snapWorkDate.isNullOrBlank())
-                    Text("يوم العمل: $snapWorkDate", style = MaterialTheme.typography.bodySmall)
+                    Text("يوم العمل: ${formatArabicDate(snapWorkDate)}", style = MaterialTheme.typography.bodySmall)
                 if (!snapStart.isNullOrBlank() && !snapEnd.isNullOrBlank())
-                    Text("الوقت: ${snapStart.take(5)} — ${snapEnd.take(5)}", style = MaterialTheme.typography.bodySmall)
+                    Text("الوقت: ${formatArabicTime(snapStart)} — ${formatArabicTime(snapEnd)}", style = MaterialTheme.typography.bodySmall)
                 if (!snapCity.isNullOrBlank())
                     Text("الموقع: $snapCity${if (!snapAddress.isNullOrBlank()) "، $snapAddress" else ""}", style = MaterialTheme.typography.bodySmall)
                 if (snapWageAmount != null && !snapCurrency.isNullOrBlank()) {
-                    val major = snapWageAmount / 100
                     val basisLabel = when (snapBasis) {
                         "PER_DAY"  -> "يومي"
                         "PER_HOUR" -> "بالساعة"
@@ -246,14 +253,15 @@ private fun AssignmentCard(
                         "OTHER"         -> "طريقة أخرى"
                         else            -> snapMethod ?: ""
                     }
+                    val wageStr = formatArabicWage(snapWageAmount, snapCurrency, snapBasis ?: "")
                     Text(
-                        "الأجر: $major $snapCurrency ($basisLabel) — $methodLabel",
+                        "الأجر: $wageStr ($basisLabel) — $methodLabel",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.primary
                     )
                 }
                 if (snapDeadlineDays != null)
-                    Text("موعد الدفع: خلال $snapDeadlineDays أيام", style = MaterialTheme.typography.bodySmall,
+                    Text("موعد الدفع: خلال ${snapDeadlineDays.toArabic()} أيام", style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
 

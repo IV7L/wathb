@@ -41,6 +41,7 @@ import com.yawmiyati.app.data.api.JobApplicationResponse
 import com.yawmiyati.app.ui.components.EmptyState
 import com.yawmiyati.app.ui.components.ErrorMessage
 import com.yawmiyati.app.ui.components.LoadingIndicator
+import com.yawmiyati.app.ui.utils.formatArabicDate
 import com.yawmiyati.app.viewmodels.WorkerAppsActionState
 import com.yawmiyati.app.viewmodels.WorkerAppsUiState
 import com.yawmiyati.app.viewmodels.WorkerApplicationsViewModel
@@ -150,7 +151,7 @@ private fun ApplicationCard(
                 StatusChip(app.status)
             }
             Text(
-                text = "تاريخ التقديم: ${app.appliedAt.take(10)}",
+                text = "تاريخ التقديم: ${formatArabicDate(app.appliedAt)}",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

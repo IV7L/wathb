@@ -40,6 +40,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.yawmiyati.app.data.api.JobListingResponse
 import com.yawmiyati.app.ui.components.ErrorMessage
 import com.yawmiyati.app.ui.components.LoadingIndicator
+import com.yawmiyati.app.ui.utils.formatArabicDate
+import com.yawmiyati.app.ui.utils.formatArabicTime
+import com.yawmiyati.app.ui.utils.formatArabicWage
+import com.yawmiyati.app.ui.utils.toArabic
 import com.yawmiyati.app.viewmodels.ApplyUiState
 import com.yawmiyati.app.viewmodels.JobDetailUiState
 import com.yawmiyati.app.viewmodels.JobDetailViewModel
@@ -168,15 +172,15 @@ private fun JobDetailContent(
         HorizontalDivider()
 
         DetailRow(label = "الموقع", value = "${job.locationCity} — ${job.locationAddress}")
-        DetailRow(label = "تاريخ العمل", value = job.workDate)
-        DetailRow(label = "الوقت", value = "${job.startTime.take(5)} – ${job.endTime.take(5)}")
-        DetailRow(label = "عدد العمال المطلوبين", value = job.numWorkersNeeded.toString())
+        DetailRow(label = "تاريخ العمل", value = formatArabicDate(job.workDate))
+        DetailRow(label = "الوقت", value = "${formatArabicTime(job.startTime)} – ${formatArabicTime(job.endTime)}")
+        DetailRow(label = "عدد العمال المطلوبين", value = job.numWorkersNeeded.toArabic())
 
         HorizontalDivider()
 
-        DetailRow(label = "الأجر", value = job.wageDisplay)
+        DetailRow(label = "الأجر", value = formatArabicWage(job.wageAmount, job.wageCurrency, job.wageBasis))
         DetailRow(label = "طريقة الدفع", value = paymentMethodLabel(job.paymentMethod))
-        DetailRow(label = "مدة سداد الأجر", value = "${job.paymentDeadlineDays} أيام بعد الإنجاز")
+        DetailRow(label = "مدة سداد الأجر", value = "${job.paymentDeadlineDays.toArabic()} أيام بعد الإنجاز")
 
         if (job.description.isNotBlank()) {
             HorizontalDivider()

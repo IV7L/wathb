@@ -1,5 +1,7 @@
 package com.yawmiyati.app.ui.screens.worker
 
+import androidx.annotation.DrawableRes
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -34,7 +36,8 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import coil.compose.AsyncImage
+import androidx.compose.ui.res.painterResource
+import com.yawmiyati.app.R
 import com.yawmiyati.app.ui.theme.WathbDeepTeal
 import com.yawmiyati.app.ui.theme.WathbGold
 import androidx.compose.runtime.Composable
@@ -52,6 +55,8 @@ import com.yawmiyati.app.data.api.JobListingResponse
 import com.yawmiyati.app.ui.components.EmptyState
 import com.yawmiyati.app.ui.components.ErrorMessage
 import com.yawmiyati.app.ui.components.LoadingIndicator
+import com.yawmiyati.app.ui.utils.formatArabicDate
+import com.yawmiyati.app.ui.utils.formatArabicWage
 import com.yawmiyati.app.viewmodels.AuthViewModel
 import com.yawmiyati.app.viewmodels.JobsUiState
 import com.yawmiyati.app.viewmodels.JobsViewModel
@@ -181,51 +186,51 @@ private fun JobCard(job: JobListingResponse, onClick: () -> Unit) {
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        // Thumbnail image
-        if (!job.thumbnailUrl.isNullOrBlank()) {
-            AsyncImage(
-                model = job.thumbnailUrl,
-                contentDescription = job.title,
+        // Category illustration header with "جديد" badge overlay
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(120.dp)
+        ) {
+            Image(
+                painter = painterResource(id = categoryDrawable(job.category)),
+                contentDescription = categoryLabel(job.category),
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(160.dp)
+                    .fillMaxSize()
                     .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
             )
+            if (job.isNew) {
+                Surface(
+                    color = WathbGold,
+                    shape = MaterialTheme.shapes.extraSmall,
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(8.dp)
+                ) {
+                    Text(
+                        text = "جديد",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color.Black,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                    )
+                }
+            }
         }
         Column(modifier = Modifier.padding(16.dp)) {
-            // Top row: category badge + NEW tag
-            if (!job.category.isNullOrBlank() || job.isNew) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+            // Category chip
+            if (!job.category.isNullOrBlank()) {
+                Surface(
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    shape = MaterialTheme.shapes.extraSmall,
                     modifier = Modifier.padding(bottom = 6.dp)
                 ) {
-                    if (!job.category.isNullOrBlank()) {
-                        Surface(
-                            color = MaterialTheme.colorScheme.primaryContainer,
-                            shape = MaterialTheme.shapes.extraSmall
-                        ) {
-                            Text(
-                                text = categoryLabel(job.category),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
-                            )
-                        }
-                    }
-                    if (job.isNew) {
-                        Surface(
-                            color = MaterialTheme.colorScheme.secondaryContainer,
-                            shape = MaterialTheme.shapes.extraSmall
-                        ) {
-                            Text(
-                                text = "جديد",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSecondaryContainer,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
-                            )
-                        }
-                    }
+                    Text(
+                        text = categoryLabel(job.category),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                    )
                 }
             }
             Text(
@@ -251,14 +256,14 @@ private fun JobCard(job: JobListingResponse, onClick: () -> Unit) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
-                    text = job.workDate,
+                    text = formatArabicDate(job.workDate),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
             Spacer(Modifier.height(8.dp))
             Text(
-                text = job.wageDisplay,
+                text = formatArabicWage(job.wageAmount, job.wageCurrency, job.wageBasis),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.primary
             )
@@ -281,6 +286,18 @@ private fun JobCard(job: JobListingResponse, onClick: () -> Unit) {
             }
         }
     }
+}
+
+@DrawableRes
+private fun categoryDrawable(category: String?): Int = when (category) {
+    "LOADING"      -> R.drawable.ic_cat_loading
+    "CLEANING"     -> R.drawable.ic_cat_cleaning
+    "CONSTRUCTION" -> R.drawable.ic_cat_construction
+    "AGRICULTURE"  -> R.drawable.ic_cat_agriculture
+    "DELIVERY"     -> R.drawable.ic_cat_delivery
+    "FOOD"         -> R.drawable.ic_cat_food
+    "RETAIL"       -> R.drawable.ic_cat_retail
+    else           -> R.drawable.ic_cat_other
 }
 
 private fun categoryLabel(category: String?): String = when (category) {

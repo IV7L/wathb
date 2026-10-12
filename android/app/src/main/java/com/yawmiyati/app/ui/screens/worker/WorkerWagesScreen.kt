@@ -46,6 +46,8 @@ import com.yawmiyati.app.data.api.WageObligationResponse
 import com.yawmiyati.app.ui.components.EmptyState
 import com.yawmiyati.app.ui.components.ErrorMessage
 import com.yawmiyati.app.ui.components.LoadingIndicator
+import com.yawmiyati.app.ui.utils.formatArabicDate
+import com.yawmiyati.app.ui.utils.toArabicNumerals
 import com.yawmiyati.app.viewmodels.WageActionState
 import com.yawmiyati.app.viewmodels.WagesUiState
 import com.yawmiyati.app.viewmodels.WorkerWagesViewModel
@@ -177,12 +179,12 @@ private fun WorkerWageCard(
                 WageStatusBadge(obligation.status)
             }
             Text(
-                text = obligation.amountDisplay,
+                text = obligation.amountDisplay.toArabicNumerals(),
                 style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.primary
             )
             Text(
-                text = "تاريخ الاستحقاق: ${obligation.dueDate}",
+                text = "تاريخ الاستحقاق: ${formatArabicDate(obligation.dueDate)}",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -194,7 +196,7 @@ private fun WorkerWageCard(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
-                    text = "تاريخ الدفع المُعلَن: ${latestDecl.paymentDate}",
+                    text = "تاريخ الدفع المُعلَن: ${formatArabicDate(latestDecl.paymentDate)}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
