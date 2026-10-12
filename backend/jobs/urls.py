@@ -1,10 +1,12 @@
 from django.urls import path
 from jobs.views import (
     JobListView, JobDetailView, JobSubmitView, JobPublishView, JobCancelView,
-    JobApplicationListView, JobApplyView, ApplicationActionView,
+    JobApplicationListView, JobApplyView, ApplicationActionView, JobCategoryListView,
+    WorkerApplicationListView,
 )
 
 urlpatterns = [
+    path("categories/", JobCategoryListView.as_view(), name="job-categories"),
     path("", JobListView.as_view(), name="job-list"),
     path("<uuid:pk>/", JobDetailView.as_view(), name="job-detail"),
     path("<uuid:pk>/submit/", JobSubmitView.as_view(), name="job-submit"),

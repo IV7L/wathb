@@ -3,6 +3,17 @@ from django.db import models
 from django.conf import settings
 
 
+class JobCategory(models.TextChoices):
+    LOADING      = "LOADING",      "تحميل وتنزيل"
+    CLEANING     = "CLEANING",     "تنظيف"
+    CONSTRUCTION = "CONSTRUCTION", "بناء وترميم"
+    AGRICULTURE  = "AGRICULTURE",  "زراعة"
+    DELIVERY     = "DELIVERY",     "نقل وتوصيل"
+    FOOD         = "FOOD",         "مطاعم ومطابخ"
+    RETAIL       = "RETAIL",       "محلات وبيع"
+    OTHER        = "OTHER",        "أخرى"
+
+
 class WageBasis(models.TextChoices):
     PER_DAY = "PER_DAY", "Per Day"
     PER_TASK = "PER_TASK", "Per Task"
@@ -56,6 +67,9 @@ class JobListing(models.Model):
         "accounts.BusinessProfile",
         on_delete=models.PROTECT,
         related_name="job_listings",
+    )
+    category = models.CharField(
+        max_length=20, choices=JobCategory.choices, default=JobCategory.OTHER
     )
     title = models.CharField(max_length=300)
     description = models.TextField()

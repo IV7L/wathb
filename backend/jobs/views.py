@@ -7,7 +7,7 @@ from rest_framework.views import APIView
 
 from accounts.models import Role
 from accounts.permissions import IsWorker, IsBusiness, IsVerifiedBusiness
-from jobs.models import JobListing, JobApplication, JobListingStatus, ApplicationStatus
+from jobs.models import JobListing, JobApplication, JobListingStatus, ApplicationStatus, JobCategory
 from jobs.serializers import (
     JobListingSerializer,
     JobListingCreateSerializer,
@@ -36,6 +36,9 @@ class JobListView(generics.ListCreateAPIView):
         date = self.request.query_params.get("work_date")
         if date:
             qs = qs.filter(work_date=date)
+        category = self.request.query_params.get("category")
+        if category:
+            qs = qs.filter(category=category)
         return qs
 
     def get_permissions(self):
@@ -160,16 +163,45 @@ class JobCancelView(APIView):
         return Response(JobListingSerializer(job).data)
 
 
+class JobCategoryListView(APIView):
+    """Public-ish list of job categories (no auth required — workers see chips before login)."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        return Response([
+            {"value": value, "label": label}
+            for value, label in JobCategory.choices
+        ])
+
+
 class JobApplicationListView(generics.ListAPIView):
     permission_classes = [IsBusiness]
     serializer_class = JobApplicationSerializer
 
     def get_queryset(self):
+        from django.db.models import Count, Q
+        from django.utils import timezone
         try:
             job = JobListing.objects.get(pk=self.kwargs["pk"], business__user=self.request.user)
         except JobListing.DoesNotExist:
             return JobApplication.objects.none()
-        return JobApplication.objects.filter(job=job).select_related("worker")
+        month_start = timezone.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        return (
+            JobApplication.objects
+            .filter(job=job)
+            .select_related("worker", "worker__worker_profile")
+            .annotate(
+                attended_this_month=Count(
+                    "worker__assignments__attendance_records",
+                    filter=Q(
+                        worker__assignments__attendance_records__status="CONFIRMED",
+                        worker__assignments__attendance_records__work_date__gte=month_start.date(),
+                    ),
+                    distinct=True,
+                )
+            )
+            .order_by("attended_this_month", "applied_at")
+        )
 
 
 class WorkerApplicationListView(generics.ListAPIView):
