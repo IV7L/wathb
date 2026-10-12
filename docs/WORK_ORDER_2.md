@@ -186,14 +186,45 @@ migrations and state machines, test list, effort per piece.
 
 OUT OF SCOPE - do not build
 Favorite or rehire-directly lists, push notifications, payment
-gateway, funder UI, offline cache, ratings with stars.E3 Biometric, only when the device supports it and the user opts
+gateway, funder UI, offline cache, ratings with stars.
+
+E3 Biometric, only when the device supports it and the user opts
    in after a successful password login:
    - Quick unlock on app open with androidx.biometric
      BiometricPrompt, device PIN or pattern as fallback.
    - Required before "تأكيد استلام الأجر".
    - Devices without biometrics work exactly as today.
    - Tokens stay in encrypted storage. Biometrics unlock the app
-     locally and never replace server authentication.WATHB WORK ORDER #3 - UI AND FLOW UPGRADE
+     locally and never replace server authentication.
+E4 App identity (applied 2026-10-12):
+   - applicationId: com.wathb.app (Kotlin package/namespace stays
+     com.yawmiyati.app — non-trivial to rename; no FileProvider,
+     no deep links reference the old id).
+   - App label: "وَثْب" (already in strings.xml).
+   - Release BASE_URL: https://wathb-api2.onrender.com/api/v1/
+     (api.yawmiyati.com removed).
+
+DECISIONS (2026-10-12)
+D1 App identity (→ E4):
+   applicationId = com.wathb.app. Kotlin package/namespace
+   com.yawmiyati.app unchanged (non-trivial rename; no FileProvider
+   authority or deep link references the old applicationId in code).
+   App label "وَثْب" already set in strings.xml.
+   Release BASE_URL is https://wathb-api2.onrender.com/api/v1/ until
+   a custom domain is decided; api.yawmiyati.com removed.
+D2 WhatsApp phone format:
+   All wa.me links and SUPPORT_WHATSAPP env var must use +970 form.
+   Apply when implementing B4, C4, E2.
+D3 Sponsorship recipient (Part G):
+   The recipient is the BUSINESS, not the worker. The worker always
+   receives the full wage from the business; the sponsor reimburses
+   the business afterwards.
+   Add to G plan:
+   - Before publishing a sponsored job: show the business
+     "تكلفتك بعد الدعم: X شيكل" (full wage minus expected subsidy).
+   - Business wages screen: expected, pending and reimbursed amounts.
+
+WATHB WORK ORDER #3 - UI AND FLOW UPGRADE
 
 PREREQUISITE
 Work Order #2 must be complete. Read docs/WORK_ORDER_2_STATUS.md

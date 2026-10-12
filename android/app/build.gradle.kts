@@ -11,7 +11,7 @@ android {
     buildToolsVersion = "35.0.0"
 
     defaultConfig {
-        applicationId = "com.yawmiyati.app"
+        applicationId = "com.wathb.app"
         minSdk = 26
         targetSdk = 35
         // RELEASE RULE: raise versionCode whenever backend accounts/consent.py
@@ -39,7 +39,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            buildConfigField("String", "API_BASE_URL", "\"https://api.yawmiyati.com/api/v1/\"")
+            buildConfigField("String", "API_BASE_URL", "\"https://wathb-api2.onrender.com/api/v1/\"")
         }
     }
 
