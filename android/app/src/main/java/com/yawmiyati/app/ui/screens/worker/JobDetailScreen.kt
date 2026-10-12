@@ -34,12 +34,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.yawmiyati.app.data.api.JobListingResponse
 import com.yawmiyati.app.ui.components.ErrorMessage
 import com.yawmiyati.app.ui.components.LoadingIndicator
+import com.yawmiyati.app.ui.components.OsmMapView
+import com.yawmiyati.app.ui.utils.cityLatLng
 import com.yawmiyati.app.ui.utils.formatArabicDate
 import com.yawmiyati.app.ui.utils.formatArabicTime
 import com.yawmiyati.app.ui.utils.formatArabicWage
@@ -171,6 +174,19 @@ private fun JobDetailContent(
 
         HorizontalDivider()
 
+        val mapCoords = cityLatLng(job.locationCity)
+        OsmMapView(
+            lat = mapCoords.lat,
+            lng = mapCoords.lng,
+            zoom = 15.0,
+            interactive = true,
+            showMarker = true,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(220.dp)
+                .clip(MaterialTheme.shapes.medium)
+        )
+        Spacer(Modifier.height(4.dp))
         DetailRow(label = "الموقع", value = "${job.locationCity} — ${job.locationAddress}")
         DetailRow(label = "تاريخ العمل", value = formatArabicDate(job.workDate))
         DetailRow(label = "الوقت", value = "${formatArabicTime(job.startTime)} – ${formatArabicTime(job.endTime)}")

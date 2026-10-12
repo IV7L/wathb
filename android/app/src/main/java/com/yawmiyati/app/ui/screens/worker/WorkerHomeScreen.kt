@@ -1,7 +1,5 @@
 package com.yawmiyati.app.ui.screens.worker
 
-import androidx.annotation.DrawableRes
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -35,11 +33,6 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
-import com.yawmiyati.app.R
-import com.yawmiyati.app.ui.theme.WathbDeepTeal
-import com.yawmiyati.app.ui.theme.WathbGold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -55,6 +48,10 @@ import com.yawmiyati.app.data.api.JobListingResponse
 import com.yawmiyati.app.ui.components.EmptyState
 import com.yawmiyati.app.ui.components.ErrorMessage
 import com.yawmiyati.app.ui.components.LoadingIndicator
+import com.yawmiyati.app.ui.components.OsmMapView
+import com.yawmiyati.app.ui.theme.WathbDeepTeal
+import com.yawmiyati.app.ui.theme.WathbGold
+import com.yawmiyati.app.ui.utils.cityLatLng
 import com.yawmiyati.app.ui.utils.formatArabicDate
 import com.yawmiyati.app.ui.utils.formatArabicWage
 import com.yawmiyati.app.viewmodels.AuthViewModel
@@ -133,7 +130,6 @@ fun WorkerHomeScreen(
             is JobsUiState.Success -> {
                 val listState = rememberLazyListState()
 
-                // Trigger next page when last visible item is near the end
                 val loadMore by remember {
                     derivedStateOf {
                         val info = listState.layoutInfo
@@ -181,24 +177,26 @@ fun WorkerHomeScreen(
 
 @Composable
 private fun JobCard(job: JobListingResponse, onClick: () -> Unit) {
+    val coords = cityLatLng(job.locationCity)
     Card(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        // Category illustration header with "جديد" badge overlay
+        // Map thumbnail with "جديد" badge overlay
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(120.dp)
+                .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
         ) {
-            Image(
-                painter = painterResource(id = categoryDrawable(job.category)),
-                contentDescription = categoryLabel(job.category),
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
+            OsmMapView(
+                lat = coords.lat,
+                lng = coords.lng,
+                zoom = 14.0,
+                interactive = false,
+                showMarker = true,
+                modifier = Modifier.fillMaxSize()
             )
             if (job.isNew) {
                 Surface(
@@ -218,7 +216,6 @@ private fun JobCard(job: JobListingResponse, onClick: () -> Unit) {
             }
         }
         Column(modifier = Modifier.padding(16.dp)) {
-            // Category chip
             if (!job.category.isNullOrBlank()) {
                 Surface(
                     color = MaterialTheme.colorScheme.primaryContainer,
@@ -286,18 +283,6 @@ private fun JobCard(job: JobListingResponse, onClick: () -> Unit) {
             }
         }
     }
-}
-
-@DrawableRes
-private fun categoryDrawable(category: String?): Int = when (category) {
-    "LOADING"      -> R.drawable.ic_cat_loading
-    "CLEANING"     -> R.drawable.ic_cat_cleaning
-    "CONSTRUCTION" -> R.drawable.ic_cat_construction
-    "AGRICULTURE"  -> R.drawable.ic_cat_agriculture
-    "DELIVERY"     -> R.drawable.ic_cat_delivery
-    "FOOD"         -> R.drawable.ic_cat_food
-    "RETAIL"       -> R.drawable.ic_cat_retail
-    else           -> R.drawable.ic_cat_other
 }
 
 private fun categoryLabel(category: String?): String = when (category) {
