@@ -1,5 +1,6 @@
 package com.yawmiyati.app.ui.screens.auth
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,10 +13,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
@@ -33,13 +38,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.yawmiyati.app.YawmiyatiApp
+import com.yawmiyati.app.data.auth.BiometricHelper
 import com.yawmiyati.app.ui.theme.WathbDeepTeal
 import com.yawmiyati.app.ui.theme.WathbGold
 import com.yawmiyati.app.ui.theme.WathbTeal
@@ -56,6 +65,16 @@ fun LoginScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     var phone    by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+
+    val context = LocalContext.current
+    val activity = context as? FragmentActivity
+    val tokenManager = remember { YawmiyatiApp.instance.tokenManager }
+
+    val showBiometric = remember {
+        activity != null &&
+        tokenManager.isLoggedIn() &&
+        BiometricHelper.isAvailable(context)
+    }
 
     LaunchedEffect(uiState) {
         when (val state = uiState) {
@@ -166,6 +185,35 @@ fun LoginScreen(
                         )
                     } else {
                         Text("دخول", style = MaterialTheme.typography.labelLarge, color = Color.White)
+                    }
+                }
+
+                if (showBiometric) {
+                    Spacer(Modifier.height(12.dp))
+                    OutlinedButton(
+                        onClick = {
+                            activity?.let { act ->
+                                BiometricHelper.prompt(
+                                    activity = act,
+                                    onSuccess = {
+                                        val role = tokenManager.getRole() ?: return@prompt
+                                        onLoginSuccess(role)
+                                    },
+                                    onFailed = {},
+                                    onError = {}
+                                )
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth().height(52.dp),
+                        border = BorderStroke(1.dp, WathbDeepTeal)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Fingerprint,
+                            contentDescription = null,
+                            tint = WathbDeepTeal,
+                            modifier = Modifier.padding(end = 8.dp)
+                        )
+                        Text("الدخول بالبصمة", color = WathbDeepTeal)
                     }
                 }
 

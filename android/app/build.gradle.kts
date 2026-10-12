@@ -84,6 +84,9 @@ dependencies {
     // Maps
     implementation("org.osmdroid:osmdroid-android:6.1.18")
 
+    // Biometric
+    implementation("androidx.biometric:biometric:1.1.0")
+
     // Coroutines
     implementation(libs.kotlinx.coroutines.android)
 
