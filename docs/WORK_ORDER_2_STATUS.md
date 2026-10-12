@@ -12,3 +12,4 @@
 | A2 | done | 236c2ac | Already implemented — RegisterSerializer.validate() rejects non-WORKER/BUSINESS; ADMIN/FUNDER both return 400; 2 tests in test_auth.py |
 | A3 | done | 9bc7c1e | Already implemented at 0.6 — ensure_admin uses normalize_phone(); invalid phone warning + skip; 5 tests |
 | A4 | done | 34553df | HMAC-SHA256 national ID: normalize_national_id + hash_national_id in utils.py; WorkerProfile.set_national_id(); ImproperlyConfigured startup check in production.py; 17 new tests. No existing rows; field dormant (no API/Android collection yet) |
+| A5 | done | 85791e0 | Consent screen: accounts/consent.py (CONSENT_VERSION=1, Arabic text); User.consent_version + accepted_at; RegisterSerializer validates version; ConsentScreen.kt (checkbox + scroll); Login→Consent→Register flow; 3 new tests; 179 Django + 35 JVM pass |
