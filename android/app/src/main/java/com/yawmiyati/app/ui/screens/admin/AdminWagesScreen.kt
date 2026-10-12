@@ -56,7 +56,7 @@ import com.yawmiyati.app.viewmodels.selectReviewableDeclaration
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AdminWagesScreen(
-    onBack: () -> Unit,
+    onBack: (() -> Unit)? = null,
     viewModel: AdminWagesViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -86,7 +86,7 @@ fun AdminWagesScreen(
             TopAppBar(
                 title = { Text("مراجعة الدفعات") },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    if (onBack != null) IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "رجوع")
                     }
                 }

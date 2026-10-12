@@ -44,7 +44,7 @@ import com.yawmiyati.app.viewmodels.WorkerProfileViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WorkerProfileScreen(
-    onBack: () -> Unit,
+    onBack: (() -> Unit)? = null,
     viewModel: WorkerProfileViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -70,7 +70,7 @@ fun WorkerProfileScreen(
             TopAppBar(
                 title = { Text("ملفي الشخصي") },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    if (onBack != null) IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "رجوع")
                     }
                 }

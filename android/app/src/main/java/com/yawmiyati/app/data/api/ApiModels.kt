@@ -84,6 +84,8 @@ data class JobListingResponse(
     @SerializedName("attendance_requirements") val attendanceRequirements: String,
     @SerializedName("cancellation_policy") val cancellationPolicy: String,
     @SerializedName("additional_conditions") val additionalConditions: String,
+    val category: String? = null,
+    @SerializedName("is_new") val isNew: Boolean = false,
     val status: String,
     @SerializedName("is_funded") val isFunded: Boolean,
     @SerializedName("published_at") val publishedAt: String?,
@@ -177,17 +179,17 @@ data class ApiError(
 data class AdminBusinessProfile(
     val id: Int,
     @SerializedName("user_id") val userId: String,
-    val email: String,
+    val email: String? = null,
     @SerializedName("legal_name") val legalName: String,
-    @SerializedName("trade_name") val tradeName: String?,
-    @SerializedName("registration_number") val registrationNumber: String?,
-    @SerializedName("location_address") val locationAddress: String?,
-    @SerializedName("location_city") val locationCity: String?,
+    @SerializedName("trade_name") val tradeName: String? = null,
+    @SerializedName("registration_number") val registrationNumber: String? = null,
+    @SerializedName("location_address") val locationAddress: String? = null,
+    @SerializedName("location_city") val locationCity: String? = null,
     @SerializedName("contact_name") val contactName: String,
     @SerializedName("contact_phone") val contactPhone: String,
     @SerializedName("verification_status") val verificationStatus: String,
-    @SerializedName("verified_at") val verifiedAt: String?,
-    @SerializedName("suspension_reason") val suspensionReason: String
+    @SerializedName("verified_at") val verifiedAt: String? = null,
+    @SerializedName("suspension_reason") val suspensionReason: String? = null
 )
 
 data class AdminVerifyRequest(
@@ -319,6 +321,42 @@ data class DisputePaymentRequest(
     val category: String = "PAYMENT_NOT_RECEIVED",
     val description: String
 )
+
+// ── Disputes ──────────────────────────────────────────────────────────────────
+
+data class DisputeResponse(
+    val id: String,
+    val category: String,
+    val assignment: String,
+    @SerializedName("wage_obligation") val wageObligation: String? = null,
+    @SerializedName("raised_by_phone") val raisedByPhone: String,
+    val description: String,
+    val status: String,
+    @SerializedName("assigned_to_phone") val assignedToPhone: String? = null,
+    @SerializedName("created_at") val createdAt: String,
+    @SerializedName("resolved_at") val resolvedAt: String? = null,
+    @SerializedName("resolution_notes") val resolutionNotes: String? = null,
+)
+
+data class DisputeResolveRequest(
+    val action: String,
+    val notes: String,
+)
+
+// ── Notifications ─────────────────────────────────────────────────────────────
+
+data class NotificationResponse(
+    val id: String,
+    @SerializedName("notification_type") val notificationType: String,
+    val title: String,
+    val body: String,
+    @SerializedName("related_model") val relatedModel: String? = null,
+    @SerializedName("related_id") val relatedId: String? = null,
+    @SerializedName("is_read") val isRead: Boolean,
+    @SerializedName("created_at") val createdAt: String,
+)
+
+// ── Admin verify declaration ───────────────────────────────────────────────────
 
 // Sent to admin verify endpoint
 data class AdminVerifyDeclarationRequest(

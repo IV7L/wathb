@@ -54,7 +54,7 @@ import java.time.LocalDate
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WageObligationsScreen(
-    onBack: () -> Unit,
+    onBack: (() -> Unit)? = null,
     viewModel: WagesViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -82,7 +82,7 @@ fun WageObligationsScreen(
             TopAppBar(
                 title = { Text("الالتزامات المالية") },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    if (onBack != null) IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "رجوع")
                     }
                 }

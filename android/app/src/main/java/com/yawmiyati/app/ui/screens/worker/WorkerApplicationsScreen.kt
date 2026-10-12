@@ -48,7 +48,7 @@ import com.yawmiyati.app.viewmodels.WorkerApplicationsViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WorkerApplicationsScreen(
-    onBack: () -> Unit,
+    onBack: (() -> Unit)? = null,
     viewModel: WorkerApplicationsViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -67,7 +67,7 @@ fun WorkerApplicationsScreen(
             TopAppBar(
                 title = { Text("طلباتي") },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    if (onBack != null) IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "رجوع")
                     }
                 }

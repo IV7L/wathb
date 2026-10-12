@@ -46,7 +46,7 @@ import com.yawmiyati.app.viewmodels.AssignmentsViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WorkerAssignmentsScreen(
-    onBack: () -> Unit,
+    onBack: (() -> Unit)? = null,
     onManageAssignment: (assignmentId: String, workerPhone: String, businessPhone: String) -> Unit = { _, _, _ -> },
     viewModel: AssignmentsViewModel = viewModel()
 ) {
@@ -66,7 +66,7 @@ fun WorkerAssignmentsScreen(
             TopAppBar(
                 title = { Text("مهامي") },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    if (onBack != null) IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "رجوع")
                     }
                 }

@@ -184,11 +184,13 @@ private fun BusinessCard(business: AdminBusinessProfile, onClick: () -> Unit) {
                 )
                 StatusBadge(business.verificationStatus)
             }
-            Text(
-                text = business.email,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            if (!business.email.isNullOrBlank()) {
+                Text(
+                    text = business.email,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
             if (!business.locationCity.isNullOrBlank()) {
                 Text(
                     text = business.locationCity,
@@ -240,11 +242,13 @@ private fun VerifyDialog(
                     text = "الحالة الحالية: ${statusLabel(business.verificationStatus)}",
                     style = MaterialTheme.typography.bodyMedium
                 )
-                Text(
-                    text = business.email,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                if (!business.email.isNullOrBlank()) {
+                    Text(
+                        text = business.email,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
 
                 Spacer(Modifier.height(4.dp))
                 Text("اختر الإجراء:", style = MaterialTheme.typography.labelLarge)

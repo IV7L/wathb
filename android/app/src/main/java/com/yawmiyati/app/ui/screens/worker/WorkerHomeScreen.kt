@@ -14,13 +14,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
-import androidx.compose.material.icons.automirrored.filled.Assignment
-import androidx.compose.material.icons.filled.DateRange
-import androidx.compose.material.icons.filled.Payments
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.Surface
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -68,18 +65,6 @@ fun WorkerHomeScreen(
             CenterAlignedTopAppBar(
                 title = { Text("الوظائف المتاحة", style = MaterialTheme.typography.titleLarge) },
                 actions = {
-                    IconButton(onClick = onMyApplications) {
-                        Icon(Icons.AutoMirrored.Filled.Assignment, contentDescription = "طلباتي")
-                    }
-                    IconButton(onClick = onMyAssignments) {
-                        Icon(Icons.Filled.DateRange, contentDescription = "مهامي")
-                    }
-                    IconButton(onClick = onMyWages) {
-                        Icon(Icons.Filled.Payments, contentDescription = "أجوري")
-                    }
-                    IconButton(onClick = onProfile) {
-                        Icon(Icons.Filled.Person, contentDescription = "ملفي")
-                    }
                     IconButton(onClick = {
                         authViewModel.logout()
                         onLogout()
@@ -167,6 +152,40 @@ private fun JobCard(job: JobListingResponse, onClick: () -> Unit) {
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
+            // Top row: category badge + NEW tag
+            if (!job.category.isNullOrBlank() || job.isNew) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    modifier = Modifier.padding(bottom = 6.dp)
+                ) {
+                    if (!job.category.isNullOrBlank()) {
+                        Surface(
+                            color = MaterialTheme.colorScheme.primaryContainer,
+                            shape = MaterialTheme.shapes.extraSmall
+                        ) {
+                            Text(
+                                text = categoryLabel(job.category),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                            )
+                        }
+                    }
+                    if (job.isNew) {
+                        Surface(
+                            color = MaterialTheme.colorScheme.secondaryContainer,
+                            shape = MaterialTheme.shapes.extraSmall
+                        ) {
+                            Text(
+                                text = "جديد",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                            )
+                        }
+                    }
+                }
+            }
             Text(
                 text = job.title,
                 style = MaterialTheme.typography.titleMedium,
@@ -220,4 +239,16 @@ private fun JobCard(job: JobListingResponse, onClick: () -> Unit) {
             }
         }
     }
+}
+
+private fun categoryLabel(category: String?): String = when (category) {
+    "LOADING"      -> "تحميل وتنزيل"
+    "CLEANING"     -> "تنظيف"
+    "CONSTRUCTION" -> "بناء وترميم"
+    "AGRICULTURE"  -> "زراعة"
+    "DELIVERY"     -> "نقل وتوصيل"
+    "FOOD"         -> "مطاعم ومطابخ"
+    "RETAIL"       -> "محلات وبيع"
+    "OTHER"        -> "أخرى"
+    else           -> category ?: ""
 }

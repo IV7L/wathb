@@ -9,23 +9,18 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.yawmiyati.app.YawmiyatiApp
 import com.yawmiyati.app.data.auth.SessionEventBus
-import com.yawmiyati.app.ui.screens.admin.AdminVerificationScreen
-import com.yawmiyati.app.ui.screens.admin.AdminWagesScreen
+import com.yawmiyati.app.ui.screens.NotificationsScreen
+import com.yawmiyati.app.ui.screens.admin.AdminMainScreen
 import com.yawmiyati.app.ui.screens.auth.ConsentScreen
 import com.yawmiyati.app.ui.screens.auth.LoginScreen
 import com.yawmiyati.app.ui.screens.auth.RegisterScreen
 import com.yawmiyati.app.ui.screens.business.BusinessAssignmentDetailScreen
-import com.yawmiyati.app.ui.screens.business.BusinessHomeScreen
+import com.yawmiyati.app.ui.screens.business.BusinessMainScreen
 import com.yawmiyati.app.ui.screens.business.JobApplicationsScreen
 import com.yawmiyati.app.ui.screens.business.JobCreateScreen
-import com.yawmiyati.app.ui.screens.business.WageObligationsScreen
 import com.yawmiyati.app.ui.screens.worker.JobDetailScreen
-import com.yawmiyati.app.ui.screens.worker.WorkerApplicationsScreen
 import com.yawmiyati.app.ui.screens.worker.WorkerAssignmentDetailScreen
-import com.yawmiyati.app.ui.screens.worker.WorkerAssignmentsScreen
-import com.yawmiyati.app.ui.screens.worker.WorkerHomeScreen
-import com.yawmiyati.app.ui.screens.worker.WorkerProfileScreen
-import com.yawmiyati.app.ui.screens.worker.WorkerWagesScreen
+import com.yawmiyati.app.ui.screens.worker.WorkerMainScreen
 
 @Composable
 fun YawmiyatiNavGraph() {
@@ -103,50 +98,23 @@ fun YawmiyatiNavGraph() {
             )
         }
 
+        // ── Worker ──────────────────────────────────────────────────────────────
+
         composable(Screen.WorkerHome.route) {
-            WorkerHomeScreen(
+            WorkerMainScreen(
                 onJobClick = { jobId ->
                     navController.navigate(Screen.JobDetail.createRoute(jobId))
                 },
-                onMyApplications = {
-                    navController.navigate(Screen.WorkerApplications.route)
-                },
-                onMyAssignments = {
-                    navController.navigate(Screen.WorkerAssignments.route)
-                },
-                onMyWages = {
-                    navController.navigate(Screen.WorkerWages.route)
-                },
-                onProfile = {
-                    navController.navigate(Screen.WorkerProfile.route)
-                },
-                onLogout = {
-                    navController.navigate(Screen.Login.route) {
-                        popUpTo(0) { inclusive = true }
-                    }
-                }
-            )
-        }
-
-        composable(Screen.WorkerProfile.route) {
-            WorkerProfileScreen(
-                onBack = { navController.popBackStack() }
-            )
-        }
-
-        composable(Screen.WorkerApplications.route) {
-            WorkerApplicationsScreen(
-                onBack = { navController.popBackStack() }
-            )
-        }
-
-        composable(Screen.WorkerAssignments.route) {
-            WorkerAssignmentsScreen(
-                onBack = { navController.popBackStack() },
                 onManageAssignment = { assignmentId, workerPhone, businessPhone ->
                     navController.navigate(
                         Screen.WorkerAssignmentDetail.createRoute(assignmentId, workerPhone, businessPhone)
                     )
+                },
+                onNotifications = { navController.navigate(Screen.WorkerNotifications.route) },
+                onLogout = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
                 }
             )
         }
@@ -160,19 +128,13 @@ fun YawmiyatiNavGraph() {
             )
         ) { backStackEntry ->
             val assignmentId = backStackEntry.arguments?.getString("assignmentId") ?: return@composable
-            val workerPhone = backStackEntry.arguments?.getString("workerPhone") ?: ""
+            val workerPhone  = backStackEntry.arguments?.getString("workerPhone") ?: ""
             val businessPhone = backStackEntry.arguments?.getString("businessPhone") ?: ""
             WorkerAssignmentDetailScreen(
-                assignmentId = assignmentId,
-                workerPhone = workerPhone,
+                assignmentId  = assignmentId,
+                workerPhone   = workerPhone,
                 businessPhone = businessPhone,
-                onBack = { navController.popBackStack() }
-            )
-        }
-
-        composable(Screen.WorkerWages.route) {
-            WorkerWagesScreen(
-                onBack = { navController.popBackStack() }
+                onBack        = { navController.popBackStack() }
             )
         }
 
@@ -192,13 +154,19 @@ fun YawmiyatiNavGraph() {
             )
         }
 
+        composable(Screen.WorkerNotifications.route) {
+            NotificationsScreen(onBack = { navController.popBackStack() })
+        }
+
+        // ── Business ────────────────────────────────────────────────────────────
+
         composable(Screen.BusinessHome.route) {
-            BusinessHomeScreen(
+            BusinessMainScreen(
                 onCreateJob = { navController.navigate(Screen.JobCreate.route) },
                 onViewApplications = { jobId ->
                     navController.navigate(Screen.JobApplications.createRoute(jobId))
                 },
-                onWages = { navController.navigate(Screen.BusinessWages.route) },
+                onNotifications = { navController.navigate(Screen.WorkerNotifications.route) },
                 onLogout = {
                     navController.navigate(Screen.Login.route) {
                         popUpTo(0) { inclusive = true }
@@ -210,13 +178,7 @@ fun YawmiyatiNavGraph() {
         composable(Screen.JobCreate.route) {
             JobCreateScreen(
                 onJobCreated = { navController.popBackStack() },
-                onBack = { navController.popBackStack() }
-            )
-        }
-
-        composable(Screen.BusinessWages.route) {
-            WageObligationsScreen(
-                onBack = { navController.popBackStack() }
+                onBack       = { navController.popBackStack() }
             )
         }
 
@@ -228,11 +190,11 @@ fun YawmiyatiNavGraph() {
             )
         ) { backStackEntry ->
             val assignmentId = backStackEntry.arguments?.getString("assignmentId") ?: return@composable
-            val workerPhone = backStackEntry.arguments?.getString("workerPhone") ?: ""
+            val workerPhone  = backStackEntry.arguments?.getString("workerPhone") ?: ""
             BusinessAssignmentDetailScreen(
                 assignmentId = assignmentId,
-                workerPhone = workerPhone,
-                onBack = { navController.popBackStack() }
+                workerPhone  = workerPhone,
+                onBack       = { navController.popBackStack() }
             )
         }
 
@@ -250,20 +212,15 @@ fun YawmiyatiNavGraph() {
             )
         }
 
+        // ── Admin ────────────────────────────────────────────────────────────────
+
         composable(Screen.AdminVerification.route) {
-            AdminVerificationScreen(
+            AdminMainScreen(
                 onLogout = {
                     navController.navigate(Screen.Login.route) {
                         popUpTo(0) { inclusive = true }
                     }
-                },
-                onWageReview = { navController.navigate(Screen.AdminWages.route) }
-            )
-        }
-
-        composable(Screen.AdminWages.route) {
-            AdminWagesScreen(
-                onBack = { navController.popBackStack() }
+                }
             )
         }
     }

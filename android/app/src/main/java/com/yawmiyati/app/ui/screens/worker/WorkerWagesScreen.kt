@@ -53,7 +53,7 @@ import com.yawmiyati.app.viewmodels.WorkerWagesViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WorkerWagesScreen(
-    onBack: () -> Unit,
+    onBack: (() -> Unit)? = null,
     viewModel: WorkerWagesViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -81,7 +81,7 @@ fun WorkerWagesScreen(
             TopAppBar(
                 title = { Text("أجوري") },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    if (onBack != null) IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "رجوع")
                     }
                 }
