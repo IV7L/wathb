@@ -157,3 +157,6 @@ CORS_ALLOWED_ORIGINS = config(
     default="http://localhost:3000",
     cast=Csv(),
 )
+
+# National ID HMAC key — required in production, optional in dev/test.
+NATIONAL_ID_HMAC_KEY = config("NATIONAL_ID_HMAC_KEY", default="")

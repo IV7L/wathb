@@ -72,6 +72,10 @@ class WorkerProfile(models.Model):
     national_id_hash = models.CharField(max_length=64, blank=True)
     is_available = models.BooleanField(default=True)
 
+    def set_national_id(self, raw_id: str) -> None:
+        from accounts.utils import hash_national_id
+        self.national_id_hash = hash_national_id(raw_id)
+
     def __str__(self):
         return f"Worker: {self.full_name}"
 

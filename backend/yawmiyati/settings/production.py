@@ -1,5 +1,6 @@
 from .base import *  # noqa: F401, F403
 from decouple import config, Csv
+from django.core.exceptions import ImproperlyConfigured
 
 DEBUG = False
 
@@ -22,6 +23,11 @@ CORS_ALLOWED_ORIGINS    = config("CORS_ALLOWED_ORIGINS", cast=Csv())
 
 # Static file collection path
 STATIC_ROOT = config("STATIC_ROOT", default=str(BASE_DIR / "staticfiles"))
+
+# National ID HMAC key — mandatory in production.
+NATIONAL_ID_HMAC_KEY = config("NATIONAL_ID_HMAC_KEY", default="")
+if not NATIONAL_ID_HMAC_KEY:
+    raise ImproperlyConfigured("NATIONAL_ID_HMAC_KEY must be set in production.")
 
 # PostgreSQL SSL mode.
 # Render external connections require sslmode=require.
