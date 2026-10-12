@@ -1,3 +1,7 @@
+# RELEASE RULE: whenever CONSENT_VERSION is bumped, APP_MIN_VERSION_CODE in
+# android/app/build.gradle.kts MUST be raised to the new build in the same
+# release. This forces old clients to update before they can register, preventing
+# them from sending a stale consent_version that the backend will reject.
 CONSENT_VERSION = 1
 
 CONSENT_TEXT = """شروط الاستخدام وسياسة الخصوصية — وَثْب

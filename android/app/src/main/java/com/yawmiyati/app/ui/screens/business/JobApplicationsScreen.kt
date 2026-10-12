@@ -23,8 +23,10 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.ui.graphics.Color
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -131,11 +133,17 @@ private fun ApplicationCard(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    if (!application.workerName.isNullOrBlank()) {
-                        Text(
-                            text = application.workerName,
-                            style = MaterialTheme.typography.titleSmall
-                        )
+                    Row(
+                        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        if (!application.workerName.isNullOrBlank()) {
+                            Text(
+                                text = application.workerName,
+                                style = MaterialTheme.typography.titleSmall
+                            )
+                        }
+                        VerificationBadge(application.workerIsVerified)
                     }
                     if (!application.workerPhone.isNullOrBlank()) {
                         Text(
@@ -202,6 +210,27 @@ private fun ApplicationCard(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun VerificationBadge(isVerified: Boolean) {
+    val (label, containerColor, contentColor) = if (isVerified) {
+        Triple("موثّق", Color(0xFF2E7D32), Color.White)
+    } else {
+        Triple("غير موثّق", MaterialTheme.colorScheme.surfaceVariant,
+            MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+    Surface(
+        shape = MaterialTheme.shapes.small,
+        color = containerColor,
+        contentColor = contentColor,
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+        )
     }
 }
 

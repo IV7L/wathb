@@ -54,6 +54,7 @@ class JobApplicationSerializer(serializers.ModelSerializer):
     worker_email = serializers.EmailField(source="worker.email", read_only=True, allow_null=True, default=None)
     worker_name = serializers.SerializerMethodField()
     worker_phone = serializers.CharField(source="worker.phone", read_only=True)
+    worker_is_verified = serializers.BooleanField(source="worker.is_verified", read_only=True)
     job_title = serializers.CharField(source="job.title", read_only=True)
     assignment_id = serializers.SerializerMethodField()
 
@@ -61,12 +62,12 @@ class JobApplicationSerializer(serializers.ModelSerializer):
         model = JobApplication
         fields = [
             "id", "job", "job_title",
-            "worker_email", "worker_name", "worker_phone",
+            "worker_email", "worker_name", "worker_phone", "worker_is_verified",
             "status", "cover_note", "applied_at", "reviewed_at", "assignment_id",
         ]
         read_only_fields = [
             "id", "job", "job_title",
-            "worker_email", "worker_name", "worker_phone",
+            "worker_email", "worker_name", "worker_phone", "worker_is_verified",
             "status", "applied_at", "reviewed_at", "assignment_id",
         ]
 

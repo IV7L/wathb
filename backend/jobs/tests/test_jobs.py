@@ -352,3 +352,20 @@ class ApplicationAssignmentIdTests(APITestCase):
         app_data = response.data["results"][0]
         self.assertEqual(app_data["worker_name"], "Id Worker")
         self.assertEqual(app_data["worker_phone"], "+970599123456")
+
+    def test_unverified_worker_shows_is_verified_false(self):
+        self.client.force_authenticate(user=self.biz_user)
+        response = self.client.get(self._list_url())
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        app_data = response.data["results"][0]
+        self.assertIn("worker_is_verified", app_data)
+        self.assertFalse(app_data["worker_is_verified"])
+
+    def test_verified_worker_shows_is_verified_true(self):
+        self.worker.is_verified = True
+        self.worker.save(update_fields=["is_verified"])
+        self.client.force_authenticate(user=self.biz_user)
+        response = self.client.get(self._list_url())
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        app_data = response.data["results"][0]
+        self.assertTrue(app_data["worker_is_verified"])

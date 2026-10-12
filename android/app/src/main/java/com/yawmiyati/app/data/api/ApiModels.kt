@@ -118,6 +118,7 @@ data class JobApplicationResponse(
     @SerializedName("job_title") val jobTitle: String,
     @SerializedName("worker_name") val workerName: String? = null,
     @SerializedName("worker_phone") val workerPhone: String? = null,
+    @SerializedName("worker_is_verified") val workerIsVerified: Boolean = false,
     val status: String,
     @SerializedName("cover_note") val coverNote: String,
     @SerializedName("applied_at") val appliedAt: String,

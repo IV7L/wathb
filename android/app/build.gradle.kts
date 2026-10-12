@@ -14,6 +14,8 @@ android {
         applicationId = "com.yawmiyati.app"
         minSdk = 26
         targetSdk = 35
+        // RELEASE RULE: raise versionCode whenever backend accounts/consent.py
+        // bumps CONSENT_VERSION — old clients must update before they can register.
         versionCode = 1
         versionName = "1.0.0"
 
