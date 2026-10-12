@@ -1,0 +1,22 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="100dp"
+    android:height="100dp"
+    android:viewportWidth="100"
+    android:viewportHeight="100">
+    <!-- background -->
+    <path
+        android:fillColor="#FEF3D7"
+        android:pathData="M0,0 L100,0 L100,100 L0,100 Z" />
+    <!-- row 1 bricks -->
+    <path android:fillColor="#006D6B" android:pathData="M18,30 L47,30 L47,42 L18,42 Z" />
+    <path android:fillColor="#006D6B" android:pathData="M51,30 L82,30 L82,42 L51,42 Z" />
+    <!-- row 2 bricks offset -->
+    <path android:fillColor="#0EA5A3" android:pathData="M18,46 L33,46 L33,58 L18,58 Z" />
+    <path android:fillColor="#0EA5A3" android:pathData="M37,46 L63,46 L63,58 L37,58 Z" />
+    <path android:fillColor="#0EA5A3" android:pathData="M67,46 L82,46 L82,58 L67,58 Z" />
+    <!-- row 3 bricks -->
+    <path android:fillColor="#006D6B" android:pathData="M18,62 L47,62 L47,74 L18,74 Z" />
+    <path android:fillColor="#006D6B" android:pathData="M51,62 L82,62 L82,74 L51,74 Z" />
+    <!-- trowel -->
+    <path android:fillColor="#F4B432" android:pathData="M60,18 L80,24 L72,38 L56,28 Z" />
+</vector>

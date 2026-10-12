@@ -1,0 +1,33 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="100dp"
+    android:height="100dp"
+    android:viewportWidth="100"
+    android:viewportHeight="100">
+    <!-- background -->
+    <path
+        android:fillColor="#FEF3D7"
+        android:pathData="M0,0 L100,0 L100,100 L0,100 Z" />
+    <!-- chef hat dome -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M34,44 Q34,16 50,16 Q66,16 66,44 Z" />
+    <!-- hat brim -->
+    <path
+        android:fillColor="#006D6B"
+        android:pathData="M28,44 L72,44 L72,52 L28,52 Z" />
+    <!-- pan body -->
+    <path
+        android:fillColor="#0EA5A3"
+        android:pathData="M24,60 L68,60 L68,76 L24,76 Z" />
+    <!-- pan handle -->
+    <path
+        android:fillColor="#006D6B"
+        android:pathData="M68,63 L86,63 L86,72 L68,72 Z" />
+    <!-- steam wisps -->
+    <path
+        android:fillColor="#F4B432"
+        android:strokeColor="#F4B432"
+        android:strokeWidth="2.5"
+        android:pathData="M34,56 Q32,52 34,48 M50,56 Q48,52 50,48 M66,56 Q64,52 66,48"
+        android:fillAlpha="0" />
+</vector>
