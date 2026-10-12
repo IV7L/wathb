@@ -14,3 +14,8 @@
 | A4 | done | 34553df | HMAC-SHA256 national ID: normalize_national_id + hash_national_id in utils.py; WorkerProfile.set_national_id(); ImproperlyConfigured startup check in production.py; 17 new tests. No existing rows; field dormant (no API/Android collection yet) |
 | A5 | done | 85791e0 | Consent screen: accounts/consent.py (CONSENT_VERSION=1, Arabic text); User.consent_version + accepted_at; RegisterSerializer validates version; ConsentScreen.kt (checkbox + scroll); Login→Consent→Register flow; 3 new tests; 179 Django + 35 JVM pass |
 | A6 | done | 2922466 | Verification badge: worker_is_verified in JobApplicationSerializer; VerificationBadge composable (موثّق/غير موثّق); 2 new tests; 181 Django + 35 JVM pass |
+| health | done | 0460649 | /health/ runs real SELECT + MigrationExecutor plan check; returns "migrations": "ok"\|"pending"; 503 on pending; 3 new tests |
+| B1 | done | bbffa3f | WorkerProfileScreen + WorkerProfileViewModel: view/edit full_name, location, availability; phone read-only; GET/PATCH workers/profile/ |
+| B2 | done | bd379ce + bbffa3f | GET /workers/applications/ (WorkerApplicationListView); WorkerApplicationsScreen + VM; withdraw via PATCH action=withdraw; AlertDialog confirm; status chips |
+| B3 | done | bd379ce + bbffa3f | business_track_record on JobListingSerializer (server-side WageObligation aggregation); BusinessTrackRecord model in ApiModels.kt; track record label on job card |
+| B4 | done | 6a045f4 + bbffa3f | business_phone = job.business.user.phone in AssignmentSerializer; AssignmentResponse carries it; WorkerAssignmentDetailScreen shows call + WhatsApp buttons (tel: local, wa.me strip +) |
