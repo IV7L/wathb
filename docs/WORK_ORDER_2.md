@@ -1,5 +1,19 @@
 WATHB WORK ORDER #2
 
+PROTOCOL AMENDMENT — 2026-10-12 (supersedes original item 2)
+Testing rules:
+- After each item: run ONLY the Django tests of the apps you touched,
+  and only if the item changed the backend. Skip Django tests if the
+  item is Android-only or docs-only.
+- Write new tests ONLY for: money, state transitions,
+  permissions/roles, auth/session, phone normalization, and anything
+  a [STOP] point covers. No new tests for pure UI or styling changes.
+- At the end of each Part: run the full Django suite, the full Android
+  JVM suite, and assembleDebug. Do not start the next Part until all
+  pass. If something fails, find the breaking commit and fix it in a
+  separate commit.
+- One commit per item remains mandatory.
+
 PROTOCOL
 1. First, save this entire message verbatim as docs/WORK_ORDER_2.md
    and commit it. Re-read the relevant part before each item.
