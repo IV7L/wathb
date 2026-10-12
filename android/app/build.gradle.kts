@@ -81,6 +81,9 @@ dependencies {
     // Image loading
     implementation(libs.coil.compose)
 
+    // Maps
+    implementation("org.osmdroid:osmdroid-android:6.1.18")
+
     // Coroutines
     implementation(libs.kotlinx.coroutines.android)
 

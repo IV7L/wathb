@@ -3,6 +3,7 @@ package com.yawmiyati.app
 import android.app.Application
 import com.yawmiyati.app.data.api.ApiClient
 import com.yawmiyati.app.data.auth.TokenManager
+import org.osmdroid.config.Configuration
 
 class YawmiyatiApp : Application() {
     lateinit var tokenManager: TokenManager
@@ -13,6 +14,8 @@ class YawmiyatiApp : Application() {
         tokenManager = TokenManager(this)
         ApiClient.init(tokenManager)
         instance = this
+        Configuration.getInstance().load(this, getSharedPreferences("osm_prefs", MODE_PRIVATE))
+        Configuration.getInstance().userAgentValue = packageName
     }
 
     companion object {
