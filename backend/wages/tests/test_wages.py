@@ -11,12 +11,12 @@ from jobs.models import JobListing, JobListingStatus, JobApplication, Applicatio
 from wages.models import WageObligation, WageObligationStatus, PaymentDeclaration, PaymentDeclarationStatus
 
 
-def make_user(email, role, password="P@ss1234", **kwargs):
-    return User.objects.create_user(email=email, password=password, role=role, **kwargs)
+def make_user(phone, role, password="P@ss1234", **kwargs):
+    return User.objects.create_user(phone, password, role=role, **kwargs)
 
 
-def make_business(email="biz@wages.com"):
-    user = make_user(email, Role.BUSINESS)
+def make_business(phone="+970599013001"):
+    user = make_user(phone, Role.BUSINESS)
     bp = BusinessProfile.objects.create(
         user=user, legal_name="Wages Co", contact_name="Owner",
         contact_phone="0599000100", verification_status="APPROVED",
@@ -26,8 +26,8 @@ def make_business(email="biz@wages.com"):
     return user, bp
 
 
-def make_worker(email="worker@wages.com"):
-    user = make_user(email, Role.WORKER)
+def make_worker(phone="+970599013002"):
+    user = make_user(phone, Role.WORKER)
     WorkerProfile.objects.create(user=user, full_name="Wage Worker")
     return user
 
@@ -86,16 +86,16 @@ def make_declaration(obligation, declared_by, decl_status=PaymentDeclarationStat
 class WageObligationCreationTests(APITestCase):
 
     def test_wage_obligation_created_from_snapshot_values(self):
-        biz_user, biz_profile = make_business("b@wtest.com")
-        worker = make_worker("w@wtest.com")
+        biz_user, biz_profile = make_business("+970599013003")
+        worker = make_worker("+970599013004")
         job, assignment = make_job_and_assignment(biz_profile, worker, wage_amount=15000)
         obligation = make_obligation(assignment, wage_amount=15000)
         self.assertEqual(obligation.amount, 15000)
         self.assertEqual(obligation.currency, "ILS")
 
     def test_only_one_obligation_per_assignment(self):
-        biz_user, biz_profile = make_business("b2@wtest.com")
-        worker = make_worker("w2@wtest.com")
+        biz_user, biz_profile = make_business("+970599013005")
+        worker = make_worker("+970599013006")
         job, assignment = make_job_and_assignment(biz_profile, worker)
         make_obligation(assignment)
         from django.db import IntegrityError
@@ -148,7 +148,7 @@ class PaymentDeclarationTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_cannot_declare_for_another_businesss_obligation(self):
-        other_biz_user, other_biz_profile = make_business("other@wages.com")
+        other_biz_user, other_biz_profile = make_business("+970599013007")
         self.client.force_authenticate(user=other_biz_user)
         response = self.client.post(
             reverse("wage-declare-payment", args=[self.obligation.pk]),
@@ -281,8 +281,8 @@ class PaymentDisputeTests(APITestCase):
 class FileUploadValidationTests(APITestCase):
 
     def setUp(self):
-        self.biz_user, self.biz_profile = make_business("b@upload.com")
-        self.worker = make_worker("w@upload.com")
+        self.biz_user, self.biz_profile = make_business("+970599013010")
+        self.worker = make_worker("+970599013011")
         self.job, self.assignment = make_job_and_assignment(self.biz_profile, self.worker)
         self.obligation = make_obligation(self.assignment, obligation_status=WageObligationStatus.AWAITING_ACK)
         self.declaration = make_declaration(self.obligation, self.biz_user)
@@ -344,9 +344,9 @@ class FileUploadValidationTests(APITestCase):
 class AdminVerifyPaymentTests(APITestCase):
 
     def setUp(self):
-        self.biz_user, self.biz_profile = make_business("biz@adminverify.com")
-        self.worker = make_worker("worker@adminverify.com")
-        self.admin = make_user("admin@adminverify.com", Role.ADMIN)
+        self.biz_user, self.biz_profile = make_business("+970599013015")
+        self.worker = make_worker("+970599013016")
+        self.admin = make_user("+970599013017", Role.ADMIN)
         self.job, self.assignment = make_job_and_assignment(self.biz_profile, self.worker)
         self.obligation = make_obligation(self.assignment, obligation_status=WageObligationStatus.AWAITING_ACK)
         self.declaration = make_declaration(self.obligation, self.biz_user)
@@ -396,8 +396,8 @@ class AdminVerifyPaymentTests(APITestCase):
         self.assertEqual(self.declaration.reviewed_by, self.admin)
 
     def test_wage_obligation_list_status_filter(self):
-        other_biz_user, other_biz_profile = make_business("biz2@adminverify.com")
-        other_worker = make_worker("worker2@adminverify.com")
+        other_biz_user, other_biz_profile = make_business("+970599013020")
+        other_worker = make_worker("+970599013021")
         other_job, other_assignment = make_job_and_assignment(other_biz_profile, other_worker)
         make_obligation(other_assignment, obligation_status=WageObligationStatus.PENDING)
 

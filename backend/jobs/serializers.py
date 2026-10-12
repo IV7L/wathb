@@ -51,7 +51,7 @@ class JobListingCreateSerializer(serializers.ModelSerializer):
 
 
 class JobApplicationSerializer(serializers.ModelSerializer):
-    worker_email = serializers.EmailField(source="worker.email", read_only=True)
+    worker_email = serializers.EmailField(source="worker.email", read_only=True, allow_null=True, default=None)
     worker_name = serializers.SerializerMethodField()
     worker_phone = serializers.CharField(source="worker.phone", read_only=True)
     job_title = serializers.CharField(source="job.title", read_only=True)

@@ -11,12 +11,12 @@ from funding.models import (
 from jobs.models import JobListing, JobListingStatus
 
 
-def make_user(email, role, password="P@ss1234", **kwargs):
-    return User.objects.create_user(email=email, password=password, role=role, **kwargs)
+def make_user(phone, role, password="P@ss1234", **kwargs):
+    return User.objects.create_user(phone=phone, password=password, role=role, **kwargs)
 
 
-def make_business(email="biz@funding.com"):
-    user = make_user(email, Role.BUSINESS)
+def make_business(phone="0599030001"):
+    user = make_user(phone, Role.BUSINESS)
     bp = BusinessProfile.objects.create(
         user=user, legal_name="Funding Co", contact_name="Owner",
         contact_phone="0599000300", verification_status="APPROVED",
@@ -61,7 +61,7 @@ def make_job(biz_profile, is_funded=False, job_status=JobListingStatus.PENDING_R
 class FundingBudgetAccountingTests(APITestCase):
 
     def test_available_amount_formula(self):
-        funder = make_user("funder@budget.com", Role.FUNDER)
+        funder = make_user("0599030010", Role.FUNDER)
         proposal = make_proposal(funder, total_amount=100000, proposal_status=FundingProposalStatus.APPROVED)
         budget = FundingBudget.objects.create(
             proposal=proposal, total_amount=100000, currency="ILS",
@@ -70,7 +70,7 @@ class FundingBudgetAccountingTests(APITestCase):
         self.assertEqual(budget.available_amount, 65000)
 
     def test_available_amount_zero_at_full_allocation(self):
-        funder = make_user("funder@budget2.com", Role.FUNDER)
+        funder = make_user("0599030011", Role.FUNDER)
         proposal = make_proposal(funder, total_amount=50000, proposal_status=FundingProposalStatus.APPROVED)
         budget = FundingBudget.objects.create(
             proposal=proposal, total_amount=50000, currency="ILS",
@@ -82,8 +82,8 @@ class FundingBudgetAccountingTests(APITestCase):
 class AdminApproveFundingTests(APITestCase):
 
     def setUp(self):
-        self.admin = make_user("admin@funding.com", Role.ADMIN, is_staff=True)
-        self.funder = make_user("funder@ftest.com", Role.FUNDER)
+        self.admin = make_user("0599030020", Role.ADMIN, is_staff=True)
+        self.funder = make_user("0599030021", Role.FUNDER)
         self.proposal = make_proposal(self.funder)
 
     def test_admin_can_approve_proposed_funding(self):
@@ -140,7 +140,7 @@ class AdminApproveFundingTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_worker_cannot_approve_funding(self):
-        worker = make_user("w@funding.com", Role.WORKER)
+        worker = make_user("0599030022", Role.WORKER)
         self.client.force_authenticate(user=worker)
         response = self.client.post(
             reverse("admin-funding-approve", args=[self.proposal.pk])
@@ -162,8 +162,8 @@ class AdminApproveFundingTests(APITestCase):
 class FunderProposalAccessTests(APITestCase):
 
     def setUp(self):
-        self.funder = make_user("funder@access.com", Role.FUNDER)
-        self.other_funder = make_user("other_funder@access.com", Role.FUNDER)
+        self.funder = make_user("0599030030", Role.FUNDER)
+        self.other_funder = make_user("0599030031", Role.FUNDER)
         self.proposal = make_proposal(self.funder)
 
     def test_funder_can_create_proposal(self):
@@ -180,7 +180,7 @@ class FunderProposalAccessTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
     def test_worker_cannot_create_proposal(self):
-        worker = make_user("w@prop.com", Role.WORKER)
+        worker = make_user("0599030032", Role.WORKER)
         self.client.force_authenticate(user=worker)
         response = self.client.post(
             reverse("funding-proposal-list"),
@@ -205,9 +205,9 @@ class AdminAllocateFundingTests(APITestCase):
     def setUp(self):
         import uuid as _uuid
         self.uuid = _uuid
-        self.admin = make_user("admin@alloc.com", Role.ADMIN, is_staff=True)
-        self.funder = make_user("funder@alloc.com", Role.FUNDER)
-        self.biz_user, self.biz_profile = make_business("biz@alloc.com")
+        self.admin = make_user("0599030040", Role.ADMIN, is_staff=True)
+        self.funder = make_user("0599030041", Role.FUNDER)
+        self.biz_user, self.biz_profile = make_business("0599030042")
 
         self.proposal = make_proposal(
             self.funder, total_amount=500_000, proposal_status=FundingProposalStatus.APPROVED

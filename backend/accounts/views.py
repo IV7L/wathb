@@ -1,19 +1,56 @@
+import hashlib
+
 from django.utils import timezone
 from rest_framework import generics, status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.throttling import SimpleRateThrottle
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.views import TokenObtainPairView
 
 from accounts.models import Role
 from accounts.permissions import IsWorker, IsBusiness, IsAdminRole
 from accounts.serializers import (
+    PhoneTokenObtainPairSerializer,
     RegisterSerializer,
     UserSerializer,
     WorkerProfileSerializer,
     BusinessProfileSerializer,
     AdminBusinessProfileSerializer,
 )
+
+
+class _LoginPerIPThrottle(SimpleRateThrottle):
+    scope = "login_per_ip"
+
+    def get_cache_key(self, request, view):
+        ident = self.get_ident(request)
+        return self.cache_format % {"scope": self.scope, "ident": ident}
+
+
+class _LoginPerPhoneThrottle(SimpleRateThrottle):
+    scope = "login_per_phone"
+
+    def get_cache_key(self, request, view):
+        phone = (request.data or {}).get("phone", "")
+        if not phone:
+            return None
+        ident = hashlib.sha256(phone.encode()).hexdigest()[:32]
+        return self.cache_format % {"scope": self.scope, "ident": ident}
+
+
+class PhoneTokenObtainPairView(TokenObtainPairView):
+    serializer_class = PhoneTokenObtainPairSerializer
+    throttle_classes = [_LoginPerIPThrottle, _LoginPerPhoneThrottle]
+
+    def get_throttles(self):
+        from django.conf import settings
+        # When tests set DEFAULT_THROTTLE_CLASSES = [] we honour that and skip throttling.
+        drf_cfg = getattr(settings, "REST_FRAMEWORK", {})
+        if drf_cfg.get("DEFAULT_THROTTLE_CLASSES") == []:
+            return []
+        return super().get_throttles()
 
 
 class RegisterView(generics.CreateAPIView):
@@ -54,9 +91,15 @@ class MeView(APIView):
         return Response(data)
 
     def patch(self, request):
+        from accounts.utils import normalize_phone
         user = request.user
         allowed = {"phone"}
         updates = {k: v for k, v in request.data.items() if k in allowed}
+        if "phone" in updates:
+            try:
+                updates["phone"] = normalize_phone(updates["phone"])
+            except ValueError as exc:
+                return Response({"phone": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
         for field, value in updates.items():
             setattr(user, field, value)
         user.save(update_fields=list(updates.keys()))

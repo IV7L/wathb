@@ -3,26 +3,26 @@ from disputes.models import Dispute, DisputeEvent
 
 
 class DisputeEventSerializer(serializers.ModelSerializer):
-    actor_email = serializers.EmailField(source="actor.email", read_only=True)
+    actor_phone = serializers.CharField(source="actor.phone", read_only=True)
 
     class Meta:
         model = DisputeEvent
-        fields = ["id", "actor_email", "action", "notes", "timestamp"]
+        fields = ["id", "actor_phone", "action", "notes", "timestamp"]
         read_only_fields = fields
 
 
 class DisputeSerializer(serializers.ModelSerializer):
-    raised_by_email = serializers.EmailField(source="raised_by.email", read_only=True)
-    assigned_to_email = serializers.EmailField(source="assigned_to.email", read_only=True, default=None)
+    raised_by_phone = serializers.CharField(source="raised_by.phone", read_only=True)
+    assigned_to_phone = serializers.CharField(source="assigned_to.phone", read_only=True, default=None)
 
     class Meta:
         model = Dispute
         fields = [
             "id", "category", "assignment", "wage_obligation",
-            "raised_by_email", "description", "status",
-            "assigned_to_email", "created_at", "resolved_at", "resolution_notes",
+            "raised_by_phone", "description", "status",
+            "assigned_to_phone", "created_at", "resolved_at", "resolution_notes",
         ]
-        read_only_fields = ["id", "raised_by_email", "status", "assigned_to_email", "created_at", "resolved_at", "resolution_notes"]
+        read_only_fields = ["id", "raised_by_phone", "status", "assigned_to_phone", "created_at", "resolved_at", "resolution_notes"]
 
 
 class DisputeCreateSerializer(serializers.ModelSerializer):

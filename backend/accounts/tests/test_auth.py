@@ -1,4 +1,3 @@
-from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
@@ -9,54 +8,50 @@ class RegistrationTests(APITestCase):
 
     def test_register_worker_success(self):
         response = self.client.post(reverse("auth-register"), {
-            "email": "worker@test.com",
+            "phone": "0599001001",
             "password": "StrongPass123!",
             "role": Role.WORKER,
             "full_name": "Test Worker",
-            "phone": "0599000001",
         })
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertIn("access", response.data)
         self.assertIn("refresh", response.data)
         self.assertEqual(response.data["user"]["role"], Role.WORKER)
-        self.assertTrue(User.objects.filter(email="worker@test.com").exists())
+        self.assertTrue(User.objects.filter(phone="+970599001001").exists())
         self.assertTrue(WorkerProfile.objects.filter(full_name="Test Worker").exists())
 
     def test_register_business_success(self):
         response = self.client.post(reverse("auth-register"), {
-            "email": "biz@test.com",
+            "phone": "0599001002",
             "password": "StrongPass123!",
             "role": Role.BUSINESS,
             "legal_name": "Test Biz",
             "contact_name": "Owner",
-            "contact_phone": "0599000000",
+            "contact_phone": "0599001002",
         })
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertTrue(BusinessProfile.objects.filter(legal_name="Test Biz").exists())
 
-    def test_register_duplicate_email(self):
-        User.objects.create_user(email="dup@test.com", password="P@ss1234", role=Role.WORKER)
+    def test_register_duplicate_phone(self):
+        User.objects.create_user("+970599001003", "P@ss1234", role=Role.WORKER)
         response = self.client.post(reverse("auth-register"), {
-            "email": "dup@test.com",
+            "phone": "0599001003",
             "password": "P@ss1234",
             "role": Role.WORKER,
             "full_name": "Dup",
-            "phone": "0599000002",
         })
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_register_worker_missing_full_name(self):
         response = self.client.post(reverse("auth-register"), {
-            "email": "noname@test.com",
+            "phone": "0599001004",
             "password": "StrongPass123!",
             "role": Role.WORKER,
-            "phone": "0599000003",
         })
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_register_worker_missing_phone(self):
         response = self.client.post(reverse("auth-register"), {
-            "email": "nophone@test.com",
             "password": "StrongPass123!",
             "role": Role.WORKER,
             "full_name": "No Phone",
@@ -66,7 +61,7 @@ class RegistrationTests(APITestCase):
 
     def test_register_admin_not_allowed(self):
         response = self.client.post(reverse("auth-register"), {
-            "email": "admin@test.com",
+            "phone": "0599001005",
             "password": "StrongPass123!",
             "role": Role.ADMIN,
         })
@@ -74,7 +69,7 @@ class RegistrationTests(APITestCase):
 
     def test_register_funder_not_allowed(self):
         response = self.client.post(reverse("auth-register"), {
-            "email": "funder@test.com",
+            "phone": "0599001006",
             "password": "StrongPass123!",
             "role": Role.FUNDER,
         })
@@ -85,14 +80,12 @@ class LoginTests(APITestCase):
 
     def setUp(self):
         self.user = User.objects.create_user(
-            email="login@test.com",
-            password="StrongPass123!",
-            role=Role.WORKER,
+            "+970599001010", "StrongPass123!", role=Role.WORKER,
         )
 
     def test_login_success(self):
         response = self.client.post(reverse("auth-login"), {
-            "email": "login@test.com",
+            "phone": "0599001010",
             "password": "StrongPass123!",
         })
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -101,14 +94,14 @@ class LoginTests(APITestCase):
 
     def test_login_wrong_password(self):
         response = self.client.post(reverse("auth-login"), {
-            "email": "login@test.com",
+            "phone": "0599001010",
             "password": "WrongPassword",
         })
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_login_nonexistent_user(self):
         response = self.client.post(reverse("auth-login"), {
-            "email": "notexist@test.com",
+            "phone": "0599001011",
             "password": "StrongPass123!",
         })
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
@@ -119,35 +112,35 @@ class LoginTests(APITestCase):
 
     def test_protected_endpoint_with_valid_token(self):
         login_response = self.client.post(reverse("auth-login"), {
-            "email": "login@test.com",
+            "phone": "0599001010",
             "password": "StrongPass123!",
         })
         token = login_response.data["access"]
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {token}")
         response = self.client.get(reverse("auth-me"))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["email"], "login@test.com")
+        self.assertEqual(response.data["phone"], "+970599001010")
 
 
 class RoleIsolationTests(APITestCase):
 
     def setUp(self):
         self.worker = User.objects.create_user(
-            email="worker_role@test.com", password="P@ss1234", role=Role.WORKER
+            "+970599001021", "P@ss1234", role=Role.WORKER
         )
         self.business = User.objects.create_user(
-            email="biz_role@test.com", password="P@ss1234", role=Role.BUSINESS
+            "+970599001022", "P@ss1234", role=Role.BUSINESS
         )
         self.funder = User.objects.create_user(
-            email="funder_role@test.com", password="P@ss1234", role=Role.FUNDER
+            "+970599001023", "P@ss1234", role=Role.FUNDER
         )
         self.admin = User.objects.create_user(
-            email="admin_role@test.com", password="P@ss1234", role=Role.ADMIN, is_staff=True
+            "+970599001024", "P@ss1234", role=Role.ADMIN, is_staff=True
         )
 
     def _auth(self, user):
         response = self.client.post(reverse("auth-login"), {
-            "email": user.email, "password": "P@ss1234"
+            "phone": user.phone, "password": "P@ss1234"
         })
         token = response.data["access"]
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {token}")
@@ -174,7 +167,7 @@ class RoleIsolationTests(APITestCase):
 
     def test_worker_cannot_access_worker_profile_of_other_worker(self):
         other_worker = User.objects.create_user(
-            email="other_worker@test.com", password="P@ss1234", role=Role.WORKER
+            "+970599001020", "P@ss1234", role=Role.WORKER
         )
         WorkerProfile.objects.create(user=other_worker, full_name="Other")
         WorkerProfile.objects.create(user=self.worker, full_name="Mine")
@@ -182,3 +175,26 @@ class RoleIsolationTests(APITestCase):
         response = self.client.get(reverse("worker-profile"))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["full_name"], "Mine")
+
+
+class PhoneNormalizationTests(APITestCase):
+
+    def test_local_059x_format_normalized_on_login(self):
+        User.objects.create_user("+970599001030", "P@ss1234", role=Role.WORKER)
+        response = self.client.post(reverse("auth-login"), {
+            "phone": "0599001030", "password": "P@ss1234"
+        })
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_plus970_format_accepted_on_login(self):
+        User.objects.create_user("+970599001031", "P@ss1234", role=Role.WORKER)
+        response = self.client.post(reverse("auth-login"), {
+            "phone": "+970599001031", "password": "P@ss1234"
+        })
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_invalid_phone_returns_401(self):
+        response = self.client.post(reverse("auth-login"), {
+            "phone": "not-a-phone", "password": "P@ss1234"
+        })
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)

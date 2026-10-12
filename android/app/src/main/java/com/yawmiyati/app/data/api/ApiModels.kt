@@ -5,7 +5,7 @@ import com.google.gson.annotations.SerializedName
 // ── Auth ──────────────────────────────────────────────────────────────────────
 
 data class LoginRequest(
-    val email: String,
+    val phone: String,
     val password: String
 )
 
@@ -18,21 +18,20 @@ data class RefreshRequest(val refresh: String)
 data class RefreshResponse(val access: String, val refresh: String? = null)
 
 data class RegisterWorkerRequest(
-    val email: String,
+    val phone: String,
     val password: String,
     val role: String = "WORKER",
     @SerializedName("full_name") val fullName: String,
-    val phone: String? = null
 )
 
 data class RegisterBusinessRequest(
-    val email: String,
+    val phone: String,
     val password: String,
     val role: String = "BUSINESS",
     @SerializedName("legal_name") val legalName: String,
     @SerializedName("contact_name") val contactName: String,
     @SerializedName("contact_phone") val contactPhone: String,
-    val phone: String? = null
+    val email: String? = null
 )
 
 // RegisterView returns {user, access, refresh} on 201
@@ -44,8 +43,8 @@ data class RegisterResponse(
 
 data class UserResponse(
     val id: String,
-    val email: String,
-    val phone: String?,
+    val email: String? = null,
+    val phone: String,
     val role: String,
     @SerializedName("is_verified") val isVerified: Boolean,
     @SerializedName("date_joined") val dateJoined: String
@@ -115,7 +114,6 @@ data class JobApplicationResponse(
     val id: String,
     val job: String,
     @SerializedName("job_title") val jobTitle: String,
-    @SerializedName("worker_email") val workerEmail: String,
     @SerializedName("worker_name") val workerName: String? = null,
     @SerializedName("worker_phone") val workerPhone: String? = null,
     val status: String,
@@ -172,7 +170,7 @@ data class AssignmentResponse(
     val id: String,
     val job: String,
     @SerializedName("job_title") val jobTitle: String,
-    @SerializedName("worker_email") val workerEmail: String,
+    @SerializedName("worker_phone") val workerPhone: String,
     @SerializedName("business_name") val businessName: String,
     // Live job terms — populated on every response for pre-acceptance review
     @SerializedName("job_work_date") val jobWorkDate: String? = null,
@@ -205,7 +203,7 @@ data class ApplicationActionRequest(
 data class AttendanceResponse(
     val id: String,
     val assignment: String,
-    @SerializedName("submitted_by_email") val submittedByEmail: String,
+    @SerializedName("submitted_by_phone") val submittedByPhone: String,
     @SerializedName("submitted_at") val submittedAt: String,
     @SerializedName("work_date") val workDate: String,
     @SerializedName("check_in_time") val checkInTime: String?,
@@ -228,7 +226,7 @@ data class AttendanceSubmitRequest(
 data class CompletionResponse(
     val id: String,
     val assignment: String,
-    @SerializedName("submitted_by_email") val submittedByEmail: String,
+    @SerializedName("submitted_by_phone") val submittedByPhone: String,
     @SerializedName("submitted_at") val submittedAt: String,
     @SerializedName("hours_worked") val hoursWorked: String?,
     val notes: String,
@@ -247,7 +245,8 @@ data class CompletionSubmitRequest(
 data class WageObligationResponse(
     val id: String,
     val assignment: String,
-    @SerializedName("worker_email") val workerEmail: String,
+    @SerializedName("worker_phone") val workerPhone: String,
+    @SerializedName("worker_name") val workerName: String? = null,
     @SerializedName("job_title") val jobTitle: String,
     val amount: Long,
     val currency: String,
@@ -267,7 +266,7 @@ data class PaymentDeclarationResponse(
     @SerializedName("payment_date") val paymentDate: String,
     @SerializedName("payment_method") val paymentMethod: String,
     @SerializedName("transaction_reference") val transactionReference: String,
-    @SerializedName("declared_by_email") val declaredByEmail: String,
+    @SerializedName("declared_by_phone") val declaredByPhone: String,
     @SerializedName("declared_at") val declaredAt: String,
     val status: String,
     @SerializedName("review_notes") val reviewNotes: String

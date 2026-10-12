@@ -161,7 +161,7 @@ private fun WageObligationCard(
                 WageStatusBadge(obligation.status)
             }
             Text(
-                text = "العامل: ${obligation.workerEmail}",
+                text = "العامل: ${obligation.workerName ?: obligation.workerPhone}",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

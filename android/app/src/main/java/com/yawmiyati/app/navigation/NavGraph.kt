@@ -106,8 +106,8 @@ fun YawmiyatiNavGraph() {
         composable(Screen.WorkerAssignments.route) {
             WorkerAssignmentsScreen(
                 onBack = { navController.popBackStack() },
-                onManageAssignment = { assignmentId, workerEmail ->
-                    navController.navigate(Screen.WorkerAssignmentDetail.createRoute(assignmentId, workerEmail))
+                onManageAssignment = { assignmentId, workerPhone ->
+                    navController.navigate(Screen.WorkerAssignmentDetail.createRoute(assignmentId, workerPhone))
                 }
             )
         }
@@ -116,14 +116,14 @@ fun YawmiyatiNavGraph() {
             route = Screen.WorkerAssignmentDetail.route,
             arguments = listOf(
                 navArgument("assignmentId") { type = NavType.StringType },
-                navArgument("workerEmail") { type = NavType.StringType }
+                navArgument("workerPhone") { type = NavType.StringType }
             )
         ) { backStackEntry ->
             val assignmentId = backStackEntry.arguments?.getString("assignmentId") ?: return@composable
-            val workerEmail = backStackEntry.arguments?.getString("workerEmail") ?: ""
+            val workerPhone = backStackEntry.arguments?.getString("workerPhone") ?: ""
             WorkerAssignmentDetailScreen(
                 assignmentId = assignmentId,
-                workerEmail = workerEmail,
+                workerPhone = workerPhone,
                 onBack = { navController.popBackStack() }
             )
         }
@@ -182,14 +182,14 @@ fun YawmiyatiNavGraph() {
             route = Screen.BusinessAssignment.route,
             arguments = listOf(
                 navArgument("assignmentId") { type = NavType.StringType },
-                navArgument("workerEmail") { type = NavType.StringType }
+                navArgument("workerPhone") { type = NavType.StringType }
             )
         ) { backStackEntry ->
             val assignmentId = backStackEntry.arguments?.getString("assignmentId") ?: return@composable
-            val workerEmail = backStackEntry.arguments?.getString("workerEmail") ?: ""
+            val workerPhone = backStackEntry.arguments?.getString("workerPhone") ?: ""
             BusinessAssignmentDetailScreen(
                 assignmentId = assignmentId,
-                workerEmail = workerEmail,
+                workerPhone = workerPhone,
                 onBack = { navController.popBackStack() }
             )
         }
@@ -202,8 +202,8 @@ fun YawmiyatiNavGraph() {
             JobApplicationsScreen(
                 jobId = jobId,
                 onBack = { navController.popBackStack() },
-                onManageAssignment = { assignmentId, workerEmail ->
-                    navController.navigate(Screen.BusinessAssignment.createRoute(assignmentId, workerEmail))
+                onManageAssignment = { assignmentId, workerPhone ->
+                    navController.navigate(Screen.BusinessAssignment.createRoute(assignmentId, workerPhone))
                 }
             )
         }

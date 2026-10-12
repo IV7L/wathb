@@ -80,6 +80,10 @@ DATABASES = {
 
 AUTH_USER_MODEL = "accounts.User"
 
+AUTHENTICATION_BACKENDS = [
+    "accounts.backends.PhoneAuthBackend",
+]
+
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
@@ -116,6 +120,10 @@ REST_FRAMEWORK = {
     "PAGE_SIZE": 20,
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "EXCEPTION_HANDLER": "yawmiyati.exception_handler.custom_exception_handler",
+    "DEFAULT_THROTTLE_RATES": {
+        "login_per_ip": "10/min",
+        "login_per_phone": "5/min",
+    },
 }
 
 SIMPLE_JWT = {

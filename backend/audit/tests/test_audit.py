@@ -6,14 +6,14 @@ from accounts.models import User, Role
 from audit.models import AuditEvent
 
 
-def make_user(email, role, password="P@ss1234", **kwargs):
-    return User.objects.create_user(email=email, password=password, role=role, **kwargs)
+def make_user(phone, role, password="P@ss1234", **kwargs):
+    return User.objects.create_user(phone, password, role=role, **kwargs)
 
 
 class AuditEventImmutabilityTests(TestCase):
 
     def setUp(self):
-        self.actor = make_user("actor@audit.com", Role.ADMIN, is_staff=True)
+        self.actor = make_user("+970599012001", Role.ADMIN, is_staff=True)
         self.event = AuditEvent.objects.create(
             actor=self.actor,
             action="test_action",
@@ -74,8 +74,8 @@ class AuditEventImmutabilityTests(TestCase):
 class AuditLogAPITests(APITestCase):
 
     def setUp(self):
-        self.admin = make_user("admin@auditapi.com", Role.ADMIN, is_staff=True)
-        self.worker = make_user("worker@auditapi.com", Role.WORKER)
+        self.admin = make_user("+970599012002", Role.ADMIN, is_staff=True)
+        self.worker = make_user("+970599012003", Role.WORKER)
         AuditEvent.objects.create(
             actor=self.admin, action="business_approved",
             model_name="BusinessProfile", object_id="1",

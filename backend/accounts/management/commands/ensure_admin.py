@@ -11,6 +11,7 @@ import os
 from django.core.management.base import BaseCommand
 
 from accounts.models import Role, User
+from accounts.utils import normalize_phone
 
 
 class Command(BaseCommand):
@@ -21,12 +22,21 @@ class Command(BaseCommand):
         updated_count = 0
         i = 1
         while True:
-            phone = os.environ.get(f"ADMIN_{i}_PHONE", "").strip()
-            if not phone:
+            raw_phone = os.environ.get(f"ADMIN_{i}_PHONE", "").strip()
+            if not raw_phone:
                 break
 
+            try:
+                phone = normalize_phone(raw_phone)
+            except ValueError as exc:
+                self.stderr.write(
+                    self.style.WARNING(f"ADMIN_{i}_PHONE invalid ({exc}) — skipping.")
+                )
+                i += 1
+                continue
+
             password = os.environ.get(f"ADMIN_{i}_PASSWORD", "").strip()
-            email = os.environ.get(f"ADMIN_{i}_EMAIL", "").strip() or f"admin{i}@wathb.local"
+            email = os.environ.get(f"ADMIN_{i}_EMAIL", "").strip() or None
 
             if not password:
                 self.stderr.write(
@@ -38,7 +48,7 @@ class Command(BaseCommand):
             user, created = User.objects.get_or_create(
                 phone=phone,
                 defaults={
-                    "email": email,
+                    "email": email or None,
                     "role": Role.ADMIN,
                     "is_staff": True,
                     "is_superuser": True,
@@ -47,7 +57,8 @@ class Command(BaseCommand):
             )
             user.set_password(password)
             if not created:
-                user.email = email
+                if email:
+                    user.email = email
                 user.role = Role.ADMIN
                 user.is_staff = True
                 user.is_superuser = True

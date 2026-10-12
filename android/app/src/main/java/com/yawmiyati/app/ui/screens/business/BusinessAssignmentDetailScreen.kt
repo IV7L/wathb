@@ -53,7 +53,7 @@ import java.time.LocalDate
 @Composable
 fun BusinessAssignmentDetailScreen(
     assignmentId: String,
-    workerEmail: String,
+    workerPhone: String,
     onBack: () -> Unit,
     viewModel: BusinessAssignmentViewModel = viewModel()
 ) {
@@ -87,7 +87,7 @@ fun BusinessAssignmentDetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("إدارة المهمة — $workerEmail") },
+                title = { Text("إدارة المهمة — $workerPhone") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "رجوع")
@@ -122,7 +122,7 @@ fun BusinessAssignmentDetailScreen(
                     AttendanceCard(
                         record = record,
                         isLoading = isActionLoading,
-                        businessIsSubmitter = record.submittedByEmail != workerEmail,
+                        businessIsSubmitter = record.submittedByPhone != workerPhone,
                         onConfirm = { viewModel.confirmAttendance(assignmentId, record.id) }
                     )
                 }
@@ -196,7 +196,7 @@ fun BusinessAssignmentDetailScreen(
                     CompletionCard(
                         record = comp.record,
                         isLoading = isActionLoading,
-                        businessIsSubmitter = comp.record.submittedByEmail != workerEmail,
+                        businessIsSubmitter = comp.record.submittedByPhone != workerPhone,
                         onConfirm = { viewModel.confirmCompletion(assignmentId) }
                     )
                 }
@@ -224,7 +224,7 @@ private fun AttendanceCard(
                 Text(record.workDate, style = MaterialTheme.typography.bodyMedium)
                 AttendanceStatusBadge(record.status)
             }
-            Text("بواسطة: ${record.submittedByEmail}", style = MaterialTheme.typography.bodySmall,
+            Text("بواسطة: ${record.submittedByPhone}", style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
             if (record.notes.isNotBlank()) {
                 Text(record.notes, style = MaterialTheme.typography.bodySmall)
@@ -269,7 +269,7 @@ private fun CompletionCard(
             if (!record.hoursWorked.isNullOrBlank()) {
                 Text("ساعات العمل: ${record.hoursWorked}", style = MaterialTheme.typography.bodyMedium)
             }
-            Text("بواسطة: ${record.submittedByEmail}", style = MaterialTheme.typography.bodySmall,
+            Text("بواسطة: ${record.submittedByPhone}", style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
             if (record.notes.isNotBlank()) {
                 Text(record.notes, style = MaterialTheme.typography.bodySmall)

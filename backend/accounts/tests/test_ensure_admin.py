@@ -64,3 +64,13 @@ class EnsureAdminCommandTest(TestCase):
             call_command("ensure_admin", stdout=StringIO(), stderr=err)
         self.assertFalse(User.objects.filter(phone="+970599000006").exists())
         self.assertIn("not set", err.getvalue())
+
+    def test_invalid_phone_is_skipped(self):
+        err = StringIO()
+        with mock.patch.dict("os.environ", {
+            "ADMIN_1_PHONE": "not-a-valid-phone",
+            "ADMIN_1_PASSWORD": "Pass1!",
+        }, clear=False):
+            call_command("ensure_admin", stdout=StringIO(), stderr=err)
+        self.assertEqual(User.objects.filter(role=Role.ADMIN).count(), 0)
+        self.assertIn("invalid", err.getvalue().lower())

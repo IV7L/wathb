@@ -38,7 +38,7 @@ class WagesViewModelTest {
     @After  fun tearDown() { Dispatchers.resetMain() }
 
     private fun fakeObligation(id: String, status: String) = WageObligationResponse(
-        id = id, assignment = "assign-$id", workerEmail = "worker@test.com",
+        id = id, assignment = "assign-$id", workerPhone = "+970599000001",
         jobTitle = "Day Work", amount = 10000L, currency = "ILS",
         amountDisplay = "100 ILS", dueDate = "2026-10-15", status = status,
         createdAt = "2026-10-10T08:00:00Z", declarations = emptyList()
@@ -47,7 +47,7 @@ class WagesViewModelTest {
     private fun fakeDeclaration(id: String, obligationId: String) = PaymentDeclarationResponse(
         id = id, wageObligation = obligationId, declaredAmount = 10000L,
         currency = "ILS", paymentDate = "2026-10-10", paymentMethod = "CASH",
-        transactionReference = "", declaredByEmail = "biz@test.com",
+        transactionReference = "", declaredByPhone = "+970599000002",
         declaredAt = "2026-10-10T09:00:00Z", status = "SUBMITTED", reviewNotes = ""
     )
 

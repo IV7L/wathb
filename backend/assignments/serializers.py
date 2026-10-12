@@ -4,7 +4,8 @@ from assignments.models import Assignment, AttendanceRecord, CompletionRecord
 
 class AssignmentSerializer(serializers.ModelSerializer):
     job_title = serializers.CharField(source="job.title", read_only=True)
-    worker_email = serializers.EmailField(source="worker.email", read_only=True)
+    worker_phone = serializers.CharField(source="worker.phone", read_only=True)
+    worker_name = serializers.SerializerMethodField()
     business_name = serializers.CharField(source="job.business.legal_name", read_only=True)
 
     # Live job terms — shown on OFFERED cards so the worker can review before accepting.
@@ -19,10 +20,16 @@ class AssignmentSerializer(serializers.ModelSerializer):
     job_payment_method = serializers.CharField(source="job.payment_method", read_only=True)
     job_payment_deadline_days = serializers.IntegerField(source="job.payment_deadline_days", read_only=True)
 
+    def get_worker_name(self, obj):
+        try:
+            return obj.worker.worker_profile.full_name
+        except Exception:
+            return None
+
     class Meta:
         model = Assignment
         fields = [
-            "id", "job", "job_title", "worker_email", "business_name",
+            "id", "job", "job_title", "worker_phone", "worker_name", "business_name",
             "job_work_date", "job_start_time", "job_end_time",
             "job_location_city", "job_location_address",
             "job_wage_amount", "job_wage_currency", "job_wage_basis",
@@ -34,16 +41,16 @@ class AssignmentSerializer(serializers.ModelSerializer):
 
 
 class AttendanceRecordSerializer(serializers.ModelSerializer):
-    submitted_by_email = serializers.EmailField(source="submitted_by.email", read_only=True)
+    submitted_by_phone = serializers.CharField(source="submitted_by.phone", read_only=True)
 
     class Meta:
         model = AttendanceRecord
         fields = [
-            "id", "assignment", "submitted_by_email", "submitted_at",
+            "id", "assignment", "submitted_by_phone", "submitted_at",
             "work_date", "check_in_time", "check_out_time", "notes",
             "status", "confirmed_at",
         ]
-        read_only_fields = ["id", "assignment", "submitted_by_email", "submitted_at", "status", "confirmed_at"]
+        read_only_fields = ["id", "assignment", "submitted_by_phone", "submitted_at", "status", "confirmed_at"]
 
 
 class AttendanceSubmitSerializer(serializers.ModelSerializer):
@@ -53,15 +60,15 @@ class AttendanceSubmitSerializer(serializers.ModelSerializer):
 
 
 class CompletionRecordSerializer(serializers.ModelSerializer):
-    submitted_by_email = serializers.EmailField(source="submitted_by.email", read_only=True)
+    submitted_by_phone = serializers.CharField(source="submitted_by.phone", read_only=True)
 
     class Meta:
         model = CompletionRecord
         fields = [
-            "id", "assignment", "submitted_by_email", "submitted_at",
+            "id", "assignment", "submitted_by_phone", "submitted_at",
             "hours_worked", "notes", "status", "confirmed_at",
         ]
-        read_only_fields = ["id", "assignment", "submitted_by_email", "submitted_at", "status", "confirmed_at"]
+        read_only_fields = ["id", "assignment", "submitted_by_phone", "submitted_at", "status", "confirmed_at"]
 
 
 class CompletionSubmitSerializer(serializers.ModelSerializer):

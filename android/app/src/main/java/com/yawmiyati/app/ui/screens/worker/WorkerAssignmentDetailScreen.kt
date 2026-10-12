@@ -50,7 +50,7 @@ import com.yawmiyati.app.viewmodels.WorkerCompletionUiState
 @Composable
 fun WorkerAssignmentDetailScreen(
     assignmentId: String,
-    workerEmail: String = "",
+    workerPhone: String = "",
     onBack: () -> Unit,
     viewModel: WorkerAssignmentDetailViewModel = viewModel()
 ) {
@@ -115,7 +115,7 @@ fun WorkerAssignmentDetailScreen(
                     WorkerAttendanceCard(
                         record = record,
                         isLoading = isActionLoading,
-                        workerIsSubmitter = record.submittedByEmail == workerEmail,
+                        workerIsSubmitter = record.submittedByPhone == workerPhone,
                         onConfirm = { viewModel.confirmAttendance(assignmentId, record.id) },
                         onDispute = { viewModel.disputeAttendance(assignmentId, record.id) }
                     )
@@ -139,7 +139,7 @@ fun WorkerAssignmentDetailScreen(
                     WorkerCompletionCard(
                         record = comp.record,
                         isLoading = isActionLoading,
-                        workerIsSubmitter = comp.record.submittedByEmail == workerEmail,
+                        workerIsSubmitter = comp.record.submittedByPhone == workerPhone,
                         onConfirm = { viewModel.confirmCompletion(assignmentId) },
                         onDispute = { viewModel.disputeCompletion(assignmentId) }
                     )
@@ -170,7 +170,7 @@ private fun WorkerAttendanceCard(
                 AttendanceBadge(record.status)
             }
             Text(
-                text = "بواسطة: ${record.submittedByEmail}",
+                text = "بواسطة: ${record.submittedByPhone}",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -230,7 +230,7 @@ private fun WorkerCompletionCard(
                 )
             }
             Text(
-                text = "بواسطة: ${record.submittedByEmail}",
+                text = "بواسطة: ${record.submittedByPhone}",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

@@ -25,28 +25,28 @@ class AuthViewModel : ViewModel() {
     private val _uiState = MutableStateFlow<AuthUiState>(AuthUiState.Idle)
     val uiState: StateFlow<AuthUiState> = _uiState
 
-    fun login(email: String, password: String) {
-        if (email.isBlank() || password.isBlank()) {
-            _uiState.value = AuthUiState.Error("يرجى إدخال البريد الإلكتروني وكلمة المرور")
+    fun login(phone: String, password: String) {
+        if (phone.isBlank() || password.isBlank()) {
+            _uiState.value = AuthUiState.Error("يرجى إدخال رقم الهاتف وكلمة المرور")
             return
         }
         viewModelScope.launch {
             _uiState.value = AuthUiState.Loading
-            _uiState.value = when (val result = repository.login(email, password)) {
+            _uiState.value = when (val result = repository.login(phone, password)) {
                 is AuthResult.Success -> AuthUiState.Success(result.data)
                 is AuthResult.Error -> AuthUiState.Error(result.message)
             }
         }
     }
 
-    fun registerWorker(email: String, password: String, fullName: String, phone: String?) {
-        if (email.isBlank() || password.isBlank() || fullName.isBlank()) {
+    fun registerWorker(phone: String, password: String, fullName: String) {
+        if (phone.isBlank() || password.isBlank() || fullName.isBlank()) {
             _uiState.value = AuthUiState.Error("يرجى ملء جميع الحقول المطلوبة")
             return
         }
         viewModelScope.launch {
             _uiState.value = AuthUiState.Loading
-            _uiState.value = when (val result = repository.registerWorker(email, password, fullName, phone)) {
+            _uiState.value = when (val result = repository.registerWorker(phone, password, fullName)) {
                 is AuthResult.Success -> AuthUiState.Success(result.data)
                 is AuthResult.Error -> AuthUiState.Error(result.message)
             }
@@ -54,10 +54,10 @@ class AuthViewModel : ViewModel() {
     }
 
     fun registerBusiness(
-        email: String, password: String,
-        legalName: String, contactName: String, contactPhone: String, phone: String?
+        phone: String, password: String,
+        legalName: String, contactName: String, contactPhone: String
     ) {
-        if (email.isBlank() || password.isBlank() || legalName.isBlank() ||
+        if (phone.isBlank() || password.isBlank() || legalName.isBlank() ||
             contactName.isBlank() || contactPhone.isBlank()
         ) {
             _uiState.value = AuthUiState.Error("يرجى ملء جميع الحقول المطلوبة")
@@ -66,7 +66,7 @@ class AuthViewModel : ViewModel() {
         viewModelScope.launch {
             _uiState.value = AuthUiState.Loading
             _uiState.value = when (val result = repository.registerBusiness(
-                email, password, legalName, contactName, contactPhone, phone
+                phone, password, legalName, contactName, contactPhone
             )) {
                 is AuthResult.Success -> AuthUiState.Success(result.data)
                 is AuthResult.Error -> AuthUiState.Error(result.message)

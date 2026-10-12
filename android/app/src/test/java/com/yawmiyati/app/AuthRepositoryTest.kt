@@ -29,7 +29,7 @@ class AuthRepositoryTest {
     @Test
     fun `register request body has correct role field for worker`() {
         val request = com.yawmiyati.app.data.api.RegisterWorkerRequest(
-            email = "test@example.com",
+            phone = "0599000001",
             password = "pass",
             fullName = "Test User"
         )
@@ -39,7 +39,7 @@ class AuthRepositoryTest {
     @Test
     fun `register request body has correct role field for business`() {
         val request = com.yawmiyati.app.data.api.RegisterBusinessRequest(
-            email = "biz@example.com",
+            phone = "0599000002",
             password = "pass",
             legalName = "Test Co",
             contactName = "Owner",

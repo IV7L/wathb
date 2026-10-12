@@ -3,7 +3,8 @@ from wages.models import WageObligation, PaymentDeclaration, PaymentEvidence, Pa
 
 
 class WageObligationSerializer(serializers.ModelSerializer):
-    worker_email = serializers.EmailField(source="assignment.worker.email", read_only=True)
+    worker_phone = serializers.CharField(source="assignment.worker.phone", read_only=True)
+    worker_name = serializers.SerializerMethodField()
     job_title = serializers.CharField(source="assignment.job.title", read_only=True)
     amount_display = serializers.SerializerMethodField()
     declarations = serializers.SerializerMethodField()
@@ -11,11 +12,17 @@ class WageObligationSerializer(serializers.ModelSerializer):
     class Meta:
         model = WageObligation
         fields = [
-            "id", "assignment", "worker_email", "job_title",
+            "id", "assignment", "worker_phone", "worker_name", "job_title",
             "amount", "currency", "amount_display", "due_date", "status", "created_at",
             "declarations",
         ]
         read_only_fields = fields
+
+    def get_worker_name(self, obj):
+        try:
+            return obj.assignment.worker.worker_profile.full_name
+        except Exception:
+            return None
 
     def get_amount_display(self, obj):
         major = obj.amount / 100
@@ -27,16 +34,16 @@ class WageObligationSerializer(serializers.ModelSerializer):
 
 
 class PaymentDeclarationSerializer(serializers.ModelSerializer):
-    declared_by_email = serializers.EmailField(source="declared_by.email", read_only=True)
+    declared_by_phone = serializers.CharField(source="declared_by.phone", read_only=True)
 
     class Meta:
         model = PaymentDeclaration
         fields = [
             "id", "wage_obligation", "declared_amount", "currency",
             "payment_date", "payment_method", "transaction_reference",
-            "declared_by_email", "declared_at", "status", "review_notes",
+            "declared_by_phone", "declared_at", "status", "review_notes",
         ]
-        read_only_fields = ["id", "declared_by_email", "declared_at", "status", "review_notes"]
+        read_only_fields = ["id", "declared_by_phone", "declared_at", "status", "review_notes"]
 
 
 class PaymentDeclarationCreateSerializer(serializers.ModelSerializer):

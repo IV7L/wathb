@@ -11,12 +11,12 @@ from jobs.models import JobListing, JobListingStatus, JobApplication, Applicatio
 from wages.models import WageObligation, WageObligationStatus
 
 
-def make_user(email, role, password="P@ss1234", **kwargs):
-    return User.objects.create_user(email=email, password=password, role=role, **kwargs)
+def make_user(phone, role, password="P@ss1234", **kwargs):
+    return User.objects.create_user(phone, password, role=role, **kwargs)
 
 
-def make_business(email="biz@disputes.com"):
-    user = make_user(email, Role.BUSINESS)
+def make_business(phone="+970599011001"):
+    user = make_user(phone, Role.BUSINESS)
     bp = BusinessProfile.objects.create(
         user=user, legal_name="Dispute Co", contact_name="Owner",
         contact_phone="0599000200", verification_status="APPROVED",
@@ -26,8 +26,8 @@ def make_business(email="biz@disputes.com"):
     return user, bp
 
 
-def make_worker(email="worker@disputes.com"):
-    user = make_user(email, Role.WORKER)
+def make_worker(phone="+970599011002"):
+    user = make_user(phone, Role.WORKER)
     WorkerProfile.objects.create(user=user, full_name="Dispute Worker")
     return user
 
@@ -94,7 +94,7 @@ class DisputeVisibilityTests(APITestCase):
         self.assertIn(str(self.dispute.pk), ids)
 
     def test_other_business_cannot_see_dispute(self):
-        other_biz_user, _ = make_business("other@disputes.com")
+        other_biz_user, _ = make_business("+970599011003")
         self.client.force_authenticate(user=other_biz_user)
         response = self.client.get(reverse("dispute-list"))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -102,9 +102,9 @@ class DisputeVisibilityTests(APITestCase):
         self.assertNotIn(str(self.dispute.pk), ids)
 
     def test_admin_can_see_all_disputes(self):
-        admin = make_user("admin@disputes.com", Role.ADMIN, is_staff=True)
-        other_biz_user, other_biz_profile = make_business("biz2@disputes.com")
-        other_worker = make_worker("w2@disputes.com")
+        admin = make_user("+970599011004", Role.ADMIN, is_staff=True)
+        other_biz_user, other_biz_profile = make_business("+970599011005")
+        other_worker = make_worker("+970599011006")
         other_job, other_assignment = make_job_and_assignment(other_biz_profile, other_worker)
         other_dispute = make_dispute(other_assignment, other_worker)
 
@@ -121,7 +121,7 @@ class DisputeVisibilityTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_other_worker_cannot_see_dispute_detail(self):
-        other_worker = make_worker("other_w@disputes.com")
+        other_worker = make_worker("+970599011010")
         self.client.force_authenticate(user=other_worker)
         response = self.client.get(reverse("dispute-detail", args=[self.dispute.pk]))
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
@@ -130,9 +130,9 @@ class DisputeVisibilityTests(APITestCase):
 class AdminDisputeWorkflowTests(APITestCase):
 
     def setUp(self):
-        self.admin = make_user("admin@dtest.com", Role.ADMIN, is_staff=True)
-        self.biz_user, self.biz_profile = make_business("biz@dtest.com")
-        self.worker = make_worker("worker@dtest.com")
+        self.admin = make_user("+970599011007", Role.ADMIN, is_staff=True)
+        self.biz_user, self.biz_profile = make_business("+970599011008")
+        self.worker = make_worker("+970599011009")
         self.job, self.assignment = make_job_and_assignment(self.biz_profile, self.worker)
         self.dispute = make_dispute(self.assignment, self.worker)
 
@@ -203,8 +203,8 @@ class AdminDisputeWorkflowTests(APITestCase):
 class DisputeEventTests(APITestCase):
 
     def setUp(self):
-        self.biz_user, self.biz_profile = make_business("b@evt.com")
-        self.worker = make_worker("w@evt.com")
+        self.biz_user, self.biz_profile = make_business("+970599011011")
+        self.worker = make_worker("+970599011012")
         self.job, self.assignment = make_job_and_assignment(self.biz_profile, self.worker)
         self.dispute = make_dispute(self.assignment, self.worker)
         DisputeEvent.objects.create(

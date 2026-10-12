@@ -181,7 +181,7 @@ private fun AdminWageCard(
                 Text(obligation.jobTitle, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
                 AdminWageStatusBadge(obligation.status)
             }
-            Text("العامل: ${obligation.workerEmail}", style = MaterialTheme.typography.bodySmall,
+            Text("العامل: ${obligation.workerName ?: obligation.workerPhone}", style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
             Text(obligation.amountDisplay, style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.primary)
@@ -197,7 +197,7 @@ private fun AdminWageCard(
                 if (displayDecl.transactionReference.isNotBlank()) {
                     Text("المرجع: ${displayDecl.transactionReference}", style = MaterialTheme.typography.bodySmall)
                 }
-                Text("بواسطة: ${displayDecl.declaredByEmail}", style = MaterialTheme.typography.bodySmall,
+                Text("بواسطة: ${displayDecl.declaredByPhone}", style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
 
                 if (reviewableDecl != null) {

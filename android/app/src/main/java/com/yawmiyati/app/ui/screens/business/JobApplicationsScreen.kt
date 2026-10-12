@@ -46,7 +46,7 @@ import com.yawmiyati.app.viewmodels.JobApplicationsViewModel
 fun JobApplicationsScreen(
     jobId: String,
     onBack: () -> Unit,
-    onManageAssignment: (assignmentId: String, workerEmail: String) -> Unit = { _, _ -> },
+    onManageAssignment: (assignmentId: String, workerPhone: String) -> Unit = { _, _ -> },
     viewModel: JobApplicationsViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -102,7 +102,7 @@ fun JobApplicationsScreen(
                             onReject = { viewModel.rejectApplication(app.id) },
                             onManageAssignment = {
                                 val assignId = app.assignmentId
-                                if (assignId != null) onManageAssignment(assignId, app.workerEmail)
+                                if (assignId != null) onManageAssignment(assignId, app.workerPhone ?: "")
                             }
                         )
                     }
@@ -137,16 +137,11 @@ private fun ApplicationCard(
                             style = MaterialTheme.typography.titleSmall
                         )
                     }
-                    Text(
-                        text = application.workerEmail,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
                     if (!application.workerPhone.isNullOrBlank()) {
                         Text(
                             text = application.workerPhone,
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.primary
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }

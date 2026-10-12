@@ -17,9 +17,9 @@ sealed class AuthResult<out T> {
 class AuthRepository(private val tokenManager: TokenManager) {
     private val api = ApiClient.authApi
 
-    suspend fun login(email: String, password: String): AuthResult<UserResponse> {
+    suspend fun login(phone: String, password: String): AuthResult<UserResponse> {
         return try {
-            val response = api.login(LoginRequest(email, password))
+            val response = api.login(LoginRequest(phone, password))
             if (response.isSuccessful) {
                 val body = response.body()!!
                 tokenManager.saveTokens(body.access, body.refresh)
@@ -40,11 +40,11 @@ class AuthRepository(private val tokenManager: TokenManager) {
     }
 
     suspend fun registerWorker(
-        email: String, password: String, fullName: String, phone: String?
+        phone: String, password: String, fullName: String
     ): AuthResult<UserResponse> {
         return try {
             val response = api.registerWorker(
-                RegisterWorkerRequest(email, password, fullName = fullName, phone = phone)
+                RegisterWorkerRequest(phone, password, fullName = fullName)
             )
             if (response.isSuccessful) {
                 val body = response.body()!!
@@ -61,17 +61,16 @@ class AuthRepository(private val tokenManager: TokenManager) {
     }
 
     suspend fun registerBusiness(
-        email: String, password: String,
-        legalName: String, contactName: String, contactPhone: String, phone: String?
+        phone: String, password: String,
+        legalName: String, contactName: String, contactPhone: String
     ): AuthResult<UserResponse> {
         return try {
             val response = api.registerBusiness(
                 RegisterBusinessRequest(
-                    email, password,
+                    phone, password,
                     legalName = legalName,
                     contactName = contactName,
-                    contactPhone = contactPhone,
-                    phone = phone
+                    contactPhone = contactPhone
                 )
             )
             if (response.isSuccessful) {

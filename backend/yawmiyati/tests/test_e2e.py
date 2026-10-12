@@ -22,14 +22,14 @@ from wages.models import WageObligation, WageObligationStatus, PaymentDeclaratio
 PASSWORD = "SecurePass1!"
 
 
-def make_user(email, role, **kwargs):
-    return User.objects.create_user(email=email, password=PASSWORD, role=role, **kwargs)
+def make_user(phone, role, **kwargs):
+    return User.objects.create_user(phone, PASSWORD, role=role, **kwargs)
 
 
-def make_business(email):
-    user = make_user(email, Role.BUSINESS)
+def make_business(phone):
+    user = make_user(phone, Role.BUSINESS)
     bp = BusinessProfile.objects.create(
-        user=user, legal_name=f"Co {email}", contact_name="Owner",
+        user=user, legal_name=f"Co {phone}", contact_name="Owner",
         contact_phone="0599000000", verification_status="APPROVED",
     )
     user.is_verified = True
@@ -37,18 +37,18 @@ def make_business(email):
     return user, bp
 
 
-def make_worker(email):
-    user = make_user(email, Role.WORKER)
-    WorkerProfile.objects.create(user=user, full_name=f"Worker {email}")
+def make_worker(phone):
+    user = make_user(phone, Role.WORKER)
+    WorkerProfile.objects.create(user=user, full_name=f"Worker {phone}")
     return user
 
 
-def make_admin(email):
-    return make_user(email, Role.ADMIN, is_staff=True)
+def make_admin(phone):
+    return make_user(phone, Role.ADMIN, is_staff=True)
 
 
-def make_funder(email):
-    return make_user(email, Role.FUNDER)
+def make_funder(phone):
+    return make_user(phone, Role.FUNDER)
 
 
 def make_job(biz_profile, is_funded=False, job_status=JobListingStatus.PENDING_REVIEW,
@@ -79,8 +79,8 @@ class ScenarioAHappyPath(APITestCase):
     """
 
     def setUp(self):
-        self.biz_user, self.biz_profile = make_business("biz@scenA.com")
-        self.worker = make_worker("worker@scenA.com")
+        self.biz_user, self.biz_profile = make_business("+970599020001")
+        self.worker = make_worker("+970599020002")
         self.job = make_job(self.biz_profile, job_status=JobListingStatus.PUBLISHED)
 
     def test_full_happy_path(self):
@@ -157,9 +157,9 @@ class ScenarioBDisputedWage(APITestCase):
     """
 
     def setUp(self):
-        self.admin = make_admin("admin@scenB.com")
-        self.biz_user, self.biz_profile = make_business("biz@scenB.com")
-        self.worker = make_worker("worker@scenB.com")
+        self.admin = make_admin("+970599020003")
+        self.biz_user, self.biz_profile = make_business("+970599020004")
+        self.worker = make_worker("+970599020005")
         self.job = make_job(self.biz_profile, job_status=JobListingStatus.PUBLISHED)
 
     def test_disputed_wage_scenario(self):
@@ -233,10 +233,10 @@ class ScenarioCFundedJob(APITestCase):
     """
 
     def setUp(self):
-        self.admin = make_admin("admin@scenC.com")
-        self.funder = make_funder("funder@scenC.com")
-        self.biz_user, self.biz_profile = make_business("biz@scenC.com")
-        self.worker = make_worker("worker@scenC.com")
+        self.admin = make_admin("+970599020006")
+        self.funder = make_funder("+970599020007")
+        self.biz_user, self.biz_profile = make_business("+970599020008")
+        self.worker = make_worker("+970599020009")
 
     def test_funded_job_lifecycle(self):
         # Step 1: Funder creates proposal
@@ -287,7 +287,7 @@ class ScenarioDInsufficientFunding(APITestCase):
     """
 
     def setUp(self):
-        self.biz_user, self.biz_profile = make_business("biz@scenD.com")
+        self.biz_user, self.biz_profile = make_business("+970599020010")
 
     def test_funded_job_blocked_without_allocation(self):
         job = make_job(self.biz_profile, is_funded=True,
@@ -300,7 +300,7 @@ class ScenarioDInsufficientFunding(APITestCase):
         self.assertEqual(job.status, JobListingStatus.PENDING_REVIEW)
 
     def test_funded_job_with_released_allocation_still_blocked(self):
-        funder = make_funder("funder@scenD.com")
+        funder = make_funder("+970599020011")
         proposal = FundingProposal.objects.create(
             funder=funder, title="Fund", description="...",
             total_amount=100000, currency="ILS",

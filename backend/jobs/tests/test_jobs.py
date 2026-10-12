@@ -10,12 +10,12 @@ from funding.models import FundingProposal, FundingBudget, FundingAllocation
 from jobs.models import JobListing, JobListingStatus, JobApplication, ApplicationStatus
 
 
-def make_user(email, role, password="P@ss1234", **kwargs):
-    return User.objects.create_user(email=email, password=password, role=role, **kwargs)
+def make_user(phone, role, password="P@ss1234", **kwargs):
+    return User.objects.create_user(phone, password, role=role, **kwargs)
 
 
-def make_business(email="biz@test.com"):
-    user = make_user(email, Role.BUSINESS)
+def make_business(phone="+970599014001"):
+    user = make_user(phone, Role.BUSINESS)
     bp = BusinessProfile.objects.create(
         user=user,
         legal_name="Test Co",
@@ -28,8 +28,8 @@ def make_business(email="biz@test.com"):
     return user, bp
 
 
-def make_worker(email="worker@test.com"):
-    user = make_user(email, Role.WORKER)
+def make_worker(phone="+970599014002"):
+    user = make_user(phone, Role.WORKER)
     WorkerProfile.objects.create(user=user, full_name="Test Worker")
     return user
 
@@ -125,7 +125,7 @@ class JobStateMachineTests(APITestCase):
 class JobPublishPermissionTests(APITestCase):
 
     def test_unverified_business_cannot_publish(self):
-        user = make_user("unverified@test.com", Role.BUSINESS)
+        user = make_user("+970599014003", Role.BUSINESS)
         bp = BusinessProfile.objects.create(
             user=user, legal_name="Unverified Co",
             contact_name="Owner", contact_phone="0599000001",
@@ -137,8 +137,8 @@ class JobPublishPermissionTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_worker_cannot_publish_job(self):
-        worker = make_worker("w@test.com")
-        biz_user, biz_profile = make_business("b@test.com")
+        worker = make_worker("+970599014004")
+        biz_user, biz_profile = make_business("+970599014005")
         job = make_job(biz_profile, status=JobListingStatus.PENDING_REVIEW)
         self.client.force_authenticate(user=worker)
         response = self.client.post(reverse("job-publish", args=[job.pk]))
@@ -149,8 +149,8 @@ class FundedJobPublishTests(APITestCase):
 
     def setUp(self):
         self.biz_user, self.biz_profile = make_business()
-        self.funder = make_user("funder@test.com", Role.FUNDER)
-        self.admin = make_user("admin@test.com", Role.ADMIN, is_staff=True)
+        self.funder = make_user("+970599014006", Role.FUNDER)
+        self.admin = make_user("+970599014007", Role.ADMIN, is_staff=True)
 
     def test_funded_job_without_allocation_cannot_publish(self):
         job = make_job(self.biz_profile, is_funded=True, status=JobListingStatus.PENDING_REVIEW)
@@ -295,14 +295,14 @@ class ApplicationAssignmentIdTests(APITestCase):
 
     def setUp(self):
         from accounts.models import User, Role, BusinessProfile, WorkerProfile
-        self.biz_user = User.objects.create_user(email="b@assignid.com", password="P@ss1234", role=Role.BUSINESS)
+        self.biz_user = User.objects.create_user("+970599014010", "P@ss1234", role=Role.BUSINESS)
         bp = BusinessProfile.objects.create(
             user=self.biz_user, legal_name="AssignId Co", contact_name="Owner",
             contact_phone="0599000200", verification_status="APPROVED",
         )
         self.biz_user.is_verified = True
         self.biz_user.save(update_fields=["is_verified"])
-        self.worker = User.objects.create_user(email="w@assignid.com", password="P@ss1234", role=Role.WORKER)
+        self.worker = User.objects.create_user("+970599014011", "P@ss1234", role=Role.WORKER)
         WorkerProfile.objects.create(user=self.worker, full_name="Id Worker")
         import datetime
         self.job = JobListing.objects.create(
@@ -344,11 +344,11 @@ class ApplicationAssignmentIdTests(APITestCase):
         self.assertEqual(app_data["assignment_id"], str(assign.pk))
 
     def test_worker_name_and_phone_in_application_response(self):
-        self.worker.phone = "0599123456"
+        self.worker.phone = "+970599123456"
         self.worker.save(update_fields=["phone"])
         self.client.force_authenticate(user=self.biz_user)
         response = self.client.get(self._list_url())
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         app_data = response.data["results"][0]
         self.assertEqual(app_data["worker_name"], "Id Worker")
-        self.assertEqual(app_data["worker_phone"], "0599123456")
+        self.assertEqual(app_data["worker_phone"], "+970599123456")

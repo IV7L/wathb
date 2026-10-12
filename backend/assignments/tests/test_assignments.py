@@ -13,12 +13,12 @@ from jobs.models import JobListing, JobListingStatus, JobApplication, Applicatio
 from wages.models import WageObligation
 
 
-def make_user(email, role, password="P@ss1234", **kwargs):
-    return User.objects.create_user(email=email, password=password, role=role, **kwargs)
+def make_user(phone, role, password="P@ss1234", **kwargs):
+    return User.objects.create_user(phone, password, role=role, **kwargs)
 
 
-def make_business(email="biz@test.com"):
-    user = make_user(email, Role.BUSINESS)
+def make_business(phone="+970599010001"):
+    user = make_user(phone, Role.BUSINESS)
     bp = BusinessProfile.objects.create(
         user=user, legal_name="Test Co", contact_name="Owner",
         contact_phone="0599000000", verification_status="APPROVED",
@@ -28,8 +28,8 @@ def make_business(email="biz@test.com"):
     return user, bp
 
 
-def make_worker(email="worker@test.com"):
-    user = make_user(email, Role.WORKER)
+def make_worker(phone="+970599010002"):
+    user = make_user(phone, Role.WORKER)
     WorkerProfile.objects.create(user=user, full_name="Test Worker")
     return user
 
@@ -120,7 +120,7 @@ class AssignmentAcceptTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_worker_cannot_accept_another_workers_assignment(self):
-        other_worker = make_worker("other@test.com")
+        other_worker = make_worker("+970599010003")
         self.client.force_authenticate(user=other_worker)
         response = self.client.post(reverse("assignment-accept", args=[self.assignment.pk]))
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
@@ -129,7 +129,7 @@ class AssignmentAcceptTests(APITestCase):
         from django.db import IntegrityError
         with self.assertRaises(IntegrityError):
             app2 = JobApplication.objects.create(
-                job=self.job, worker=make_worker("w2@test.com"), status=ApplicationStatus.OFFERED
+                job=self.job, worker=make_worker("+970599010004"), status=ApplicationStatus.OFFERED
             )
             Assignment.objects.create(
                 job=self.job,
