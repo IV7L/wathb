@@ -129,6 +129,22 @@ class WorkerProfileSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "phone", "email", "is_verified"]
 
 
+class AdminWorkerProfileSerializer(serializers.ModelSerializer):
+    phone = serializers.CharField(source="user.phone", read_only=True)
+    email = serializers.EmailField(source="user.email", read_only=True, allow_null=True, default=None)
+    user_id = serializers.UUIDField(source="user.id", read_only=True)
+    is_verified = serializers.BooleanField(source="user.is_verified", read_only=True)
+
+    class Meta:
+        model = WorkerProfile
+        fields = [
+            "id", "user_id", "phone", "email", "is_verified",
+            "full_name", "location_city", "location_region",
+            "skills", "experience_summary", "is_available",
+        ]
+        read_only_fields = fields
+
+
 class BusinessProfileSerializer(serializers.ModelSerializer):
     phone = serializers.CharField(source="user.phone", read_only=True)
     email = serializers.EmailField(source="user.email", read_only=True, allow_null=True, default=None)

@@ -4,6 +4,8 @@ import com.google.gson.Gson
 import com.google.gson.JsonObject
 import com.yawmiyati.app.data.api.AdminBusinessProfile
 import com.yawmiyati.app.data.api.AdminVerifyRequest
+import com.yawmiyati.app.data.api.AdminWorkerActionRequest
+import com.yawmiyati.app.data.api.AdminWorkerProfile
 import com.yawmiyati.app.data.api.ApiClient
 
 sealed class AdminResult<out T> {
@@ -31,6 +33,39 @@ class AdminRepository {
     suspend fun verifyBusiness(pk: Int, action: String, reason: String = ""): AdminResult<AdminBusinessProfile> {
         return try {
             val response = api.verifyBusiness(pk, AdminVerifyRequest(action, reason))
+            if (response.isSuccessful) {
+                AdminResult.Success(response.body()!!)
+            } else {
+                val code = response.code()
+                val msg = when (code) {
+                    400 -> parseError(response.errorBody()?.string())
+                    403 -> "ليس لديك صلاحية إدارية"
+                    404 -> "لم يتم العثور على الحساب"
+                    else -> parseError(response.errorBody()?.string())
+                }
+                AdminResult.Error(msg, code == 401)
+            }
+        } catch (e: Exception) {
+            AdminResult.Error(networkMessage(e))
+        }
+    }
+
+    suspend fun listWorkers(isVerified: Boolean? = null, search: String? = null): AdminResult<List<AdminWorkerProfile>> {
+        return try {
+            val response = api.listWorkers(isVerified = isVerified, search = search?.takeIf { it.isNotBlank() })
+            if (response.isSuccessful) {
+                AdminResult.Success(response.body()?.results ?: emptyList())
+            } else {
+                AdminResult.Error(parseError(response.errorBody()?.string()), response.code() == 401)
+            }
+        } catch (e: Exception) {
+            AdminResult.Error(networkMessage(e))
+        }
+    }
+
+    suspend fun verifyWorker(pk: Int, action: String): AdminResult<AdminWorkerProfile> {
+        return try {
+            val response = api.verifyWorker(pk, AdminWorkerActionRequest(action))
             if (response.isSuccessful) {
                 AdminResult.Success(response.body()!!)
             } else {

@@ -222,6 +222,22 @@ data class AdminVerifyRequest(
     val reason: String = ""
 )
 
+// Matches AdminWorkerProfileSerializer
+data class AdminWorkerProfile(
+    val id: Int,
+    @SerializedName("user_id") val userId: String,
+    val phone: String,
+    val email: String? = null,
+    @SerializedName("is_verified") val isVerified: Boolean,
+    @SerializedName("full_name") val fullName: String,
+    @SerializedName("location_city") val locationCity: String,
+    @SerializedName("location_region") val locationRegion: String,
+)
+
+data class AdminWorkerActionRequest(
+    val action: String,   // "verify" or "suspend"
+)
+
 // ── Assignments ───────────────────────────────────────────────────────────────
 
 // Matches AssignmentSerializer

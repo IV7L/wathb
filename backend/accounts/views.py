@@ -1,5 +1,6 @@
 import hashlib
 
+from django.db.models import Q
 from django.utils import timezone
 from rest_framework import generics, status
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -9,13 +10,14 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 
-from accounts.models import Role
+from accounts.models import Role, WorkerProfile
 from accounts.permissions import IsWorker, IsBusiness, IsAdminRole
 from accounts.serializers import (
     PhoneTokenObtainPairSerializer,
     RegisterSerializer,
     UserSerializer,
     WorkerProfileSerializer,
+    AdminWorkerProfileSerializer,
     BusinessProfileSerializer,
     AdminBusinessProfileSerializer,
 )
@@ -175,6 +177,52 @@ class AdminBusinessVerifyView(APIView):
             return Response({"detail": "action must be approve, reject, or suspend."}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response(AdminBusinessProfileSerializer(bp).data)
+
+
+class AdminWorkerListView(generics.ListAPIView):
+    permission_classes = [IsAdminRole]
+    serializer_class = AdminWorkerProfileSerializer
+
+    def get_queryset(self):
+        qs = WorkerProfile.objects.select_related("user").order_by("-id")
+        is_verified = self.request.query_params.get("is_verified")
+        if is_verified is not None:
+            qs = qs.filter(user__is_verified=is_verified.lower() == "true")
+        search = self.request.query_params.get("search", "").strip()
+        if search:
+            qs = qs.filter(
+                Q(user__phone__icontains=search) |
+                Q(full_name__icontains=search)
+            )
+        return qs
+
+
+class AdminWorkerVerifyView(APIView):
+    permission_classes = [IsAdminRole]
+
+    def patch(self, request, pk):
+        try:
+            wp = WorkerProfile.objects.select_related("user").get(pk=pk)
+        except WorkerProfile.DoesNotExist:
+            return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        action = request.data.get("action")
+
+        if action == "verify":
+            wp.user.is_verified = True
+            wp.user.save(update_fields=["is_verified"])
+            _log_audit(request.user, "worker_verified", "WorkerProfile", str(wp.pk))
+        elif action == "suspend":
+            wp.user.is_verified = False
+            wp.user.save(update_fields=["is_verified"])
+            _log_audit(request.user, "worker_suspended", "WorkerProfile", str(wp.pk))
+        else:
+            return Response(
+                {"detail": "action must be verify or suspend."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        return Response(AdminWorkerProfileSerializer(wp).data)
 
 
 def _log_audit(actor, action, model_name, object_id, details=None):

@@ -20,6 +20,18 @@ interface AdminApi {
         @Body request: AdminVerifyRequest
     ): Response<AdminBusinessProfile>
 
+    @GET("admin/workers/")
+    suspend fun listWorkers(
+        @Query("is_verified") isVerified: Boolean? = null,
+        @Query("search") search: String? = null
+    ): Response<PaginatedResponse<AdminWorkerProfile>>
+
+    @PATCH("admin/workers/{pk}/verify/")
+    suspend fun verifyWorker(
+        @Path("pk") pk: Int,
+        @Body request: AdminWorkerActionRequest
+    ): Response<AdminWorkerProfile>
+
     @GET("disputes/")
     suspend fun listDisputes(
         @Query("category") category: String = "WAGE_DISPUTED"
