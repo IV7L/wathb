@@ -22,12 +22,17 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.yawmiyati.app.data.api.NotificationResponse
 import com.yawmiyati.app.ui.components.EmptyState
@@ -40,10 +45,21 @@ import com.yawmiyati.app.viewmodels.NotificationsViewModel
 @Composable
 fun NotificationsScreen(
     onBack: () -> Unit,
+    onNavigate: (relatedModel: String, relatedId: String) -> Unit = { _, _ -> },
     viewModel: NotificationsViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val isRefreshing = (uiState as? NotificationsUiState.Success)?.let { false } ?: false
     val hasUnread = (uiState as? NotificationsUiState.Success)?.items?.any { !it.isRead } == true
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) viewModel.load()
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
 
     Scaffold(
         topBar = {
@@ -66,25 +82,42 @@ fun NotificationsScreen(
     ) { padding ->
         when (val state = uiState) {
             is NotificationsUiState.Loading -> LoadingIndicator(modifier = Modifier.padding(padding))
-            is NotificationsUiState.Empty -> EmptyState(
-                message = "لا توجد إشعارات",
-                modifier = Modifier.padding(padding).fillMaxSize()
-            )
+            is NotificationsUiState.Empty -> PullToRefreshBox(
+                isRefreshing = false,
+                onRefresh = { viewModel.load() },
+                modifier = Modifier.padding(padding)
+            ) {
+                EmptyState(
+                    message = "لا توجد إشعارات",
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
             is NotificationsUiState.Error -> ErrorMessage(
                 message = state.message,
                 onRetry = { viewModel.load() },
                 modifier = Modifier.padding(padding)
             )
-            is NotificationsUiState.Success -> {
+            is NotificationsUiState.Success -> PullToRefreshBox(
+                isRefreshing = isRefreshing,
+                onRefresh = { viewModel.load() },
+                modifier = Modifier.padding(padding)
+            ) {
                 LazyColumn(
-                    modifier = Modifier.padding(padding).padding(horizontal = 16.dp),
+                    modifier = Modifier.padding(horizontal = 16.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     item { Spacer(Modifier.height(8.dp)) }
                     items(state.items, key = { it.id }) { notification ->
                         NotificationCard(
                             notification = notification,
-                            onRead = { if (!notification.isRead) viewModel.markRead(notification.id) }
+                            onClick = {
+                                if (!notification.isRead) viewModel.markRead(notification.id)
+                                val model = notification.relatedModel
+                                val id = notification.relatedId
+                                if (!model.isNullOrBlank() && !id.isNullOrBlank()) {
+                                    onNavigate(model, id)
+                                }
+                            }
                         )
                     }
                     item { Spacer(Modifier.height(16.dp)) }
@@ -97,10 +130,10 @@ fun NotificationsScreen(
 @Composable
 private fun NotificationCard(
     notification: NotificationResponse,
-    onRead: () -> Unit
+    onClick: () -> Unit
 ) {
     Card(
-        onClick = onRead,
+        onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
             containerColor = if (notification.isRead)

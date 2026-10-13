@@ -1,9 +1,63 @@
+import datetime
 from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from notifications.models import Notification
+from notifications.models import Notification, NotificationType
 from notifications.serializers import NotificationSerializer
+
+
+def _create_wage_reminders(user):
+    """Lazily create wage reminder notifications for workers with stale AWAITING_ACK obligations."""
+    from accounts.models import Role
+    if user.role != Role.WORKER:
+        return
+    from django.utils import timezone
+    from wages.models import WageObligation, WageObligationStatus, PaymentDeclaration, PaymentDeclarationStatus
+    now = timezone.now()
+    cutoff_1d = now - datetime.timedelta(days=1)
+    cutoff_3d = now - datetime.timedelta(days=3)
+    obligations = WageObligation.objects.filter(
+        assignment__worker=user,
+        status=WageObligationStatus.AWAITING_ACK,
+        declarations__status=PaymentDeclarationStatus.SUBMITTED,
+    ).distinct().prefetch_related("declarations")
+    for obl in obligations:
+        declared_at = obl.declarations.filter(
+            status=PaymentDeclarationStatus.SUBMITTED
+        ).order_by("declared_at").values_list("declared_at", flat=True).first()
+        if declared_at is None:
+            continue
+        if declared_at <= cutoff_3d:
+            if not Notification.objects.filter(
+                recipient=user,
+                notification_type=NotificationType.WAGE_REMINDER_3D,
+                related_model="WageObligation",
+                related_id=str(obl.pk),
+            ).exists():
+                Notification.objects.create(
+                    recipient=user,
+                    notification_type=NotificationType.WAGE_REMINDER_3D,
+                    title="تذكير: لم تُقرّ استلام أجرك منذ 3 أيام",
+                    body="الرجاء مراجعة أجرك وتأكيد استلامه أو الاعتراض عليه.",
+                    related_model="WageObligation",
+                    related_id=str(obl.pk),
+                )
+        elif declared_at <= cutoff_1d:
+            if not Notification.objects.filter(
+                recipient=user,
+                notification_type=NotificationType.WAGE_REMINDER_1D,
+                related_model="WageObligation",
+                related_id=str(obl.pk),
+            ).exists():
+                Notification.objects.create(
+                    recipient=user,
+                    notification_type=NotificationType.WAGE_REMINDER_1D,
+                    title="تذكير: لم تُقرّ استلام أجرك بعد",
+                    body="مرّ يوم على إعلان الدفع. الرجاء تأكيد الاستلام أو الاعتراض.",
+                    related_model="WageObligation",
+                    related_id=str(obl.pk),
+                )
 
 
 class NotificationListView(generics.ListAPIView):
@@ -12,6 +66,10 @@ class NotificationListView(generics.ListAPIView):
 
     def get_queryset(self):
         return Notification.objects.filter(recipient=self.request.user)
+
+    def list(self, request, *args, **kwargs):
+        _create_wage_reminders(request.user)
+        return super().list(request, *args, **kwargs)
 
 
 class NotificationMarkReadView(APIView):

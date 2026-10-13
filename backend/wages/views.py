@@ -25,6 +25,11 @@ class WageObligationListView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = WageObligationSerializer
 
+    def list(self, request, *args, **kwargs):
+        from notifications.views import _create_wage_reminders
+        _create_wage_reminders(request.user)
+        return super().list(request, *args, **kwargs)
+
     def get_queryset(self):
         user = self.request.user
         if user.role == Role.WORKER:
@@ -263,6 +268,7 @@ class AdminVerifyPaymentView(APIView):
             obligation.save(update_fields=["status"])
 
             _log_audit(request.user, "payment_verified", "PaymentDeclaration", str(declaration.pk))
+            _notify_worker(obligation.assignment.worker, "PAYMENT_VERIFIED", obligation)
 
         elif action_name == "reject":
             if not review_notes:
@@ -277,6 +283,7 @@ class AdminVerifyPaymentView(APIView):
             obligation.save(update_fields=["status"])
 
             _log_audit(request.user, "payment_rejected", "PaymentDeclaration", str(declaration.pk), {"notes": review_notes})
+            _notify_worker(obligation.assignment.worker, "PAYMENT_REJECTED", obligation)
 
         else:
             return Response({"detail": "action must be verify or reject."}, status=status.HTTP_400_BAD_REQUEST)
@@ -297,11 +304,22 @@ def _detect_mime_from_bytes(data):
 def _notify_worker(worker, notification_type, obligation):
     try:
         from notifications.models import Notification
+        amount = obligation.amount // 100
+        titles = {
+            "PAYMENT_DECLARED": "تم الإعلان عن دفع أجرك",
+            "PAYMENT_VERIFIED": "تم التحقق من دفع أجرك",
+            "PAYMENT_REJECTED": "تم رفض إعلان الدفع",
+        }
+        bodies = {
+            "PAYMENT_DECLARED": f"أعلن صاحب العمل عن دفع {amount} {obligation.currency}. الرجاء تأكيد الاستلام.",
+            "PAYMENT_VERIFIED": f"تم التحقق من دفع {amount} {obligation.currency}.",
+            "PAYMENT_REJECTED": f"رفض المسؤول إعلان دفع {amount} {obligation.currency}. سيتواصل معك.",
+        }
         Notification.objects.create(
             recipient=worker,
             notification_type=notification_type,
-            title="تم الإعلان عن دفع أجرك",
-            body=f"أعلن صاحب العمل عن دفع {obligation.amount // 100} {obligation.currency}.",
+            title=titles.get(notification_type, "إشعار أجر"),
+            body=bodies.get(notification_type, ""),
             related_model="WageObligation",
             related_id=str(obligation.pk),
         )

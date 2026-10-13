@@ -115,6 +115,9 @@ fun YawmiyatiNavGraph() {
                     navController.navigate(Screen.Login.route) {
                         popUpTo(0) { inclusive = true }
                     }
+                },
+                onOpenNotifications = {
+                    navController.navigate(Screen.WorkerNotifications.route)
                 }
             )
         }
@@ -158,7 +161,15 @@ fun YawmiyatiNavGraph() {
         }
 
         composable(Screen.WorkerNotifications.route) {
-            NotificationsScreen(onBack = { navController.popBackStack() })
+            NotificationsScreen(
+                onBack = { navController.popBackStack() },
+                onNavigate = { model, id ->
+                    when (model) {
+                        "JobListing" -> navController.navigate(Screen.JobDetail.createRoute(id))
+                        else -> {}
+                    }
+                }
+            )
         }
 
         // ── Business ────────────────────────────────────────────────────────────

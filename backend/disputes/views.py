@@ -125,7 +125,23 @@ class AdminDisputeResolveView(APIView):
         )
 
         _log_audit(request.user, "dispute_resolved", "Dispute", str(dispute.pk), {"notes": resolution_notes[:200]})
+        _notify_dispute_resolved(dispute, resolution_notes)
         return Response(DisputeSerializer(dispute).data)
+
+
+def _notify_dispute_resolved(dispute, notes):
+    try:
+        from notifications.models import Notification
+        Notification.objects.create(
+            recipient=dispute.raised_by,
+            notification_type="DISPUTE_STATUS_CHANGED",
+            title="تم حل النزاع",
+            body=f"تم حل نزاعك. ملاحظات المسؤول: {notes[:100]}",
+            related_model="Dispute",
+            related_id=str(dispute.pk),
+        )
+    except Exception:
+        pass
 
 
 def _log_audit(actor, action, model_name, object_id, details=None):

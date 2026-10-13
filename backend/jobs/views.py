@@ -167,7 +167,15 @@ class JobCancelView(APIView):
             job.cancellation_reason = reason
             job.save(update_fields=["status", "cancellation_reason"])
 
-            # Cancel pending/offered applications so workers are notified.
+            # Capture workers to notify before bulk update changes statuses.
+            workers_to_notify = list(
+                job.applications
+                .filter(status__in=[ApplicationStatus.PENDING, ApplicationStatus.OFFERED])
+                .select_related("worker")
+                .values_list("worker", flat=True)
+            )
+
+            # Cancel pending/offered applications.
             job.applications.filter(
                 status__in=[ApplicationStatus.PENDING, ApplicationStatus.OFFERED]
             ).update(status=ApplicationStatus.CANCELLED)
@@ -178,6 +186,11 @@ class JobCancelView(APIView):
                 job=job,
                 status__in=[AssignmentStatus.OFFERED, AssignmentStatus.ACCEPTED]
             ).update(status=AssignmentStatus.CANCELLED)
+
+            # Notify affected workers.
+            from accounts.models import CustomUser
+            for worker in CustomUser.objects.filter(pk__in=workers_to_notify):
+                _notify_worker(worker, "JOB_CANCELLED", job)
 
         return Response(JobListingSerializer(job).data)
 
@@ -376,10 +389,12 @@ def _notify_worker(worker, notification_type, job):
         titles = {
             "JOB_OFFER": f"تم عرض وظيفة عليك: {job.title}",
             "APPLICATION_REJECTED": f"تم رفض طلبك: {job.title}",
+            "JOB_CANCELLED": f"تم إلغاء الوظيفة: {job.title}",
         }
         bodies = {
             "JOB_OFFER": f"عرضت عليك {job.business.legal_name} العمل في '{job.title}' بتاريخ {job.work_date}.",
             "APPLICATION_REJECTED": f"تم رفض طلبك للوظيفة '{job.title}'.",
+            "JOB_CANCELLED": f"أُلغيت الوظيفة '{job.title}' بتاريخ {job.work_date}.",
         }
         Notification.objects.create(
             recipient=worker,

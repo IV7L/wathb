@@ -17,6 +17,12 @@ class NotificationType(models.TextChoices):
     DISPUTE_STATUS_CHANGED = "DISPUTE_STATUS_CHANGED", "Dispute Status Changed"
     FUNDING_APPROVED = "FUNDING_APPROVED", "Funding Approved"
     FUNDING_REJECTED = "FUNDING_REJECTED", "Funding Rejected"
+    JOB_CANCELLED = "JOB_CANCELLED", "Job Cancelled"
+    ASSIGNMENT_CANCELLED = "ASSIGNMENT_CANCELLED", "Assignment Cancelled"
+    ATTENDANCE_SUBMITTED = "ATTENDANCE_SUBMITTED", "Attendance Submitted"
+    COMPLETION_SUBMITTED = "COMPLETION_SUBMITTED", "Completion Submitted"
+    WAGE_REMINDER_1D = "WAGE_REMINDER_1D", "Wage Acknowledgement Reminder (1 day)"
+    WAGE_REMINDER_3D = "WAGE_REMINDER_3D", "Wage Acknowledgement Reminder (3 days)"
 
 
 class Notification(models.Model):

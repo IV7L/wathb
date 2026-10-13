@@ -140,6 +140,23 @@ class AssignmentCancelView(APIView):
         assignment.cancelled_at = timezone.now()
         assignment.cancellation_reason = reason
         assignment.save(update_fields=["status", "cancelled_at", "cancellation_reason"])
+
+        if user.role == Role.BUSINESS:
+            _notify(
+                assignment.worker, "ASSIGNMENT_CANCELLED",
+                f"تم إلغاء مهمتك: {assignment.job.title}",
+                f"أُلغيت المهمة في {assignment.job.work_date}. السبب: {reason[:100]}",
+                "Assignment", str(assignment.pk),
+            )
+        elif user.role == Role.WORKER:
+            business_user = assignment.job.business.user
+            _notify(
+                business_user, "ASSIGNMENT_CANCELLED",
+                f"ألغى العامل مهمته: {assignment.job.title}",
+                f"ألغى العامل مشاركته في {assignment.job.work_date}. السبب: {reason[:100]}",
+                "Assignment", str(assignment.pk),
+            )
+
         return Response(AssignmentSerializer(assignment).data)
 
 
@@ -164,6 +181,15 @@ class AttendanceListCreateView(APIView):
         serializer = AttendanceSubmitSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         record = serializer.save(assignment=assignment, submitted_by=request.user)
+
+        business_user = assignment.job.business.user
+        _notify(
+            business_user, "ATTENDANCE_SUBMITTED",
+            f"تم تسجيل الحضور: {assignment.job.title}",
+            f"سجّل العامل حضوره ليوم {record.work_date}. بانتظار تأكيدك.",
+            "Assignment", str(assignment.pk),
+        )
+
         return Response(AttendanceRecordSerializer(record).data, status=status.HTTP_201_CREATED)
 
     def _get_assignment(self, request, pk):
@@ -240,6 +266,15 @@ class AttendanceDisputeView(APIView):
 
         record.status = AttendanceStatus.DISPUTED
         record.save(update_fields=["status"])
+
+        worker = assignment.worker
+        _notify(
+            worker, "ATTENDANCE_DISPUTED",
+            f"اعتُرض على حضورك: {assignment.job.title}",
+            f"اعترض صاحب العمل على سجل حضورك ليوم {record.work_date}.",
+            "Assignment", str(assignment.pk),
+        )
+
         return Response(AttendanceRecordSerializer(record).data)
 
 
@@ -274,6 +309,14 @@ class CompletionView(APIView):
 
         assignment.status = AssignmentStatus.ACTIVE
         assignment.save(update_fields=["status"])
+
+        business_user = assignment.job.business.user
+        _notify(
+            business_user, "COMPLETION_SUBMITTED",
+            f"طلب إنهاء العمل: {assignment.job.title}",
+            "أرسل العامل طلب تأكيد إنهاء العمل. بانتظار موافقتك.",
+            "Assignment", str(assignment.pk),
+        )
 
         return Response(CompletionRecordSerializer(record).data, status=status.HTTP_201_CREATED)
 
@@ -325,6 +368,13 @@ class CompletionConfirmView(APIView):
 
         _create_wage_obligation(assignment)
 
+        _notify(
+            assignment.worker, "COMPLETION_CONFIRMED",
+            f"تم تأكيد إنهاء العمل: {assignment.job.title}",
+            "تم تأكيد إنهاء العمل. سيتم معالجة أجرك قريباً.",
+            "Assignment", str(assignment.pk),
+        )
+
         return Response(CompletionRecordSerializer(record).data)
 
 
@@ -349,7 +399,30 @@ class CompletionDisputeView(APIView):
 
         record.status = CompletionStatus.DISPUTED
         record.save(update_fields=["status"])
+
+        _notify(
+            assignment.worker, "COMPLETION_DISPUTED",
+            f"اعتُرض على إنهاء العمل: {assignment.job.title}",
+            "اعترض صاحب العمل على طلب إنهاء العمل. تواصل مع الدعم.",
+            "Assignment", str(assignment.pk),
+        )
+
         return Response(CompletionRecordSerializer(record).data)
+
+
+def _notify(recipient, notification_type, title, body, related_model, related_id):
+    try:
+        from notifications.models import Notification
+        Notification.objects.create(
+            recipient=recipient,
+            notification_type=notification_type,
+            title=title,
+            body=body,
+            related_model=related_model,
+            related_id=related_id,
+        )
+    except Exception:
+        pass
 
 
 def _create_wage_obligation(assignment):

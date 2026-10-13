@@ -1,5 +1,6 @@
 package com.yawmiyati.app.ui.screens.worker
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,12 +10,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Card
@@ -30,7 +32,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -47,15 +48,14 @@ import com.yawmiyati.app.data.api.JobListingResponse
 import com.yawmiyati.app.ui.components.EmptyState
 import com.yawmiyati.app.ui.components.ErrorMessage
 import com.yawmiyati.app.ui.components.LoadingIndicator
-import com.yawmiyati.app.ui.components.OsmMapView
 import com.yawmiyati.app.ui.components.SupportWhatsappButton
 import com.yawmiyati.app.ui.theme.WathbDeepTeal
 import com.yawmiyati.app.ui.theme.WathbGold
-import com.yawmiyati.app.ui.utils.cityLatLng
 import com.yawmiyati.app.ui.utils.formatArabicDate
 import com.yawmiyati.app.ui.utils.formatArabicWage
 import com.yawmiyati.app.viewmodels.JobsUiState
 import com.yawmiyati.app.viewmodels.JobsViewModel
+import com.yawmiyati.app.viewmodels.NotificationsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -67,10 +67,11 @@ fun WorkerHomeScreen(
     onProfile: () -> Unit,
     onLogout: () -> Unit,
     onNotifications: () -> Unit = {},
-    unreadCount: Int = 0,
-    jobsViewModel: JobsViewModel = viewModel()
+    jobsViewModel: JobsViewModel = viewModel(),
+    notificationsViewModel: NotificationsViewModel = viewModel()
 ) {
     val jobsState by jobsViewModel.uiState.collectAsState()
+    val unreadCount by notificationsViewModel.unreadCount.collectAsState()
     val isRefreshing = (jobsState as? JobsUiState.Success)?.isRefreshing == true
 
     Scaffold(
@@ -172,72 +173,55 @@ fun WorkerHomeScreen(
 
 @Composable
 private fun JobCard(job: JobListingResponse, onClick: () -> Unit) {
-    val coords = cityLatLng(job.locationCity)
     Card(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        // Map thumbnail with "جديد" badge overlay
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(120.dp)
-                .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
-        ) {
-            OsmMapView(
-                lat = coords.lat,
-                lng = coords.lng,
-                zoom = 13.0,
-                interactive = false,
-                showMarker = true,
-                modifier = Modifier.fillMaxSize()
-            )
-            if (job.isNew) {
-                Surface(
-                    color = WathbGold,
-                    shape = MaterialTheme.shapes.extraSmall,
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(8.dp)
-                ) {
-                    Text(
-                        text = "جديد",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = Color.Black,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
-                    )
-                }
-            }
-        }
         Column(modifier = Modifier.padding(16.dp)) {
-            if (!job.category.isNullOrBlank()) {
-                Surface(
-                    color = MaterialTheme.colorScheme.primaryContainer,
-                    shape = MaterialTheme.shapes.extraSmall,
-                    modifier = Modifier.padding(bottom = 6.dp)
-                ) {
+            // Header row: category circle + title/business + جديد badge
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.Top
+            ) {
+                CategoryCircle(category = job.category)
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = categoryLabel(job.category),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                        text = job.title,
+                        style = MaterialTheme.typography.titleMedium,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Text(
+                        text = job.businessName,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
+                if (job.isNew) {
+                    Surface(
+                        color = WathbGold,
+                        shape = MaterialTheme.shapes.extraSmall
+                    ) {
+                        Text(
+                            text = "جديد",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color.Black,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                        )
+                    }
+                }
             }
+            Spacer(Modifier.height(12.dp))
+            // Wage — largest element
             Text(
-                text = job.title,
-                style = MaterialTheme.typography.titleMedium,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
+                text = formatArabicWage(job.wageAmount, job.wageCurrency, job.wageBasis),
+                style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.primary
             )
             Spacer(Modifier.height(4.dp))
-            Text(
-                text = job.businessName,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(Modifier.height(8.dp))
+            // Location + date row
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
@@ -253,15 +237,10 @@ private fun JobCard(job: JobListingResponse, onClick: () -> Unit) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            Spacer(Modifier.height(8.dp))
-            Text(
-                text = formatArabicWage(job.wageAmount, job.wageCurrency, job.wageBasis),
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.primary
-            )
+            // Track record
             val trackLabel = job.businessTrackRecord?.label
             if (!trackLabel.isNullOrBlank()) {
-                Spacer(Modifier.height(2.dp))
+                Spacer(Modifier.height(4.dp))
                 Text(
                     text = trackLabel,
                     style = MaterialTheme.typography.labelSmall,
@@ -280,14 +259,27 @@ private fun JobCard(job: JobListingResponse, onClick: () -> Unit) {
     }
 }
 
-private fun categoryLabel(category: String?): String = when (category) {
-    "LOADING"      -> "تحميل وتنزيل"
-    "CLEANING"     -> "تنظيف"
-    "CONSTRUCTION" -> "بناء وترميم"
-    "AGRICULTURE"  -> "زراعة"
-    "DELIVERY"     -> "نقل وتوصيل"
-    "FOOD"         -> "مطاعم ومطابخ"
-    "RETAIL"       -> "محلات وبيع"
-    "OTHER"        -> "أخرى"
-    else           -> category ?: ""
+@Composable
+private fun CategoryCircle(category: String?) {
+    val (emoji, bgColor) = categoryVisual(category)
+    Box(
+        modifier = Modifier
+            .size(48.dp)
+            .background(bgColor, shape = CircleShape),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(text = emoji, style = MaterialTheme.typography.titleMedium)
+    }
 }
+
+private fun categoryVisual(category: String?): Pair<String, Color> = when (category) {
+    "LOADING"      -> "📦" to Color(0xFFB3E5FC)
+    "CLEANING"     -> "🧹" to Color(0xFFB2EBF2)
+    "CONSTRUCTION" -> "🏗️" to Color(0xFFFFCCBC)
+    "AGRICULTURE"  -> "🌿" to Color(0xFFC8E6C9)
+    "DELIVERY"     -> "🚚" to Color(0xFFFFE0B2)
+    "FOOD"         -> "🍽️" to Color(0xFFF8BBD9)
+    "RETAIL"       -> "🛒" to Color(0xFFE1BEE7)
+    else           -> "💼" to Color(0xFFE0E0E0)
+}
+
