@@ -12,6 +12,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -20,17 +21,21 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -58,11 +63,54 @@ fun WorkerAssignmentsScreen(
     val actionState by viewModel.actionState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
+    var disputingObligationId by remember { mutableStateOf<String?>(null) }
+    var disputeReason by remember { mutableStateOf("") }
+
     LaunchedEffect(actionState) {
-        if (actionState is AssignmentActionState.Error) {
-            snackbarHostState.showSnackbar((actionState as AssignmentActionState.Error).message)
-            viewModel.resetActionState()
+        when (actionState) {
+            is AssignmentActionState.Error -> {
+                snackbarHostState.showSnackbar((actionState as AssignmentActionState.Error).message)
+                viewModel.resetActionState()
+            }
+            is AssignmentActionState.Success -> {
+                snackbarHostState.showSnackbar("تم بنجاح")
+                viewModel.resetActionState()
+            }
+            else -> {}
         }
+    }
+
+    if (disputingObligationId != null) {
+        AlertDialog(
+            onDismissRequest = { disputingObligationId = null; disputeReason = "" },
+            title = { Text("الاعتراض على الأجر") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("اشرح سبب الاعتراض:")
+                    OutlinedTextField(
+                        value = disputeReason,
+                        onValueChange = { disputeReason = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        minLines = 2
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        disputingObligationId?.let { oblId ->
+                            viewModel.disputeWage(oblId, disputeReason)
+                            disputingObligationId = null
+                            disputeReason = ""
+                        }
+                    },
+                    enabled = disputeReason.isNotBlank()
+                ) { Text("تأكيد الاعتراض") }
+            },
+            dismissButton = {
+                TextButton(onClick = { disputingObligationId = null; disputeReason = "" }) { Text("إلغاء") }
+            }
+        )
     }
 
     Scaffold(
@@ -103,7 +151,9 @@ fun WorkerAssignmentsScreen(
                             isActionLoading = actionState is AssignmentActionState.Loading,
                             onAccept  = { viewModel.acceptAssignment(assignment.id) },
                             onDecline = { viewModel.declineAssignment(assignment.id) },
-                            onManage  = { onManageAssignment(assignment.id, assignment.workerPhone, assignment.businessPhone ?: "", assignment.status) }
+                            onManage  = { onManageAssignment(assignment.id, assignment.workerPhone, assignment.businessPhone ?: "", assignment.status) },
+                            onAcknowledgeWage = { oblId -> viewModel.acknowledgeWage(oblId) },
+                            onDisputeWage = { oblId -> disputingObligationId = oblId }
                         )
                     }
                     item { Spacer(Modifier.height(16.dp)) }
@@ -119,7 +169,9 @@ private fun AssignmentCard(
     isActionLoading: Boolean,
     onAccept: () -> Unit,
     onDecline: () -> Unit,
-    onManage: () -> Unit = {}
+    onManage: () -> Unit = {},
+    onAcknowledgeWage: (obligationId: String) -> Unit = {},
+    onDisputeWage: (obligationId: String) -> Unit = {}
 ) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(
@@ -214,9 +266,9 @@ private fun AssignmentCard(
                 }
             }
 
-            // Show agreed terms after acceptance — read from snapshot, not live job fields
+            // Show agreed terms after acceptance
             val snap = assignment.termsSnapshot
-            if (snap != null && assignment.status !in listOf("OFFERED", "DECLINED")) {
+            if (snap != null && assignment.status !in listOf("OFFERED", "DECLINED", "COMPLETED")) {
                 val snapWageAmount = (snap["wage_amount"] as? Number)?.toLong()
                 val snapCurrency = snap["wage_currency"] as? String
                 val snapBasis = snap["wage_basis"] as? String
@@ -265,35 +317,64 @@ private fun AssignmentCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
 
-            if (assignment.status == "OFFERED") {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button(
-                        onClick = onAccept,
-                        enabled = !isActionLoading,
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text("قبول المهمة")
-                    }
-                    OutlinedButton(
-                        onClick = onDecline,
-                        enabled = !isActionLoading,
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = MaterialTheme.colorScheme.error
-                        ),
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text("رفض")
+            // Action buttons
+            when (assignment.status) {
+                "OFFERED" -> {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Button(
+                            onClick = onAccept,
+                            enabled = !isActionLoading,
+                            modifier = Modifier.weight(1f)
+                        ) { Text("قبول المهمة") }
+                        OutlinedButton(
+                            onClick = onDecline,
+                            enabled = !isActionLoading,
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                            modifier = Modifier.weight(1f)
+                        ) { Text("رفض") }
                     }
                 }
-            }
-
-            if (assignment.status in listOf("ACCEPTED", "ACTIVE", "COMPLETED")) {
-                Button(
-                    onClick = onManage,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(if (assignment.status == "COMPLETED") "إقرار الأجر" else "عرض التفاصيل")
+                "COMPLETED" -> {
+                    val obligationId = assignment.wageObligationId
+                    if (obligationId != null && snap != null) {
+                        val snapAmount = (snap["wage_amount"] as? Number)?.toLong()
+                        val snapCurrency = snap["wage_currency"] as? String ?: "ILS"
+                        val snapBasis = snap["wage_basis"] as? String ?: ""
+                        val snapMethod = snap["payment_method"] as? String
+                        val methodLabel = when (snapMethod) {
+                            "CASH"          -> "نقداً"
+                            "BANK_TRANSFER" -> "تحويل بنكي"
+                            else            -> ""
+                        }
+                        if (snapAmount != null) {
+                            Text(
+                                text = "أجرك: ${formatArabicWage(snapAmount, snapCurrency, snapBasis)}${if (methodLabel.isNotBlank()) " — $methodLabel" else ""}",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Button(
+                                onClick = { onAcknowledgeWage(obligationId) },
+                                enabled = !isActionLoading,
+                                modifier = Modifier.weight(1f)
+                            ) { Text("تأكيد الاستلام") }
+                            OutlinedButton(
+                                onClick = { onDisputeWage(obligationId) },
+                                enabled = !isActionLoading,
+                                colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                                modifier = Modifier.weight(1f)
+                            ) { Text("اعتراض") }
+                        }
+                    } else {
+                        // wage_obligation_id not yet in response — fallback to detail screen
+                        Button(onClick = onManage, modifier = Modifier.fillMaxWidth()) {
+                            Text("إقرار الأجر")
+                        }
+                    }
                 }
+                // ACCEPTED/ACTIVE: worker waits for work day — no action button
+                // DECLINED/CANCELLED/terminal: no button
             }
         }
     }
@@ -302,12 +383,12 @@ private fun AssignmentCard(
 @Composable
 private fun AssignmentStatusBadge(status: String) {
     val (label, color) = when (status) {
-        "OFFERED"   -> "عرض جديد"    to MaterialTheme.colorScheme.primary
-        "ACCEPTED"  -> "مقبول"        to MaterialTheme.colorScheme.tertiary
-        "DECLINED"  -> "مرفوض"        to MaterialTheme.colorScheme.error
-        "ACTIVE"    -> "نشط"          to MaterialTheme.colorScheme.secondary
-        "COMPLETED" -> "مكتمل"        to MaterialTheme.colorScheme.tertiary
-        "CANCELLED" -> "ملغى"         to MaterialTheme.colorScheme.error
+        "OFFERED"   -> "عرض جديد"       to MaterialTheme.colorScheme.primary
+        "ACCEPTED"  -> "مقبول"           to MaterialTheme.colorScheme.tertiary
+        "DECLINED"  -> "مرفوض"           to MaterialTheme.colorScheme.error
+        "ACTIVE"    -> "نشط"             to MaterialTheme.colorScheme.secondary
+        "COMPLETED" -> "مكتمل"           to MaterialTheme.colorScheme.tertiary
+        "CANCELLED" -> "ملغى"            to MaterialTheme.colorScheme.error
         else        -> "حالة غير معروفة" to MaterialTheme.colorScheme.onSurfaceVariant
     }
     Surface(

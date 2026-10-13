@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.yawmiyati.app.data.api.AssignmentResponse
 import com.yawmiyati.app.data.assignments.AssignmentRepository
 import com.yawmiyati.app.data.assignments.AssignmentResult
+import com.yawmiyati.app.data.wages.WageRepository
+import com.yawmiyati.app.data.wages.WageResult
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -19,11 +21,13 @@ sealed class AssignmentsUiState {
 sealed class AssignmentActionState {
     object Idle : AssignmentActionState()
     object Loading : AssignmentActionState()
+    object Success : AssignmentActionState()
     data class Error(val message: String) : AssignmentActionState()
 }
 
 class AssignmentsViewModel(
-    private val repository: AssignmentRepository = AssignmentRepository()
+    private val repository: AssignmentRepository = AssignmentRepository(),
+    private val wageRepository: WageRepository = WageRepository()
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<AssignmentsUiState>(AssignmentsUiState.Loading)
@@ -46,17 +50,17 @@ class AssignmentsViewModel(
         }
     }
 
-    fun acceptAssignment(id: String) = performAction(id, accept = true)
-    fun declineAssignment(id: String) = performAction(id, accept = false)
+    fun acceptAssignment(id: String) = performActionAndUpdate(id, accept = true)
+    fun declineAssignment(id: String) = performActionAndUpdate(id, accept = false)
 
-    private fun performAction(id: String, accept: Boolean) {
+    private fun performActionAndUpdate(id: String, accept: Boolean) {
         if (_actionState.value is AssignmentActionState.Loading) return
         viewModelScope.launch {
             _actionState.value = AssignmentActionState.Loading
             val result = if (accept) repository.acceptAssignment(id) else repository.declineAssignment(id)
             when (result) {
                 is AssignmentResult.Success -> {
-                    _actionState.value = AssignmentActionState.Idle
+                    _actionState.value = AssignmentActionState.Success
                     val current = _uiState.value
                     if (current is AssignmentsUiState.Success) {
                         val updated = current.assignments.map {
@@ -66,6 +70,60 @@ class AssignmentsViewModel(
                     }
                 }
                 is AssignmentResult.Error -> {
+                    _actionState.value = AssignmentActionState.Error(result.message)
+                }
+            }
+        }
+    }
+
+    fun businessComplete(id: String) {
+        if (_actionState.value is AssignmentActionState.Loading) return
+        viewModelScope.launch {
+            _actionState.value = AssignmentActionState.Loading
+            when (val result = repository.businessComplete(id)) {
+                is AssignmentResult.Success -> {
+                    _actionState.value = AssignmentActionState.Success
+                    val current = _uiState.value
+                    if (current is AssignmentsUiState.Success) {
+                        val updated = current.assignments.map {
+                            if (it.id == result.data.id) result.data else it
+                        }
+                        _uiState.value = AssignmentsUiState.Success(updated)
+                    }
+                }
+                is AssignmentResult.Error -> {
+                    _actionState.value = AssignmentActionState.Error(result.message)
+                }
+            }
+        }
+    }
+
+    fun acknowledgeWage(obligationId: String) {
+        if (_actionState.value is AssignmentActionState.Loading) return
+        viewModelScope.launch {
+            _actionState.value = AssignmentActionState.Loading
+            when (val result = wageRepository.acknowledgePayment(obligationId)) {
+                is WageResult.Success -> {
+                    _actionState.value = AssignmentActionState.Success
+                    loadAssignments()
+                }
+                is WageResult.Error -> {
+                    _actionState.value = AssignmentActionState.Error(result.message)
+                }
+            }
+        }
+    }
+
+    fun disputeWage(obligationId: String, description: String) {
+        if (_actionState.value is AssignmentActionState.Loading) return
+        viewModelScope.launch {
+            _actionState.value = AssignmentActionState.Loading
+            when (val result = wageRepository.disputePayment(obligationId, description)) {
+                is WageResult.Success -> {
+                    _actionState.value = AssignmentActionState.Success
+                    loadAssignments()
+                }
+                is WageResult.Error -> {
                     _actionState.value = AssignmentActionState.Error(result.message)
                 }
             }

@@ -230,8 +230,8 @@ data class AdminWorkerProfile(
     val email: String? = null,
     @SerializedName("is_verified") val isVerified: Boolean,
     @SerializedName("full_name") val fullName: String,
-    @SerializedName("location_city") val locationCity: String,
-    @SerializedName("location_region") val locationRegion: String,
+    @SerializedName("location_city") val locationCity: String = "",
+    @SerializedName("location_region") val locationRegion: String = "",
 )
 
 data class AdminWorkerActionRequest(
@@ -282,7 +282,8 @@ data class AssignmentResponse(
     @SerializedName("offered_at") val offeredAt: String?,
     @SerializedName("accepted_at") val acceptedAt: String?,
     @SerializedName("cancelled_at") val cancelledAt: String?,
-    @SerializedName("cancellation_reason") val cancellationReason: String
+    @SerializedName("cancellation_reason") val cancellationReason: String,
+    @SerializedName("wage_obligation_id") val wageObligationId: String? = null,
 )
 
 // Sent by business when acting on a job application
