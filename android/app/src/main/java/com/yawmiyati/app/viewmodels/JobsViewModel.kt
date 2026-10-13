@@ -15,6 +15,13 @@ sealed class PublishUiState {
     data class Error(val message: String) : PublishUiState()
 }
 
+sealed class CancelJobUiState {
+    object Idle : CancelJobUiState()
+    data class Loading(val jobId: String) : CancelJobUiState()
+    object Cancelled : CancelJobUiState()
+    data class Error(val message: String) : CancelJobUiState()
+}
+
 sealed class JobsUiState {
     object Loading : JobsUiState()
     data class Success(
@@ -95,6 +102,25 @@ class JobsViewModel(private val repository: JobRepository = JobRepository()) : V
     fun resetPublishError() {
         _publishState.value = PublishUiState.Idle
     }
+
+    private val _cancelState = MutableStateFlow<CancelJobUiState>(CancelJobUiState.Idle)
+    val cancelState: StateFlow<CancelJobUiState> = _cancelState
+
+    fun cancelJob(jobId: String, reason: String) {
+        if (_cancelState.value is CancelJobUiState.Loading) return
+        viewModelScope.launch {
+            _cancelState.value = CancelJobUiState.Loading(jobId)
+            when (val result = repository.cancelJob(jobId, reason)) {
+                is JobResult.Success -> {
+                    _cancelState.value = CancelJobUiState.Cancelled
+                    refresh()
+                }
+                is JobResult.Error -> _cancelState.value = CancelJobUiState.Error(result.message)
+            }
+        }
+    }
+
+    fun resetCancelState() { _cancelState.value = CancelJobUiState.Idle }
 
     private suspend fun fetchPage(isRefresh: Boolean = false) {
         when (val result = repository.listJobs(city = currentCity, page = currentPage)) {

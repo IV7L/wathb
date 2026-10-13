@@ -34,13 +34,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.yawmiyati.app.data.api.AttendanceResponse
 import com.yawmiyati.app.data.api.CompletionResponse
+import com.yawmiyati.app.ui.components.ConfirmCancelDialog
 import com.yawmiyati.app.ui.components.EmptyState
 import com.yawmiyati.app.ui.components.ErrorMessage
 import com.yawmiyati.app.ui.components.LoadingIndicator
@@ -55,6 +58,7 @@ fun WorkerAssignmentDetailScreen(
     assignmentId: String,
     workerPhone: String = "",
     businessPhone: String = "",
+    assignmentStatus: String = "",
     onBack: () -> Unit,
     viewModel: WorkerAssignmentDetailViewModel = viewModel()
 ) {
@@ -63,16 +67,19 @@ fun WorkerAssignmentDetailScreen(
     val completionState by viewModel.completionState.collectAsState()
     val actionState by viewModel.actionState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    var showCancelDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(assignmentId) { viewModel.load(assignmentId) }
 
     LaunchedEffect(actionState) {
         when (actionState) {
             is WorkerAssignmentActionState.Success -> {
+                showCancelDialog = false
                 snackbarHostState.showSnackbar("تم الإجراء بنجاح")
                 viewModel.resetActionState()
             }
             is WorkerAssignmentActionState.Error -> {
+                showCancelDialog = false
                 snackbarHostState.showSnackbar((actionState as WorkerAssignmentActionState.Error).message)
                 viewModel.resetActionState()
             }
@@ -81,6 +88,16 @@ fun WorkerAssignmentDetailScreen(
     }
 
     val isActionLoading = actionState is WorkerAssignmentActionState.Loading
+
+    if (showCancelDialog) {
+        ConfirmCancelDialog(
+            title = "إلغاء المهمة",
+            body = "هل أنت متأكد أنك تريد إلغاء هذه المهمة؟ لا يمكن التراجع عن هذا الإجراء.",
+            isLoading = isActionLoading,
+            onConfirm = { reason -> viewModel.cancelAssignment(assignmentId, reason) },
+            onDismiss = { showCancelDialog = false }
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -103,6 +120,24 @@ fun WorkerAssignmentDetailScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             item { Spacer(Modifier.height(4.dp)) }
+
+            // ── Cancel (ACCEPTED only) ────────────────────────────────────────
+            if (assignmentStatus == "ACCEPTED") {
+                item {
+                    OutlinedButton(
+                        onClick = { showCancelDialog = true },
+                        enabled = !isActionLoading,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = MaterialTheme.colorScheme.error
+                        ),
+                        border = androidx.compose.foundation.BorderStroke(
+                            1.dp, MaterialTheme.colorScheme.error
+                        )
+                    ) { Text("إلغاء المهمة") }
+                }
+                item { HorizontalDivider() }
+            }
 
             // ── Contact business ──────────────────────────────────────────────
             if (businessPhone.isNotBlank()) {

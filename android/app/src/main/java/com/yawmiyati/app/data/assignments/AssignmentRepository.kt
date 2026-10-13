@@ -132,6 +132,14 @@ open class AssignmentRepository {
         } catch (e: Exception) { AssignmentResult.Error(networkMessage(e)) }
     }
 
+    open suspend fun cancelAssignment(assignmentId: String, reason: String): AssignmentResult<AssignmentResponse> {
+        return try {
+            val resp = api.cancelAssignment(assignmentId, com.yawmiyati.app.data.api.CancelRequest(reason))
+            if (resp.isSuccessful) AssignmentResult.Success(resp.body()!!)
+            else AssignmentResult.Error(parseError(resp.errorBody()?.string()), resp.code() == 401)
+        } catch (e: Exception) { AssignmentResult.Error(networkMessage(e)) }
+    }
+
     open suspend fun disputeCompletion(assignmentId: String): AssignmentResult<CompletionResponse> {
         return try {
             val response = api.disputeCompletion(assignmentId)

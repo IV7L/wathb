@@ -45,4 +45,10 @@ interface JobsApi {
         @Path("appId") appId: String,
         @Body request: ApplicationActionRequest
     ): Response<JobApplicationResponse>
+
+    @POST("jobs/{id}/cancel/")
+    suspend fun cancelJob(
+        @Path("id") id: String,
+        @Body request: CancelRequest
+    ): Response<JobListingResponse>
 }

@@ -89,6 +89,7 @@ class JobApplicationSerializer(serializers.ModelSerializer):
     worker_reliability = serializers.SerializerMethodField()
     job_title = serializers.CharField(source="job.title", read_only=True)
     assignment_id = serializers.SerializerMethodField()
+    assignment_status = serializers.SerializerMethodField()
 
     class Meta:
         model = JobApplication
@@ -96,13 +97,15 @@ class JobApplicationSerializer(serializers.ModelSerializer):
             "id", "job", "job_title",
             "worker_email", "worker_name", "worker_phone", "worker_is_verified",
             "worker_reliability",
-            "status", "cover_note", "applied_at", "reviewed_at", "assignment_id",
+            "status", "cover_note", "applied_at", "reviewed_at",
+            "assignment_id", "assignment_status",
         ]
         read_only_fields = [
             "id", "job", "job_title",
             "worker_email", "worker_name", "worker_phone", "worker_is_verified",
             "worker_reliability",
-            "status", "applied_at", "reviewed_at", "assignment_id",
+            "status", "applied_at", "reviewed_at",
+            "assignment_id", "assignment_status",
         ]
 
     def get_worker_name(self, obj):
@@ -114,6 +117,12 @@ class JobApplicationSerializer(serializers.ModelSerializer):
     def get_assignment_id(self, obj):
         try:
             return str(obj.assignment.id)
+        except Exception:
+            return None
+
+    def get_assignment_status(self, obj):
+        try:
+            return obj.assignment.status
         except Exception:
             return None
 

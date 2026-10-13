@@ -155,7 +155,8 @@ data class JobApplicationResponse(
     @SerializedName("cover_note") val coverNote: String,
     @SerializedName("applied_at") val appliedAt: String,
     @SerializedName("reviewed_at") val reviewedAt: String?,
-    @SerializedName("assignment_id") val assignmentId: String? = null
+    @SerializedName("assignment_id") val assignmentId: String? = null,
+    @SerializedName("assignment_status") val assignmentStatus: String? = null,
 )
 
 // ── Generic ──────────────────────────────────────────────────────────────────
@@ -364,3 +365,5 @@ data class AdminVerifyDeclarationRequest(
     val action: String,  // "verify" or "reject"
     @SerializedName("review_notes") val reviewNotes: String = ""
 )
+
+data class CancelRequest(val reason: String)

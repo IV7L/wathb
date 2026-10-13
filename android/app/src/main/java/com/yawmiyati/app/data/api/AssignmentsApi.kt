@@ -52,4 +52,10 @@ interface AssignmentsApi {
 
     @PATCH("assignments/{id}/completion/dispute/")
     suspend fun disputeCompletion(@Path("id") id: String): Response<CompletionResponse>
+
+    @POST("assignments/{id}/cancel/")
+    suspend fun cancelAssignment(
+        @Path("id") id: String,
+        @Body request: CancelRequest
+    ): Response<AssignmentResponse>
 }

@@ -6,7 +6,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Assignment
 import androidx.compose.material.icons.filled.DateRange
-import androidx.compose.material.icons.filled.Payments
+import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Work
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -23,6 +23,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.yawmiyati.app.viewmodels.AuthViewModel
 import com.yawmiyati.app.viewmodels.NotificationsViewModel
 
 private data class WorkerTab(val label: String, val icon: ImageVector)
@@ -31,7 +32,7 @@ private val WORKER_TABS = listOf(
     WorkerTab("وظائف",   Icons.Filled.Work),
     WorkerTab("طلباتي",  Icons.AutoMirrored.Filled.Assignment),
     WorkerTab("مهامي",   Icons.Filled.DateRange),
-    WorkerTab("أجوري",   Icons.Filled.Payments),
+    WorkerTab("خريطة",   Icons.Filled.Map),
     WorkerTab("ملفي",    Icons.Filled.Person),
 )
 
@@ -39,16 +40,15 @@ private val WORKER_TABS = listOf(
 @Composable
 fun WorkerMainScreen(
     onJobClick: (jobId: String) -> Unit,
-    onManageAssignment: (assignmentId: String, workerPhone: String, businessPhone: String) -> Unit,
+    onManageAssignment: (assignmentId: String, workerPhone: String, businessPhone: String, assignmentStatus: String) -> Unit,
     onNotifications: () -> Unit,
     onLogout: () -> Unit,
+    authViewModel: AuthViewModel = viewModel(),
     notificationsViewModel: NotificationsViewModel = viewModel()
 ) {
     var selectedTab by rememberSaveable { mutableIntStateOf(0) }
     val unreadCount by notificationsViewModel.unreadCount.collectAsState()
 
-    // Column + weight so the inner Scaffold fills the correct space
-    // and NavigationBar sits below — no nested Scaffold overlap issues.
     Column(modifier = Modifier.fillMaxSize()) {
         Box(modifier = Modifier.weight(1f)) {
             when (selectedTab) {
@@ -56,16 +56,21 @@ fun WorkerMainScreen(
                     onJobClick       = onJobClick,
                     onMyApplications = { selectedTab = 1 },
                     onMyAssignments  = { selectedTab = 2 },
-                    onMyWages        = { selectedTab = 3 },
+                    onMyWages        = {},
                     onProfile        = { selectedTab = 4 },
-                    onLogout         = onLogout,
+                    onLogout         = {},
                     onNotifications  = onNotifications,
                     unreadCount      = unreadCount,
                 )
                 1 -> WorkerApplicationsScreen()
                 2 -> WorkerAssignmentsScreen(onManageAssignment = onManageAssignment)
-                3 -> WorkerWagesScreen()
-                4 -> WorkerProfileScreen()
+                3 -> WorkerMapScreen(onJobClick = onJobClick)
+                4 -> WorkerProfileScreen(
+                    onLogout = {
+                        authViewModel.logout()
+                        onLogout()
+                    }
+                )
             }
         }
 

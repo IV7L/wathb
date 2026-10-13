@@ -105,9 +105,9 @@ fun YawmiyatiNavGraph() {
                 onJobClick = { jobId ->
                     navController.navigate(Screen.JobDetail.createRoute(jobId))
                 },
-                onManageAssignment = { assignmentId, workerPhone, businessPhone ->
+                onManageAssignment = { assignmentId, workerPhone, businessPhone, assignmentStatus ->
                     navController.navigate(
-                        Screen.WorkerAssignmentDetail.createRoute(assignmentId, workerPhone, businessPhone)
+                        Screen.WorkerAssignmentDetail.createRoute(assignmentId, workerPhone, businessPhone, assignmentStatus)
                     )
                 },
                 onNotifications = { navController.navigate(Screen.WorkerNotifications.route) },
@@ -124,17 +124,20 @@ fun YawmiyatiNavGraph() {
             arguments = listOf(
                 navArgument("assignmentId") { type = NavType.StringType },
                 navArgument("workerPhone") { type = NavType.StringType },
-                navArgument("businessPhone") { type = NavType.StringType }
+                navArgument("businessPhone") { type = NavType.StringType },
+                navArgument("assignmentStatus") { type = NavType.StringType }
             )
         ) { backStackEntry ->
-            val assignmentId = backStackEntry.arguments?.getString("assignmentId") ?: return@composable
-            val workerPhone  = backStackEntry.arguments?.getString("workerPhone") ?: ""
-            val businessPhone = backStackEntry.arguments?.getString("businessPhone") ?: ""
+            val assignmentId     = backStackEntry.arguments?.getString("assignmentId") ?: return@composable
+            val workerPhone      = backStackEntry.arguments?.getString("workerPhone") ?: ""
+            val businessPhone    = backStackEntry.arguments?.getString("businessPhone") ?: ""
+            val assignmentStatus = backStackEntry.arguments?.getString("assignmentStatus") ?: ""
             WorkerAssignmentDetailScreen(
-                assignmentId  = assignmentId,
-                workerPhone   = workerPhone,
-                businessPhone = businessPhone,
-                onBack        = { navController.popBackStack() }
+                assignmentId     = assignmentId,
+                workerPhone      = workerPhone,
+                businessPhone    = businessPhone,
+                assignmentStatus = assignmentStatus,
+                onBack           = { navController.popBackStack() }
             )
         }
 
@@ -186,15 +189,18 @@ fun YawmiyatiNavGraph() {
             route = Screen.BusinessAssignment.route,
             arguments = listOf(
                 navArgument("assignmentId") { type = NavType.StringType },
-                navArgument("workerPhone") { type = NavType.StringType }
+                navArgument("workerPhone") { type = NavType.StringType },
+                navArgument("assignmentStatus") { type = NavType.StringType }
             )
         ) { backStackEntry ->
-            val assignmentId = backStackEntry.arguments?.getString("assignmentId") ?: return@composable
-            val workerPhone  = backStackEntry.arguments?.getString("workerPhone") ?: ""
+            val assignmentId     = backStackEntry.arguments?.getString("assignmentId") ?: return@composable
+            val workerPhone      = backStackEntry.arguments?.getString("workerPhone") ?: ""
+            val assignmentStatus = backStackEntry.arguments?.getString("assignmentStatus") ?: ""
             BusinessAssignmentDetailScreen(
-                assignmentId = assignmentId,
-                workerPhone  = workerPhone,
-                onBack       = { navController.popBackStack() }
+                assignmentId     = assignmentId,
+                workerPhone      = workerPhone,
+                assignmentStatus = assignmentStatus,
+                onBack           = { navController.popBackStack() }
             )
         }
 
@@ -206,8 +212,8 @@ fun YawmiyatiNavGraph() {
             JobApplicationsScreen(
                 jobId = jobId,
                 onBack = { navController.popBackStack() },
-                onManageAssignment = { assignmentId, workerPhone ->
-                    navController.navigate(Screen.BusinessAssignment.createRoute(assignmentId, workerPhone))
+                onManageAssignment = { assignmentId, workerPhone, assignmentStatus ->
+                    navController.navigate(Screen.BusinessAssignment.createRoute(assignmentId, workerPhone, assignmentStatus))
                 }
             )
         }

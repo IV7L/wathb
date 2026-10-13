@@ -22,12 +22,12 @@ sealed class Screen(val route: String) {
     object JobApplications    : Screen("job_applications/{jobId}") {
         fun createRoute(jobId: String) = "job_applications/$jobId"
     }
-    object BusinessAssignment : Screen("business_assignment/{assignmentId}/{workerPhone}") {
-        fun createRoute(assignmentId: String, workerPhone: String) =
-            "business_assignment/$assignmentId/${workerPhone.replace("/", "%2F")}"
+    object BusinessAssignment : Screen("business_assignment/{assignmentId}/{workerPhone}/{assignmentStatus}") {
+        fun createRoute(assignmentId: String, workerPhone: String, assignmentStatus: String) =
+            "business_assignment/$assignmentId/${workerPhone.replace("/", "%2F")}/$assignmentStatus"
     }
-    object WorkerAssignmentDetail : Screen("worker_assignment/{assignmentId}/{workerPhone}/{businessPhone}") {
-        fun createRoute(assignmentId: String, workerPhone: String, businessPhone: String) =
-            "worker_assignment/$assignmentId/${workerPhone.replace("/", "%2F")}/${businessPhone.replace("/", "%2F").replace("+", "%2B")}"
+    object WorkerAssignmentDetail : Screen("worker_assignment/{assignmentId}/{workerPhone}/{businessPhone}/{assignmentStatus}") {
+        fun createRoute(assignmentId: String, workerPhone: String, businessPhone: String, assignmentStatus: String) =
+            "worker_assignment/$assignmentId/${workerPhone.replace("/", "%2F")}/${businessPhone.replace("/", "%2F").replace("+", "%2B")}/$assignmentStatus"
     }
 }

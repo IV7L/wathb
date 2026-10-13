@@ -158,8 +158,27 @@ class JobCancelView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        job.status = JobListingStatus.CANCELLED
-        job.save(update_fields=["status"])
+        reason = request.data.get("reason", "").strip()
+        if not reason:
+            return Response({"detail": "reason is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        with transaction.atomic():
+            job.status = JobListingStatus.CANCELLED
+            job.cancellation_reason = reason
+            job.save(update_fields=["status", "cancellation_reason"])
+
+            # Cancel pending/offered applications so workers are notified.
+            job.applications.filter(
+                status__in=[ApplicationStatus.PENDING, ApplicationStatus.OFFERED]
+            ).update(status=ApplicationStatus.CANCELLED)
+
+            # Cancel accepted assignments (work hasn't started yet).
+            from assignments.models import Assignment, AssignmentStatus
+            Assignment.objects.filter(
+                job=job,
+                status__in=[AssignmentStatus.OFFERED, AssignmentStatus.ACCEPTED]
+            ).update(status=AssignmentStatus.CANCELLED)
+
         return Response(JobListingSerializer(job).data)
 
 

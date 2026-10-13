@@ -59,6 +59,7 @@ class ApplicationStatus(models.TextChoices):
     REJECTED = "REJECTED", "Rejected"
     WITHDRAWN = "WITHDRAWN", "Withdrawn"
     EXPIRED = "EXPIRED", "Expired"
+    CANCELLED = "CANCELLED", "Cancelled"  # job was cancelled by the business
 
 
 class JobListing(models.Model):
@@ -88,6 +89,7 @@ class JobListing(models.Model):
     attendance_requirements = models.TextField(blank=True)
     cancellation_policy = models.TextField(blank=True)
     additional_conditions = models.TextField(blank=True)
+    cancellation_reason = models.TextField(blank=True, default="")
     status = models.CharField(
         max_length=20,
         choices=JobListingStatus.choices,

@@ -133,6 +133,9 @@ class WorkerAssignmentDetailViewModel(
         }
     }
 
+    fun cancelAssignment(assignmentId: String, reason: String) =
+        performAction { repository.cancelAssignment(assignmentId, reason) }
+
     fun resetActionState() {
         _actionState.value = WorkerAssignmentActionState.Idle
     }

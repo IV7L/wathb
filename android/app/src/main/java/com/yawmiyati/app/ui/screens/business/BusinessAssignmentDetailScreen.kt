@@ -12,7 +12,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -20,6 +22,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -35,6 +38,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
+import com.yawmiyati.app.ui.components.ConfirmCancelDialog
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -54,6 +58,7 @@ import java.time.LocalDate
 fun BusinessAssignmentDetailScreen(
     assignmentId: String,
     workerPhone: String,
+    assignmentStatus: String = "",
     onBack: () -> Unit,
     viewModel: BusinessAssignmentViewModel = viewModel()
 ) {
@@ -65,16 +70,21 @@ fun BusinessAssignmentDetailScreen(
     var attendanceNotes by rememberSaveable { mutableStateOf("") }
     var completionHours by rememberSaveable { mutableStateOf("") }
     var completionNotes by rememberSaveable { mutableStateOf("") }
+    var showCancelDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(assignmentId) { viewModel.load(assignmentId) }
+
+    val isActionLoading = actionState is AssignmentWorkActionState.Loading
 
     LaunchedEffect(actionState) {
         when (actionState) {
             is AssignmentWorkActionState.Success -> {
+                showCancelDialog = false
                 snackbarHostState.showSnackbar("تم الحفظ بنجاح")
                 viewModel.resetActionState()
             }
             is AssignmentWorkActionState.Error -> {
+                showCancelDialog = false
                 snackbarHostState.showSnackbar((actionState as AssignmentWorkActionState.Error).message)
                 viewModel.resetActionState()
             }
@@ -82,7 +92,15 @@ fun BusinessAssignmentDetailScreen(
         }
     }
 
-    val isActionLoading = actionState is AssignmentWorkActionState.Loading
+    if (showCancelDialog) {
+        ConfirmCancelDialog(
+            title = "إلغاء المهمة",
+            body = "هل أنت متأكد أنك تريد إلغاء مهمة هذا العامل؟",
+            isLoading = isActionLoading,
+            onConfirm = { reason -> viewModel.cancelAssignment(assignmentId, reason) },
+            onDismiss = { showCancelDialog = false }
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -105,6 +123,22 @@ fun BusinessAssignmentDetailScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item { Spacer(Modifier.height(4.dp)) }
+
+            // ── Cancel (OFFERED or ACCEPTED only) ────────────────────────────
+            if (assignmentStatus in listOf("OFFERED", "ACCEPTED")) {
+                item {
+                    OutlinedButton(
+                        onClick = { showCancelDialog = true },
+                        enabled = !isActionLoading,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = MaterialTheme.colorScheme.error
+                        ),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.error)
+                    ) { Text("إلغاء المهمة") }
+                }
+                item { HorizontalDivider() }
+            }
 
             // ── Attendance section ────────────────────────────────────────────
             item {

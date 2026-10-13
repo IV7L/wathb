@@ -41,16 +41,20 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.yawmiyati.app.data.api.JobListingResponse
+import com.yawmiyati.app.ui.components.ConfirmCancelDialog
 import com.yawmiyati.app.ui.components.EmptyState
 import com.yawmiyati.app.ui.components.ErrorMessage
 import com.yawmiyati.app.ui.components.LoadingIndicator
 import com.yawmiyati.app.viewmodels.AuthViewModel
+import com.yawmiyati.app.viewmodels.CancelJobUiState
 import com.yawmiyati.app.viewmodels.JobsUiState
 import com.yawmiyati.app.viewmodels.JobsViewModel
 import com.yawmiyati.app.viewmodels.PublishUiState
@@ -69,13 +73,40 @@ fun BusinessHomeScreen(
 ) {
     val jobsState by jobsViewModel.uiState.collectAsState()
     val publishState by jobsViewModel.publishState.collectAsState()
+    val cancelState by jobsViewModel.cancelState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    var cancelJobId by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(publishState) {
         if (publishState is PublishUiState.Error) {
             snackbarHostState.showSnackbar((publishState as PublishUiState.Error).message)
             jobsViewModel.resetPublishError()
         }
+    }
+
+    LaunchedEffect(cancelState) {
+        when (cancelState) {
+            is CancelJobUiState.Cancelled -> {
+                cancelJobId = null
+                snackbarHostState.showSnackbar("تم إلغاء الوظيفة")
+                jobsViewModel.resetCancelState()
+            }
+            is CancelJobUiState.Error -> {
+                snackbarHostState.showSnackbar((cancelState as CancelJobUiState.Error).message)
+                jobsViewModel.resetCancelState()
+            }
+            else -> {}
+        }
+    }
+
+    cancelJobId?.let { jobId ->
+        ConfirmCancelDialog(
+            title = "إلغاء الوظيفة",
+            body = "سيتم إلغاء جميع الطلبات والمهام المرتبطة بهذه الوظيفة.",
+            isLoading = cancelState is CancelJobUiState.Loading,
+            onConfirm = { reason -> jobsViewModel.cancelJob(jobId, reason) },
+            onDismiss = { cancelJobId = null }
+        )
     }
 
     Scaffold(
@@ -178,7 +209,8 @@ fun BusinessHomeScreen(
                                 isPublishing = publishState is PublishUiState.Loading &&
                                     (publishState as PublishUiState.Loading).jobId == job.id,
                                 onClick = { onViewApplications(job.id) },
-                                onPublish = { jobsViewModel.publishJob(job.id) }
+                                onPublish = { jobsViewModel.publishJob(job.id) },
+                                onCancel = { cancelJobId = job.id }
                             )
                         }
                         item { Spacer(Modifier.height(80.dp)) }
@@ -194,7 +226,8 @@ private fun BusinessJobCard(
     job: JobListingResponse,
     isPublishing: Boolean,
     onClick: () -> Unit,
-    onPublish: () -> Unit
+    onPublish: () -> Unit,
+    onCancel: () -> Unit,
 ) {
     Card(
         onClick = onClick,
@@ -242,6 +275,19 @@ private fun BusinessJobCard(
                     }
                     Text("نشر الوظيفة")
                 }
+            }
+            if (job.status == "PUBLISHED") {
+                Spacer(Modifier.height(8.dp))
+                androidx.compose.material3.OutlinedButton(
+                    onClick = onCancel,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = androidx.compose.material3.ButtonDefaults.outlinedButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error
+                    ),
+                    border = androidx.compose.foundation.BorderStroke(
+                        1.dp, MaterialTheme.colorScheme.error
+                    )
+                ) { Text("إلغاء الوظيفة") }
             }
         }
     }

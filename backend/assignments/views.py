@@ -113,9 +113,11 @@ class AssignmentCancelView(APIView):
     def post(self, request, pk):
         user = request.user
         if user.role == Role.BUSINESS:
-            qs = Assignment.objects.filter(pk=pk, job__business__user=user)
+            qs = Assignment.objects.select_related("job").filter(pk=pk, job__business__user=user)
+        elif user.role == Role.WORKER:
+            qs = Assignment.objects.select_related("job").filter(pk=pk, worker=user)
         elif user.role == Role.ADMIN:
-            qs = Assignment.objects.filter(pk=pk)
+            qs = Assignment.objects.select_related("job").filter(pk=pk)
         else:
             return Response({"detail": "Forbidden."}, status=status.HTTP_403_FORBIDDEN)
 
@@ -127,7 +129,13 @@ class AssignmentCancelView(APIView):
         if assignment.status in (AssignmentStatus.COMPLETED, AssignmentStatus.CANCELLED):
             return Response({"detail": "Cannot cancel a completed or already-cancelled assignment."}, status=status.HTTP_400_BAD_REQUEST)
 
-        reason = request.data.get("reason", "")
+        if timezone.now().date() >= assignment.job.work_date:
+            return Response({"detail": "Cannot cancel an assignment after the work date."}, status=status.HTTP_400_BAD_REQUEST)
+
+        reason = request.data.get("reason", "").strip()
+        if not reason:
+            return Response({"detail": "reason is required."}, status=status.HTTP_400_BAD_REQUEST)
+
         assignment.status = AssignmentStatus.CANCELLED
         assignment.cancelled_at = timezone.now()
         assignment.cancellation_reason = reason

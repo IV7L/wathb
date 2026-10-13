@@ -48,7 +48,7 @@ import com.yawmiyati.app.viewmodels.JobApplicationsViewModel
 fun JobApplicationsScreen(
     jobId: String,
     onBack: () -> Unit,
-    onManageAssignment: (assignmentId: String, workerPhone: String) -> Unit = { _, _ -> },
+    onManageAssignment: (assignmentId: String, workerPhone: String, assignmentStatus: String) -> Unit = { _, _, _ -> },
     viewModel: JobApplicationsViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -104,7 +104,7 @@ fun JobApplicationsScreen(
                             onReject = { viewModel.rejectApplication(app.id) },
                             onManageAssignment = {
                                 val assignId = app.assignmentId
-                                if (assignId != null) onManageAssignment(assignId, app.workerPhone ?: "")
+                                if (assignId != null) onManageAssignment(assignId, app.workerPhone ?: "", app.assignmentStatus ?: "")
                             }
                         )
                     }

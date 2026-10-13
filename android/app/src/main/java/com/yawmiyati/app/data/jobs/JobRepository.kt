@@ -129,6 +129,14 @@ open class JobRepository {
         }
     }
 
+    suspend fun cancelJob(jobId: String, reason: String): JobResult<JobListingResponse> {
+        return try {
+            val resp = api.cancelJob(jobId, com.yawmiyati.app.data.api.CancelRequest(reason))
+            if (resp.isSuccessful) JobResult.Success(resp.body()!!)
+            else JobResult.Error(parseError(resp.errorBody()?.string()), resp.code() == 401)
+        } catch (e: Exception) { JobResult.Error(networkMessage(e)) }
+    }
+
     suspend fun submitAndPublishJob(jobId: String): JobResult<JobListingResponse> {
         return try {
             val submitResponse = api.submitJob(jobId)
