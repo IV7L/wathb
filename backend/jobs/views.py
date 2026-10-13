@@ -188,8 +188,8 @@ class JobCancelView(APIView):
             ).update(status=AssignmentStatus.CANCELLED)
 
             # Notify affected workers.
-            from accounts.models import CustomUser
-            for worker in CustomUser.objects.filter(pk__in=workers_to_notify):
+            from accounts.models import User as AccountUser
+            for worker in AccountUser.objects.filter(pk__in=workers_to_notify):
                 _notify_worker(worker, "JOB_CANCELLED", job)
 
         return Response(JobListingSerializer(job).data)
