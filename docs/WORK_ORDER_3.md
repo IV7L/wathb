@@ -75,13 +75,21 @@ H5 JOB DETAIL REDESIGN
   checklist, fixed apply button at the bottom.
 
 H6 JOB LOCATION
-- Optional latitude/longitude on the job, set by the business
-  with a pin picker at creation.
-- Worker sees a small map and "افتح في الخرائط" (geo: intent).
-- Never store or request the worker's location.
-- Prefer a library that needs no API key (e.g. osmdroid /
-  OpenStreetMap). [STOP] If you think Google Maps is required,
-  ask me first; it needs a key and billing.
+- Job location is required; the business sets it with a pin
+  picker (drag the map under a fixed center pin; "موقعي الحالي"
+  may use the BUSINESS device location).
+- Worker home has a list / map toggle; each job is a pin showing
+  the wage; tap opens a small card, then the job detail; same
+  filters as H4; cluster when crowded.
+- Job detail: small map with the pin and "افتح في الخرائط"
+  (geo: intent with coordinates and job title).
+- Server validates coordinates inside a pilot bounding box.
+- Worker location is allowed on the device only (map tab
+  "موقعي" button): moves the map and computes distance locally;
+  never sent to our server or any third party; everything works
+  when permission is denied.
+- Tests: coordinate validation; no endpoint accepts worker
+  coordinates.
 
 H7 WORKER DECLARATION AT OFFER ACCEPTANCE
 - Before accepting an OFFERED assignment, three required
