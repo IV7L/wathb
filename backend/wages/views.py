@@ -1,3 +1,4 @@
+import datetime
 from django.db import transaction
 from django.http import FileResponse
 from django.utils import timezone
@@ -306,6 +307,93 @@ def _notify_worker(worker, notification_type, obligation):
         )
     except Exception:
         pass
+
+
+class AdminStaleWageListView(APIView):
+    permission_classes = [IsAdminRole]
+
+    def get(self, request):
+        cutoff = timezone.now() - datetime.timedelta(days=3)
+        obligations = WageObligation.objects.filter(
+            status=WageObligationStatus.AWAITING_ACK,
+            declarations__status=PaymentDeclarationStatus.SUBMITTED,
+            declarations__declared_at__lte=cutoff,
+        ).distinct().prefetch_related("declarations").select_related(
+            "assignment", "assignment__worker", "assignment__job", "assignment__job__business"
+        )
+        return Response(WageObligationSerializer(obligations, many=True).data)
+
+
+class AdminPhoneResolveView(APIView):
+    permission_classes = [IsAdminRole]
+
+    def patch(self, request, pk):
+        action = request.data.get("action")
+        notes = (request.data.get("notes") or "").strip()
+
+        if action not in ("confirmed_by_phone", "disputed_by_phone"):
+            return Response(
+                {"detail": "action must be 'confirmed_by_phone' or 'disputed_by_phone'."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if not notes:
+            return Response({"detail": "notes are required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            obligation = WageObligation.objects.select_for_update().get(pk=pk)
+        except WageObligation.DoesNotExist:
+            return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        if obligation.status != WageObligationStatus.AWAITING_ACK:
+            return Response(
+                {"detail": "Obligation is not in AWAITING_ACK state."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        declaration = obligation.declarations.filter(
+            status=PaymentDeclarationStatus.SUBMITTED
+        ).order_by("-declared_at").first()
+
+        if not declaration:
+            return Response(
+                {"detail": "No SUBMITTED declaration found."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        with transaction.atomic():
+            if action == "confirmed_by_phone":
+                declaration.status = PaymentDeclarationStatus.VERIFIED
+                declaration.reviewed_by = request.user
+                declaration.reviewed_at = timezone.now()
+                declaration.review_notes = f"[admin phone confirmation] {notes}"
+                declaration.save(update_fields=["status", "reviewed_by", "reviewed_at", "review_notes"])
+                obligation.status = WageObligationStatus.VERIFIED_PAID
+                obligation.save(update_fields=["status"])
+                _log_audit(
+                    request.user, "admin_phone_confirmed", "WageObligation",
+                    str(obligation.pk), {"notes": notes}
+                )
+            else:
+                declaration.status = PaymentDeclarationStatus.DISPUTED
+                declaration.reviewed_by = request.user
+                declaration.reviewed_at = timezone.now()
+                declaration.review_notes = f"[admin phone dispute] {notes}"
+                declaration.save(update_fields=["status", "reviewed_by", "reviewed_at", "review_notes"])
+                obligation.status = WageObligationStatus.DISPUTED
+                obligation.save(update_fields=["status"])
+                _create_dispute(
+                    raised_by=request.user,
+                    assignment=obligation.assignment,
+                    wage_obligation=obligation,
+                    category="PAYMENT_NOT_RECEIVED",
+                    description=f"[admin phone dispute] {notes}",
+                )
+                _log_audit(
+                    request.user, "admin_phone_disputed", "WageObligation",
+                    str(obligation.pk), {"notes": notes}
+                )
+
+        return Response(WageObligationSerializer(obligation).data)
 
 
 def _log_audit(actor, action, model_name, object_id, details=None):

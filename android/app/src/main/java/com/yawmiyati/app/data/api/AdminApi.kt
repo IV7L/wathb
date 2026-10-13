@@ -45,4 +45,13 @@ interface AdminApi {
         @Path("pk") pk: String,
         @Body body: DisputeResolveRequest
     ): Response<DisputeResponse>
+
+    @GET("admin/disputes/stale-wages/")
+    suspend fun listStaleWages(): Response<List<WageObligationResponse>>
+
+    @PATCH("wages/{pk}/admin-phone-resolve/")
+    suspend fun phoneResolveWage(
+        @Path("pk") pk: String,
+        @Body request: AdminPhoneResolveRequest
+    ): Response<WageObligationResponse>
 }

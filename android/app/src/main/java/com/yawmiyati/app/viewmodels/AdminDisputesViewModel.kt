@@ -2,9 +2,12 @@ package com.yawmiyati.app.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.yawmiyati.app.data.admin.AdminRepository
+import com.yawmiyati.app.data.admin.AdminResult
 import com.yawmiyati.app.data.api.ApiClient
 import com.yawmiyati.app.data.api.DisputeResponse
 import com.yawmiyati.app.data.api.DisputeResolveRequest
+import com.yawmiyati.app.data.api.WageObligationResponse
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -24,13 +27,24 @@ sealed class DisputeActionState {
 }
 
 class AdminDisputesViewModel : ViewModel() {
+    private val adminRepository = AdminRepository()
+
     private val _uiState = MutableStateFlow<DisputesUiState>(DisputesUiState.Loading)
     val uiState: StateFlow<DisputesUiState> = _uiState
 
     private val _actionState = MutableStateFlow<DisputeActionState>(DisputeActionState.Idle)
     val actionState: StateFlow<DisputeActionState> = _actionState
 
-    init { load() }
+    private val _staleWages = MutableStateFlow<List<WageObligationResponse>>(emptyList())
+    val staleWages: StateFlow<List<WageObligationResponse>> = _staleWages
+
+    private val _phoneResolveState = MutableStateFlow<DisputeActionState>(DisputeActionState.Idle)
+    val phoneResolveState: StateFlow<DisputeActionState> = _phoneResolveState
+
+    init {
+        load()
+        loadStaleWages()
+    }
 
     fun load() {
         viewModelScope.launch {
@@ -67,5 +81,33 @@ class AdminDisputesViewModel : ViewModel() {
         }
     }
 
+    fun loadStaleWages() {
+        viewModelScope.launch {
+            try {
+                val result = adminRepository.listStaleWages()
+                if (result is AdminResult.Success) {
+                    _staleWages.value = result.data
+                }
+            } catch (_: Exception) { }
+        }
+    }
+
+    fun phoneResolveWage(obligationId: String, action: String, notes: String) {
+        viewModelScope.launch {
+            _phoneResolveState.value = DisputeActionState.Loading
+            val result = adminRepository.phoneResolveWage(obligationId, action, notes)
+            when (result) {
+                is AdminResult.Success -> {
+                    _staleWages.value = _staleWages.value.filter { it.id != obligationId }
+                    _phoneResolveState.value = DisputeActionState.Success
+                }
+                is AdminResult.Error -> {
+                    _phoneResolveState.value = DisputeActionState.Error(result.message)
+                }
+            }
+        }
+    }
+
     fun resetActionState() { _actionState.value = DisputeActionState.Idle }
+    fun resetPhoneResolveState() { _phoneResolveState.value = DisputeActionState.Idle }
 }

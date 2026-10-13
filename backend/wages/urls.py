@@ -3,6 +3,7 @@ from wages.views import (
     WageObligationListView, WageObligationDetailView,
     DeclarePaymentView, AcknowledgePaymentView, DisputePaymentView,
     UploadEvidenceView, EvidenceFileView, AdminVerifyPaymentView,
+    AdminPhoneResolveView,
 )
 
 urlpatterns = [
@@ -14,4 +15,5 @@ urlpatterns = [
     path("<uuid:pk>/declarations/<uuid:dec_id>/evidence/", UploadEvidenceView.as_view(), name="wage-upload-evidence"),
     path("<uuid:pk>/declarations/<uuid:dec_id>/evidence/<uuid:ev_id>/file/", EvidenceFileView.as_view(), name="wage-evidence-file"),
     path("<uuid:pk>/declarations/<uuid:dec_id>/verify/", AdminVerifyPaymentView.as_view(), name="wage-admin-verify"),
+    path("<uuid:pk>/admin-phone-resolve/", AdminPhoneResolveView.as_view(), name="wage-admin-phone-resolve"),
 ]

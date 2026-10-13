@@ -3,11 +3,13 @@ package com.yawmiyati.app.data.admin
 import com.google.gson.Gson
 import com.google.gson.JsonObject
 import com.yawmiyati.app.data.api.AdminBusinessProfile
+import com.yawmiyati.app.data.api.AdminPhoneResolveRequest
 import com.yawmiyati.app.data.api.AdminVerifyRequest
 import com.yawmiyati.app.data.api.AdminWorkerActionRequest
 import com.yawmiyati.app.data.api.AdminWorkerProfile
 import com.yawmiyati.app.data.api.ApiClient
 import com.yawmiyati.app.data.api.PilotSummaryResponse
+import com.yawmiyati.app.data.api.WageObligationResponse
 
 sealed class AdminResult<out T> {
     data class Success<T>(val data: T) : AdminResult<T>()
@@ -89,6 +91,26 @@ class AdminRepository {
                 }
                 AdminResult.Error(msg, code == 401)
             }
+        } catch (e: Exception) {
+            AdminResult.Error(networkMessage(e))
+        }
+    }
+
+    suspend fun listStaleWages(): AdminResult<List<WageObligationResponse>> {
+        return try {
+            val response = api.listStaleWages()
+            if (response.isSuccessful) AdminResult.Success(response.body() ?: emptyList())
+            else AdminResult.Error(parseError(response.errorBody()?.string()), response.code() == 401)
+        } catch (e: Exception) {
+            AdminResult.Error(networkMessage(e))
+        }
+    }
+
+    suspend fun phoneResolveWage(obligationId: String, action: String, notes: String): AdminResult<WageObligationResponse> {
+        return try {
+            val response = api.phoneResolveWage(obligationId, AdminPhoneResolveRequest(action, notes))
+            if (response.isSuccessful) AdminResult.Success(response.body()!!)
+            else AdminResult.Error(parseError(response.errorBody()?.string()), response.code() == 401)
         } catch (e: Exception) {
             AdminResult.Error(networkMessage(e))
         }

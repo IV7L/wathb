@@ -202,6 +202,29 @@ private fun WorkerWageCard(
                 )
             }
             if (obligation.status == "AWAITING_ACK") {
+                val days = daysSinceDeclaration(obligation.declarations)
+                if (days >= 1) {
+                    val reminderText = if (days >= 3)
+                        "تنبيه: مضى $days أيام على إعلان الدفع. يرجى الإقرار أو الاعتراض فوراً."
+                    else
+                        "يرجى مراجعة إعلان الدفع وتأكيد استلامك أو الاعتراض عليه."
+                    val reminderColor = if (days >= 3) MaterialTheme.colorScheme.errorContainer
+                                        else MaterialTheme.colorScheme.secondaryContainer
+                    val reminderTextColor = if (days >= 3) MaterialTheme.colorScheme.onErrorContainer
+                                            else MaterialTheme.colorScheme.onSecondaryContainer
+                    Surface(
+                        color = reminderColor,
+                        shape = MaterialTheme.shapes.small,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            reminderText,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = reminderTextColor,
+                            modifier = Modifier.padding(8.dp)
+                        )
+                    }
+                }
                 Button(
                     onClick = onAcknowledge,
                     enabled = !isActionLoading,
@@ -319,4 +342,12 @@ private fun paymentMethodLabel(method: String): String = when (method) {
     "BANK_TRANSFER" -> "تحويل بنكي"
     "OTHER"         -> "طريقة أخرى"
     else            -> method
+}
+
+private fun daysSinceDeclaration(declarations: List<com.yawmiyati.app.data.api.PaymentDeclarationResponse>): Long {
+    val latest = declarations.firstOrNull() ?: return 0L
+    return try {
+        val declaredDate = java.time.LocalDate.parse(latest.declaredAt.take(10))
+        java.time.temporal.ChronoUnit.DAYS.between(declaredDate, java.time.LocalDate.now())
+    } catch (_: Exception) { 0L }
 }

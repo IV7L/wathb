@@ -381,6 +381,11 @@ data class DisputePaymentRequest(
 
 // ── Disputes ──────────────────────────────────────────────────────────────────
 
+data class AdminPhoneResolveRequest(
+    val action: String,
+    val notes: String
+)
+
 data class DisputeResponse(
     val id: String,
     val category: String,

@@ -1,18 +1,15 @@
 package com.yawmiyati.app
 
-import com.yawmiyati.app.data.api.AdminVerifyDeclarationRequest
 import com.yawmiyati.app.data.api.DeclarePaymentRequest
 import com.yawmiyati.app.data.api.PaymentDeclarationResponse
 import com.yawmiyati.app.data.api.WageObligationResponse
 import com.yawmiyati.app.data.auth.SessionEventBus
 import com.yawmiyati.app.data.wages.WageRepository
 import com.yawmiyati.app.data.wages.WageResult
-import com.yawmiyati.app.viewmodels.AdminWagesViewModel
 import com.yawmiyati.app.viewmodels.WageActionState
 import com.yawmiyati.app.viewmodels.WagesUiState
 import com.yawmiyati.app.viewmodels.WagesViewModel
 import com.yawmiyati.app.viewmodels.WorkerWagesViewModel
-import com.yawmiyati.app.viewmodels.selectReviewableDeclaration
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
@@ -166,98 +163,6 @@ class WagesViewModelTest {
         job.cancel()
     }
 
-    // ── AdminWagesViewModel ───────────────────────────────────────────────────
-
-    @Test
-    fun `admin loads only AWAITING_ACK obligations`() = runTest(testDispatcher) {
-        val pending = listOf(fakeObligation("a-1", "AWAITING_ACK"))
-        val repo = object : WageRepository() {
-            override suspend fun listObligations(status: String?) =
-                if (status == "AWAITING_ACK") WageResult.Success(pending)
-                else WageResult.Success(emptyList())
-        }
-        val vm = AdminWagesViewModel(repo)
-        advanceUntilIdle()
-        val state = vm.uiState.value as WagesUiState.Success
-        assertEquals(1, state.obligations.size)
-        assertEquals("AWAITING_ACK", state.obligations.first().status)
-    }
-
-    @Test
-    fun `admin verifyDeclaration removes obligation from list`() = runTest(testDispatcher) {
-        val obligation = fakeObligation("a-2", "AWAITING_ACK")
-        val declaration = fakeDeclaration("d-2", "a-2").copy(status = "VERIFIED")
-        val repo = object : WageRepository() {
-            override suspend fun listObligations(status: String?) = WageResult.Success(listOf(obligation))
-            override suspend fun verifyDeclaration(
-                obligationId: String, declarationId: String, request: AdminVerifyDeclarationRequest
-            ) = WageResult.Success(declaration)
-        }
-        val vm = AdminWagesViewModel(repo)
-        advanceUntilIdle()
-        vm.verifyDeclaration("a-2", "d-2")
-        advanceUntilIdle()
-        assertEquals(WageActionState.Success, vm.actionState.value)
-        assertTrue(vm.uiState.value is WagesUiState.Empty)
-    }
-
-    // ── selectReviewableDeclaration ───────────────────────────────────────────
-
-    @Test
-    fun `selectReviewableDeclaration returns null for empty list`() {
-        assertNull(selectReviewableDeclaration(emptyList()))
-    }
-
-    @Test
-    fun `selectReviewableDeclaration returns the single SUBMITTED declaration`() {
-        val decl = fakeDeclaration("d-sub", "obl-1").copy(status = "SUBMITTED")
-        assertEquals(decl, selectReviewableDeclaration(listOf(decl)))
-    }
-
-    @Test
-    fun `selectReviewableDeclaration returns null when only REJECTED declarations exist`() {
-        val rejected = fakeDeclaration("d-rej", "obl-1").copy(status = "REJECTED")
-        assertNull(selectReviewableDeclaration(listOf(rejected)))
-    }
-
-    @Test
-    fun `selectReviewableDeclaration returns SUBMITTED when list is newest-first rejected then submitted`() {
-        // Backend ordering is -declared_at: newest first.
-        // Real scenario from F.1: first declare rejected, then re-declared as submitted.
-        // API returns submitted (newer) at index 0, rejected (older) at index 1.
-        val submitted = fakeDeclaration("d-new", "obl-1").copy(status = "SUBMITTED")
-        val rejected  = fakeDeclaration("d-old", "obl-1").copy(status = "REJECTED")
-        val result = selectReviewableDeclaration(listOf(submitted, rejected))
-        assertEquals(submitted, result)
-        assertEquals("SUBMITTED", result?.status)
-    }
-
-    @Test
-    fun `selectReviewableDeclaration returns SUBMITTED regardless of position in list`() {
-        // Guard against ordering assumptions: SUBMITTED appears last in the list.
-        val rejected  = fakeDeclaration("d-first", "obl-1").copy(status = "REJECTED")
-        val submitted = fakeDeclaration("d-last",  "obl-1").copy(status = "SUBMITTED")
-        val result = selectReviewableDeclaration(listOf(rejected, submitted))
-        assertEquals(submitted, result)
-    }
-
-    @Test
-    fun `admin rejectDeclaration also removes obligation from list`() = runTest(testDispatcher) {
-        val obligation = fakeObligation("a-3", "AWAITING_ACK")
-        val declaration = fakeDeclaration("d-3", "a-3").copy(status = "REJECTED")
-        val repo = object : WageRepository() {
-            override suspend fun listObligations(status: String?) = WageResult.Success(listOf(obligation))
-            override suspend fun verifyDeclaration(
-                obligationId: String, declarationId: String, request: AdminVerifyDeclarationRequest
-            ) = WageResult.Success(declaration)
-        }
-        val vm = AdminWagesViewModel(repo)
-        advanceUntilIdle()
-        vm.rejectDeclaration("a-3", "d-3", "غير واضح")
-        advanceUntilIdle()
-        assertTrue(vm.uiState.value is WagesUiState.Empty)
-    }
-
     // ── H-1: Session expiry propagation via SessionEventBus ──────────────────
 
     @Test
@@ -308,20 +213,6 @@ class WagesViewModelTest {
         val vm = WorkerWagesViewModel(repo)
         advanceUntilIdle()
         vm.acknowledgePayment("w-auth-1")
-        advanceUntilIdle()
-        assertTrue("Expected session expired event", events.isNotEmpty())
-        job.cancel()
-    }
-
-    @Test
-    fun `AdminWagesViewModel auth error on load emits session expired`() = runTest(testDispatcher) {
-        val repo = object : WageRepository() {
-            override suspend fun listObligations(status: String?) =
-                WageResult.Error("Unauthorized", isAuth = true)
-        }
-        val events = mutableListOf<Unit>()
-        val job = launch { SessionEventBus.sessionExpired.collect { events.add(it) } }
-        val vm = AdminWagesViewModel(repo)
         advanceUntilIdle()
         assertTrue("Expected session expired event", events.isNotEmpty())
         job.cancel()

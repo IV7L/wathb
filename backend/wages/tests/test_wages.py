@@ -414,3 +414,110 @@ class AdminVerifyPaymentTests(APITestCase):
         self.assertIn("declarations", response.data)
         self.assertEqual(len(response.data["declarations"]), 1)
         self.assertEqual(response.data["declarations"][0]["id"], str(self.declaration.pk))
+
+
+class AdminPhoneResolveTests(APITestCase):
+
+    def setUp(self):
+        from django.utils import timezone as tz
+        self.admin = User.objects.create_user("+970599016001", "P@ss1234", role=Role.ADMIN, is_staff=True)
+        biz_user, biz_profile = make_business("+970599016002")
+        worker_user = make_worker("+970599016003")
+        _, assignment = make_job_and_assignment(biz_profile, worker_user)
+        self.obligation = make_obligation(assignment, obligation_status=WageObligationStatus.AWAITING_ACK)
+        self.declaration = make_declaration(self.obligation, biz_user)
+        PaymentDeclaration.objects.filter(pk=self.declaration.pk).update(
+            declared_at=tz.now() - datetime.timedelta(days=4)
+        )
+        self.url = reverse("wage-admin-phone-resolve", kwargs={"pk": str(self.obligation.pk)})
+
+    def _auth_admin(self):
+        resp = self.client.post(reverse("auth-login"), {"phone": "0599016001", "password": "P@ss1234"})
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {resp.data['access']}")
+
+    def _auth_worker(self):
+        resp = self.client.post(reverse("auth-login"), {"phone": "0599016003", "password": "P@ss1234"})
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {resp.data['access']}")
+
+    def test_confirmed_by_phone_sets_verified_paid(self):
+        self._auth_admin()
+        resp = self.client.patch(self.url, {"action": "confirmed_by_phone", "notes": "تحدثت مع العامل"}, format="json")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.obligation.refresh_from_db()
+        self.declaration.refresh_from_db()
+        self.assertEqual(self.obligation.status, WageObligationStatus.VERIFIED_PAID)
+        self.assertEqual(self.declaration.status, PaymentDeclarationStatus.VERIFIED)
+
+    def test_disputed_by_phone_creates_dispute_and_sets_disputed(self):
+        from disputes.models import Dispute
+        self._auth_admin()
+        resp = self.client.patch(self.url, {"action": "disputed_by_phone", "notes": "نفى العامل الاستلام"}, format="json")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.obligation.refresh_from_db()
+        self.declaration.refresh_from_db()
+        self.assertEqual(self.obligation.status, WageObligationStatus.DISPUTED)
+        self.assertEqual(self.declaration.status, PaymentDeclarationStatus.DISPUTED)
+        self.assertTrue(Dispute.objects.filter(wage_obligation=self.obligation).exists())
+
+    def test_non_admin_cannot_phone_resolve(self):
+        self._auth_worker()
+        resp = self.client.patch(self.url, {"action": "confirmed_by_phone", "notes": "test"}, format="json")
+        self.assertEqual(resp.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_empty_notes_returns_400(self):
+        self._auth_admin()
+        resp = self.client.patch(self.url, {"action": "confirmed_by_phone", "notes": ""}, format="json")
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_invalid_action_returns_400(self):
+        self._auth_admin()
+        resp = self.client.patch(self.url, {"action": "bad_action", "notes": "test"}, format="json")
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_non_awaiting_ack_obligation_returns_400(self):
+        self._auth_admin()
+        self.obligation.status = WageObligationStatus.VERIFIED_PAID
+        self.obligation.save(update_fields=["status"])
+        resp = self.client.patch(self.url, {"action": "confirmed_by_phone", "notes": "test"}, format="json")
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+class AdminStaleWageListTests(APITestCase):
+
+    def setUp(self):
+        self.admin = User.objects.create_user("+970599017001", "P@ss1234", role=Role.ADMIN, is_staff=True)
+        biz_user, biz_profile = make_business("+970599017002")
+        worker_user = make_worker("+970599017003")
+        _, self.assignment = make_job_and_assignment(biz_profile, worker_user)
+        self.biz_user = biz_user
+        self.url = reverse("admin-stale-wages")
+
+    def _auth_admin(self):
+        resp = self.client.post(reverse("auth-login"), {"phone": "0599017001", "password": "P@ss1234"})
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {resp.data['access']}")
+
+    def test_returns_obligations_older_than_3_days(self):
+        from django.utils import timezone as tz
+        obligation = make_obligation(self.assignment, obligation_status=WageObligationStatus.AWAITING_ACK)
+        decl = make_declaration(obligation, self.biz_user)
+        PaymentDeclaration.objects.filter(pk=decl.pk).update(
+            declared_at=tz.now() - datetime.timedelta(days=4)
+        )
+        self._auth_admin()
+        resp = self.client.get(self.url)
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        ids = [o["id"] for o in resp.data]
+        self.assertIn(str(obligation.pk), ids)
+
+    def test_excludes_recent_obligations(self):
+        from django.utils import timezone as tz
+        obligation = make_obligation(self.assignment, obligation_status=WageObligationStatus.AWAITING_ACK)
+        decl = make_declaration(obligation, self.biz_user)
+        PaymentDeclaration.objects.filter(pk=decl.pk).update(
+            declared_at=tz.now() - datetime.timedelta(days=1)
+        )
+        self._auth_admin()
+        resp = self.client.get(self.url)
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        ids = [o["id"] for o in resp.data]
+        self.assertNotIn(str(obligation.pk), ids)
