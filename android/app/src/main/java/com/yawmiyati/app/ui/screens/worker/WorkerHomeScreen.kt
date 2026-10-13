@@ -48,6 +48,7 @@ import com.yawmiyati.app.ui.components.EmptyState
 import com.yawmiyati.app.ui.components.ErrorMessage
 import com.yawmiyati.app.ui.components.LoadingIndicator
 import com.yawmiyati.app.ui.components.OsmMapView
+import com.yawmiyati.app.ui.components.SupportWhatsappButton
 import com.yawmiyati.app.ui.theme.WathbDeepTeal
 import com.yawmiyati.app.ui.theme.WathbGold
 import com.yawmiyati.app.ui.utils.cityLatLng
@@ -157,6 +158,9 @@ fun WorkerHomeScreen(
                                     CircularProgressIndicator()
                                 }
                             }
+                        }
+                        item {
+                            SupportWhatsappButton(modifier = Modifier.padding(horizontal = 4.dp))
                         }
                         item { Spacer(Modifier.height(8.dp)) }
                     }

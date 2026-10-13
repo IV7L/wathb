@@ -32,6 +32,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.yawmiyati.app.BuildConfig
+import com.yawmiyati.app.YawmiyatiApp
 import com.yawmiyati.app.data.api.AppConfigResponse
 import com.yawmiyati.app.data.api.ConfigApi
 import com.yawmiyati.app.ui.theme.WathbDeepTeal
@@ -50,7 +51,9 @@ fun AppUpdateGate(content: @Composable () -> Unit) {
 
     LaunchedEffect(Unit) {
         state = try {
-            ConfigState.Ready(ConfigApi.service.getConfig())
+            val config = ConfigApi.service.getConfig()
+            YawmiyatiApp.instance.supportWhatsapp = config.supportWhatsapp
+            ConfigState.Ready(config)
         } catch (_: Exception) {
             ConfigState.Failed
         }

@@ -54,6 +54,7 @@ import com.yawmiyati.app.ui.components.ConfirmCancelDialog
 import com.yawmiyati.app.ui.components.EmptyState
 import com.yawmiyati.app.ui.components.ErrorMessage
 import com.yawmiyati.app.ui.components.LoadingIndicator
+import com.yawmiyati.app.ui.components.SupportWhatsappButton
 import com.yawmiyati.app.viewmodels.AuthViewModel
 import com.yawmiyati.app.viewmodels.CancelJobUiState
 import com.yawmiyati.app.viewmodels.CloneJobUiState
@@ -235,6 +236,9 @@ fun BusinessHomeScreen(
                                 onCancel = { cancelJobId = job.id },
                                 onClone = { jobsViewModel.cloneJob(job.id) }
                             )
+                        }
+                        item {
+                            SupportWhatsappButton(modifier = Modifier.padding(horizontal = 4.dp))
                         }
                         item { Spacer(Modifier.height(80.dp)) }
                     }

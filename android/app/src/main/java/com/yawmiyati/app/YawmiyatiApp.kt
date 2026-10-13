@@ -9,6 +9,9 @@ class YawmiyatiApp : Application() {
     lateinit var tokenManager: TokenManager
         private set
 
+    /** Populated by AppUpdateGate after config loads; read by home screens. */
+    var supportWhatsapp: String = ""
+
     override fun onCreate() {
         super.onCreate()
         tokenManager = TokenManager(this)

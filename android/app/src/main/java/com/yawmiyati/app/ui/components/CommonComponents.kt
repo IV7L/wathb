@@ -1,22 +1,31 @@
 package com.yawmiyati.app.ui.components
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.SupportAgent
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.yawmiyati.app.YawmiyatiApp
 
 @Composable
 fun LoadingIndicator(modifier: Modifier = Modifier) {
@@ -56,6 +65,32 @@ fun ErrorMessage(
                 Text("إعادة المحاولة")
             }
         }
+    }
+}
+
+/**
+ * WhatsApp support button. Reads the support number set by AppUpdateGate from YawmiyatiApp.
+ * Hidden when the number is blank (e.g. network was unavailable at startup).
+ */
+@Composable
+fun SupportWhatsappButton(modifier: Modifier = Modifier) {
+    val phone = YawmiyatiApp.instance.supportWhatsapp
+    if (phone.isBlank()) return
+    val context = LocalContext.current
+    val digits = phone.filter { it.isDigit() || it == '+' }.trimStart('+')
+    Button(
+        onClick = {
+            val uri = Uri.parse("https://wa.me/$digits")
+            context.startActivity(Intent(Intent.ACTION_VIEW, uri))
+        },
+        modifier = modifier.fillMaxWidth(),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+            contentColor   = MaterialTheme.colorScheme.onSecondaryContainer
+        )
+    ) {
+        Icon(Icons.Filled.SupportAgent, contentDescription = null, modifier = Modifier.padding(end = 8.dp))
+        Text("تواصل مع الدعم")
     }
 }
 

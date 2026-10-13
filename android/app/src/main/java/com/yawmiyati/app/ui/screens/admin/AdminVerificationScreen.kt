@@ -47,6 +47,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.yawmiyati.app.data.api.AdminBusinessProfile
 import com.yawmiyati.app.ui.components.ErrorMessage
 import com.yawmiyati.app.ui.components.LoadingIndicator
+import com.yawmiyati.app.ui.components.SupportWhatsappButton
 import com.yawmiyati.app.viewmodels.AdminUiState
 import com.yawmiyati.app.viewmodels.AdminViewModel
 import com.yawmiyati.app.viewmodels.VerifyActionState
@@ -141,6 +142,11 @@ fun AdminVerificationScreen(
                             BusinessCard(
                                 business = business,
                                 onClick = { dialogBusiness = business }
+                            )
+                        }
+                        item {
+                            SupportWhatsappButton(
+                                modifier = Modifier.padding(horizontal = 4.dp, vertical = 8.dp)
                             )
                         }
                     }
