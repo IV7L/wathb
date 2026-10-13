@@ -246,7 +246,7 @@ fun WorkerAssignmentDetailScreen(
                                 )
                             } else {
                                 Text(
-                                    "بانتظار تأكيد صاحب العمل للإتمام",
+                                    "جاري تحميل بيانات الأجر...",
                                     style = MaterialTheme.typography.bodyLarge,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )

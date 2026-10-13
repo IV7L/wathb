@@ -287,12 +287,12 @@ private fun AssignmentCard(
                 }
             }
 
-            if (assignment.status in listOf("ACCEPTED", "ACTIVE")) {
+            if (assignment.status in listOf("ACCEPTED", "ACTIVE", "COMPLETED")) {
                 Button(
                     onClick = onManage,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("تأكيد الحضور والإتمام")
+                    Text(if (assignment.status == "COMPLETED") "إقرار الأجر" else "عرض التفاصيل")
                 }
             }
         }
