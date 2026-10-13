@@ -148,6 +148,14 @@ open class AssignmentRepository {
         } catch (e: Exception) { AssignmentResult.Error(networkMessage(e)) }
     }
 
+    open suspend fun businessComplete(assignmentId: String): AssignmentResult<AssignmentResponse> {
+        return try {
+            val response = api.businessComplete(assignmentId)
+            if (response.isSuccessful) AssignmentResult.Success(response.body()!!)
+            else AssignmentResult.Error(parseError(response.errorBody()?.string()), response.code() == 401)
+        } catch (e: Exception) { AssignmentResult.Error(networkMessage(e)) }
+    }
+
     private fun parseError(body: String?): String {
         if (body.isNullOrBlank()) return "خطأ غير معروف"
         return try {

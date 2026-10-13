@@ -58,4 +58,7 @@ interface AssignmentsApi {
         @Path("id") id: String,
         @Body request: CancelRequest
     ): Response<AssignmentResponse>
+
+    @POST("assignments/{id}/business-complete/")
+    suspend fun businessComplete(@Path("id") id: String): Response<AssignmentResponse>
 }

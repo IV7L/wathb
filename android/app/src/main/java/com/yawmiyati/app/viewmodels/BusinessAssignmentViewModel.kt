@@ -175,6 +175,17 @@ class BusinessAssignmentViewModel(
         }
     }
 
+    fun businessComplete(assignmentId: String) {
+        if (_actionState.value is AssignmentWorkActionState.Loading) return
+        viewModelScope.launch {
+            _actionState.value = AssignmentWorkActionState.Loading
+            when (val r = repository.businessComplete(assignmentId)) {
+                is AssignmentResult.Success -> _actionState.value = AssignmentWorkActionState.Success
+                is AssignmentResult.Error   -> _actionState.value = AssignmentWorkActionState.Error(r.message)
+            }
+        }
+    }
+
     fun resetActionState() {
         _actionState.value = AssignmentWorkActionState.Idle
     }

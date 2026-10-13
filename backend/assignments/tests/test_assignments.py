@@ -483,3 +483,81 @@ class AutoConfirmTests(APITestCase):
         _auto_confirm_pending(self.assignment)
         _auto_confirm_pending(self.assignment)
         self.assertEqual(WageObligation.objects.filter(assignment=self.assignment).count(), 1)
+
+
+class BusinessCompleteTests(APITestCase):
+
+    def setUp(self):
+        self.biz_user, self.biz_profile = make_business()
+        self.worker = make_worker()
+        self.job = make_job(self.biz_profile)
+        self.assignment = make_assignment(
+            self.job, self.worker, assign_status=AssignmentStatus.ACCEPTED
+        )
+        self.assignment.terms_snapshot = self.job.material_terms_snapshot()
+        self.assignment.save(update_fields=["terms_snapshot"])
+
+    def test_business_can_complete_on_work_date(self):
+        self.job.work_date = datetime.date.today()
+        self.job.save(update_fields=["work_date"])
+        self.client.force_authenticate(user=self.biz_user)
+        response = self.client.post(
+            reverse("business-complete-assignment", args=[self.assignment.pk])
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assignment.refresh_from_db()
+        self.assertEqual(self.assignment.status, AssignmentStatus.COMPLETED)
+
+    def test_complete_creates_wage_obligation(self):
+        self.job.work_date = datetime.date.today()
+        self.job.save(update_fields=["work_date"])
+        self.client.force_authenticate(user=self.biz_user)
+        self.client.post(reverse("business-complete-assignment", args=[self.assignment.pk]))
+        self.assertTrue(WageObligation.objects.filter(assignment=self.assignment).exists())
+
+    def test_complete_sets_obligation_awaiting_ack(self):
+        self.job.work_date = datetime.date.today()
+        self.job.save(update_fields=["work_date"])
+        self.client.force_authenticate(user=self.biz_user)
+        self.client.post(reverse("business-complete-assignment", args=[self.assignment.pk]))
+        from wages.models import WageObligationStatus
+        obligation = WageObligation.objects.get(assignment=self.assignment)
+        self.assertEqual(obligation.status, WageObligationStatus.AWAITING_ACK)
+
+    def test_cannot_complete_before_work_date(self):
+        self.job.work_date = datetime.date.today() + datetime.timedelta(days=1)
+        self.job.save(update_fields=["work_date"])
+        self.client.force_authenticate(user=self.biz_user)
+        response = self.client.post(
+            reverse("business-complete-assignment", args=[self.assignment.pk])
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_cannot_complete_offered_assignment(self):
+        self.assignment.status = AssignmentStatus.OFFERED
+        self.assignment.save(update_fields=["status"])
+        self.job.work_date = datetime.date.today()
+        self.job.save(update_fields=["work_date"])
+        self.client.force_authenticate(user=self.biz_user)
+        response = self.client.post(
+            reverse("business-complete-assignment", args=[self.assignment.pk])
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_complete_is_idempotent(self):
+        self.job.work_date = datetime.date.today()
+        self.job.save(update_fields=["work_date"])
+        self.client.force_authenticate(user=self.biz_user)
+        self.client.post(reverse("business-complete-assignment", args=[self.assignment.pk]))
+        response = self.client.post(reverse("business-complete-assignment", args=[self.assignment.pk]))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(WageObligation.objects.filter(assignment=self.assignment).count(), 1)
+
+    def test_worker_cannot_call_business_complete(self):
+        self.job.work_date = datetime.date.today()
+        self.job.save(update_fields=["work_date"])
+        self.client.force_authenticate(user=self.worker)
+        response = self.client.post(
+            reverse("business-complete-assignment", args=[self.assignment.pk])
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)

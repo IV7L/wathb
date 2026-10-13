@@ -470,6 +470,84 @@ class CompletionDisputeView(APIView):
         return Response(CompletionRecordSerializer(record).data)
 
 
+class BusinessCompleteAssignmentView(APIView):
+    """One-tap: business confirms work done + auto-declares payment → worker acknowledges."""
+    permission_classes = [IsBusiness]
+
+    @transaction.atomic
+    def post(self, request, pk):
+        try:
+            assignment = Assignment.objects.select_for_update().get(
+                pk=pk, job__business__user=request.user
+            )
+        except Assignment.DoesNotExist:
+            return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        if assignment.status == AssignmentStatus.COMPLETED:
+            return Response(AssignmentSerializer(assignment).data)
+
+        if assignment.status not in (AssignmentStatus.ACCEPTED, AssignmentStatus.ACTIVE):
+            return Response(
+                {"detail": "يمكن تأكيد إتمام المهام المقبولة والنشطة فقط."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if datetime.date.today() < assignment.job.work_date:
+            return Response(
+                {"detail": "لا يمكن تأكيد الإتمام قبل يوم العمل."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if not CompletionRecord.objects.filter(assignment=assignment).exists():
+            now = timezone.now()
+            CompletionRecord.objects.create(
+                assignment=assignment,
+                submitted_by=request.user,
+                status=CompletionStatus.CONFIRMED,
+                confirmed_by=request.user,
+                confirmed_at=now,
+            )
+
+        assignment.status = AssignmentStatus.COMPLETED
+        assignment.save(update_fields=["status"])
+
+        _create_wage_obligation(assignment)
+
+        from wages.models import WageObligation, WageObligationStatus, PaymentDeclaration
+        obligation = WageObligation.objects.get(assignment=assignment)
+
+        if obligation.status == WageObligationStatus.PENDING:
+            snapshot = assignment.terms_snapshot
+            PaymentDeclaration.objects.create(
+                wage_obligation=obligation,
+                declared_by=request.user,
+                declared_amount=snapshot.get("wage_amount", obligation.amount),
+                currency=snapshot.get("wage_currency", obligation.currency),
+                payment_method=snapshot.get("payment_method", "CASH"),
+                payment_date=assignment.job.work_date,
+            )
+            obligation.status = WageObligationStatus.AWAITING_ACK
+            obligation.save(update_fields=["status"])
+
+            _notify(
+                assignment.worker, "PAYMENT_DECLARED",
+                f"أجرك بانتظار إقرارك: {assignment.job.title}",
+                f"تم تأكيد إتمام العمل. أجرك {obligation.amount} {obligation.currency} بانتظار إقرارك.",
+                "WageObligation", str(obligation.pk),
+            )
+
+            from audit.models import AuditEvent
+            AuditEvent.objects.create(
+                actor=request.user,
+                action="business_complete_and_declare",
+                model_name="Assignment",
+                object_id=str(assignment.pk),
+                details={"obligation_id": str(obligation.pk)},
+            )
+
+        return Response(AssignmentSerializer(assignment).data)
+
+
 def _notify(recipient, notification_type, title, body, related_model, related_id):
     try:
         from notifications.models import Notification

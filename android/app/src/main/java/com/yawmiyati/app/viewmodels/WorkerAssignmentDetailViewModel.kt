@@ -6,8 +6,11 @@ import com.yawmiyati.app.data.api.AttendanceResponse
 import com.yawmiyati.app.data.api.AttendanceSubmitRequest
 import com.yawmiyati.app.data.api.CompletionResponse
 import com.yawmiyati.app.data.api.CompletionSubmitRequest
+import com.yawmiyati.app.data.api.WageObligationResponse
 import com.yawmiyati.app.data.assignments.AssignmentRepository
 import com.yawmiyati.app.data.assignments.AssignmentResult
+import com.yawmiyati.app.data.wages.WageRepository
+import com.yawmiyati.app.data.wages.WageResult
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -34,7 +37,8 @@ sealed class WorkerAssignmentActionState {
 }
 
 class WorkerAssignmentDetailViewModel(
-    private val repository: AssignmentRepository = AssignmentRepository()
+    private val repository: AssignmentRepository = AssignmentRepository(),
+    private val wageRepository: WageRepository = WageRepository()
 ) : ViewModel() {
 
     private val _attendanceState = MutableStateFlow<WorkerAttendanceUiState>(WorkerAttendanceUiState.Loading)
@@ -46,6 +50,9 @@ class WorkerAssignmentDetailViewModel(
     private val _actionState = MutableStateFlow<WorkerAssignmentActionState>(WorkerAssignmentActionState.Idle)
     val actionState: StateFlow<WorkerAssignmentActionState> = _actionState
 
+    private val _wagesForAssignment = MutableStateFlow<WageObligationResponse?>(null)
+    val wagesForAssignment: StateFlow<WageObligationResponse?> = _wagesForAssignment
+
     private var currentAssignmentId: String? = null
 
     fun load(assignmentId: String) {
@@ -53,6 +60,38 @@ class WorkerAssignmentDetailViewModel(
         currentAssignmentId = assignmentId
         loadAttendance(assignmentId)
         loadCompletion(assignmentId)
+        loadWagesForAssignment(assignmentId)
+    }
+
+    private fun loadWagesForAssignment(assignmentId: String) {
+        viewModelScope.launch {
+            when (val r = wageRepository.listObligations()) {
+                is WageResult.Success -> {
+                    _wagesForAssignment.value = r.data.firstOrNull { it.assignment == assignmentId }
+                }
+                is WageResult.Error -> { /* ignore — wage might not exist yet */ }
+            }
+        }
+    }
+
+    fun acknowledgeWage(obligationId: String) = performAction {
+        when (val r = wageRepository.acknowledgePayment(obligationId)) {
+            is WageResult.Success -> {
+                _wagesForAssignment.value = r.data
+                AssignmentResult.Success(Unit)
+            }
+            is WageResult.Error -> AssignmentResult.Error(r.message)
+        }
+    }
+
+    fun disputeWage(obligationId: String, reason: String) = performAction {
+        when (val r = wageRepository.disputePayment(obligationId, reason)) {
+            is WageResult.Success -> {
+                _wagesForAssignment.value = r.data
+                AssignmentResult.Success(Unit)
+            }
+            is WageResult.Error -> AssignmentResult.Error(r.message)
+        }
     }
 
     private fun loadAttendance(assignmentId: String) {

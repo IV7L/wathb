@@ -4,6 +4,7 @@ from assignments.views import (
     AssignmentAcceptView, AssignmentDeclineView, AssignmentCancelView,
     AttendanceListCreateView, AttendanceConfirmView, AttendanceDisputeView,
     CompletionView, CompletionConfirmView, CompletionDisputeView,
+    BusinessCompleteAssignmentView,
 )
 
 urlpatterns = [
@@ -18,4 +19,5 @@ urlpatterns = [
     path("<uuid:pk>/completion/", CompletionView.as_view(), name="completion"),
     path("<uuid:pk>/completion/confirm/", CompletionConfirmView.as_view(), name="completion-confirm"),
     path("<uuid:pk>/completion/dispute/", CompletionDisputeView.as_view(), name="completion-dispute"),
+    path("<uuid:pk>/business-complete/", BusinessCompleteAssignmentView.as_view(), name="business-complete-assignment"),
 ]
