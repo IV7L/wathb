@@ -1,12 +1,22 @@
 package com.yawmiyati.app.ui.components
 
 import android.graphics.Color as AndroidColor
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
@@ -19,6 +29,13 @@ import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
 import org.osmdroid.views.overlay.Polyline
 
+data class JobMapMarker(
+    val id: String,
+    val lat: Double,
+    val lng: Double,
+    val title: String = ""
+)
+
 @Composable
 fun OsmMapView(
     lat: Double,
@@ -29,10 +46,13 @@ fun OsmMapView(
     workerLat: Double? = null,
     workerLng: Double? = null,
     routePoints: List<GeoPoint> = emptyList(),
+    jobMarkers: List<JobMapMarker> = emptyList(),
+    onJobMarkerClick: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
+    val currentOnClick by rememberUpdatedState(onJobMarkerClick)
 
     val mapView = remember {
         MapView(context).apply {
@@ -47,10 +67,15 @@ fun OsmMapView(
         }
     }
 
-    DisposableEffect(lat, lng, showMarker, workerLat, workerLng, routePoints.size) {
+    // Re-center map when lat/lng changes (e.g. worker location arrives for map tab)
+    LaunchedEffect(lat, lng) {
+        mapView.controller.setCenter(GeoPoint(lat, lng))
+    }
+
+    DisposableEffect(showMarker, workerLat, workerLng, routePoints.size, jobMarkers.size) {
         mapView.overlays.clear()
 
-        // Route polyline (drawn first so markers appear on top)
+        // 1. Route polyline (bottom layer)
         if (routePoints.isNotEmpty()) {
             val polyline = Polyline().apply {
                 setPoints(routePoints)
@@ -60,31 +85,44 @@ fun OsmMapView(
             mapView.overlays.add(polyline)
         }
 
-        // Job location marker (Deep Teal pin)
+        // 2. Job markers (middle layer — teal pins, clickable)
+        for (jm in jobMarkers) {
+            val marker = Marker(mapView).apply {
+                position = GeoPoint(jm.lat, jm.lng)
+                setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+                icon = ContextCompat.getDrawable(context, R.drawable.ic_map_pin)
+                title = jm.title
+                setOnMarkerClickListener { _, _ ->
+                    currentOnClick(jm.id)
+                    true
+                }
+            }
+            mapView.overlays.add(marker)
+        }
+
+        // 3. Single job marker for job detail screen (above job markers)
         if (showMarker) {
-            val pinIcon = ContextCompat.getDrawable(context, R.drawable.ic_map_pin)
             val marker = Marker(mapView).apply {
                 position = GeoPoint(lat, lng)
                 setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
-                icon = pinIcon
+                icon = ContextCompat.getDrawable(context, R.drawable.ic_map_pin)
                 title = "موقع الوظيفة"
             }
             mapView.overlays.add(marker)
         }
 
-        // Worker location marker (Teal pin)
+        // 4. Worker marker — drawn LAST so it's always on top
         if (workerLat != null && workerLng != null) {
-            val workerIcon = ContextCompat.getDrawable(context, R.drawable.ic_map_pin_worker)
             val workerMarker = Marker(mapView).apply {
                 position = GeoPoint(workerLat, workerLng)
                 setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
-                icon = workerIcon
+                icon = ContextCompat.getDrawable(context, R.drawable.ic_map_pin_worker)
                 title = "موقعك"
             }
             mapView.overlays.add(workerMarker)
         }
 
-        // Auto-zoom to show the full route when available
+        // Auto-zoom to show full route when available
         if (routePoints.size >= 2) {
             val box = BoundingBox.fromGeoPoints(routePoints)
             mapView.post { mapView.zoomToBoundingBox(box.increaseByScale(1.3f), true) }
@@ -109,5 +147,15 @@ fun OsmMapView(
         }
     }
 
-    AndroidView(factory = { mapView }, modifier = modifier)
+    Box(modifier = modifier) {
+        AndroidView(factory = { mapView }, modifier = Modifier.fillMaxSize())
+        Text(
+            text = "© OpenStreetMap contributors",
+            style = MaterialTheme.typography.labelSmall,
+            color = androidx.compose.ui.graphics.Color(0xFF333333),
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .padding(start = 4.dp, bottom = 2.dp)
+        )
+    }
 }
