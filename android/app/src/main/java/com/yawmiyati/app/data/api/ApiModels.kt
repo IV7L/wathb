@@ -238,6 +238,22 @@ data class AdminWorkerActionRequest(
     val action: String,   // "verify" or "suspend"
 )
 
+// Matches _compute_pilot_summary() in reporting/views.py
+data class PilotSummaryResponse(
+    @SerializedName("verified_businesses")         val verifiedBusinesses: Int,
+    @SerializedName("verified_workers")            val verifiedWorkers: Int,
+    @SerializedName("published_jobs")              val publishedJobs: Int,
+    @SerializedName("applications")                val applications: Int,
+    @SerializedName("accepted_assignments")        val acceptedAssignments: Int,
+    @SerializedName("completed_worker_days")       val completedWorkerDays: Int,
+    @SerializedName("wage_obligations_created")    val wageObligationsCreated: Int,
+    @SerializedName("payments_declared")           val paymentsDeclared: Int,
+    @SerializedName("payments_verified_paid")      val paymentsVerifiedPaid: Int,
+    @SerializedName("total_verified_paid_minor_units") val totalVerifiedPaidMinor: Long,
+    @SerializedName("disputes_opened")             val disputesOpened: Int,
+    @SerializedName("disputes_resolved")           val disputesResolved: Int,
+)
+
 // ── Assignments ───────────────────────────────────────────────────────────────
 
 // Matches AssignmentSerializer

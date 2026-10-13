@@ -32,6 +32,9 @@ interface AdminApi {
         @Body request: AdminWorkerActionRequest
     ): Response<AdminWorkerProfile>
 
+    @GET("admin/reports/pilot-summary/")
+    suspend fun getPilotSummary(): Response<PilotSummaryResponse>
+
     @GET("disputes/")
     suspend fun listDisputes(
         @Query("category") category: String = "WAGE_DISPUTED"

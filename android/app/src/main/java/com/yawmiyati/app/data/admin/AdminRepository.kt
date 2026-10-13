@@ -7,6 +7,7 @@ import com.yawmiyati.app.data.api.AdminVerifyRequest
 import com.yawmiyati.app.data.api.AdminWorkerActionRequest
 import com.yawmiyati.app.data.api.AdminWorkerProfile
 import com.yawmiyati.app.data.api.ApiClient
+import com.yawmiyati.app.data.api.PilotSummaryResponse
 
 sealed class AdminResult<out T> {
     data class Success<T>(val data: T) : AdminResult<T>()
@@ -45,6 +46,16 @@ class AdminRepository {
                 }
                 AdminResult.Error(msg, code == 401)
             }
+        } catch (e: Exception) {
+            AdminResult.Error(networkMessage(e))
+        }
+    }
+
+    suspend fun getPilotSummary(): AdminResult<PilotSummaryResponse> {
+        return try {
+            val response = api.getPilotSummary()
+            if (response.isSuccessful) AdminResult.Success(response.body()!!)
+            else AdminResult.Error(parseError(response.errorBody()?.string()), response.code() == 401)
         } catch (e: Exception) {
             AdminResult.Error(networkMessage(e))
         }

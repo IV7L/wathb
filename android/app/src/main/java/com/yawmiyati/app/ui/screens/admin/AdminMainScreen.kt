@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.Gavel
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.Payments
@@ -37,6 +38,7 @@ fun AdminMainScreen(
                 1 -> AdminWagesScreen()
                 2 -> AdminDisputesScreen()
                 3 -> AdminWorkersScreen()
+                4 -> AdminDashboardScreen()
             }
         }
 
@@ -64,6 +66,12 @@ fun AdminMainScreen(
                 onClick  = { selectedTab = 3 },
                 icon     = { Icon(Icons.Filled.Group, contentDescription = "العمال") },
                 label    = { Text("العمال") }
+            )
+            NavigationBarItem(
+                selected = selectedTab == 4,
+                onClick  = { selectedTab = 4 },
+                icon     = { Icon(Icons.Filled.Dashboard, contentDescription = "لوحة التحكم") },
+                label    = { Text("لوحة") }
             )
         }
     }
