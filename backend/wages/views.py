@@ -26,6 +26,7 @@ class WageObligationListView(generics.ListAPIView):
     serializer_class = WageObligationSerializer
 
     def list(self, request, *args, **kwargs):
+        _auto_confirm_all_pending()
         from notifications.views import _create_wage_reminders
         _create_wage_reminders(request.user)
         return super().list(request, *args, **kwargs)
@@ -412,6 +413,20 @@ class AdminPhoneResolveView(APIView):
                 )
 
         return Response(WageObligationSerializer(obligation).data)
+
+
+def _auto_confirm_all_pending():
+    from assignments.views import _auto_confirm_pending
+    from assignments.models import Assignment, AttendanceRecord, AttendanceStatus, CompletionRecord, CompletionStatus
+    now = timezone.now()
+    cutoff = now - datetime.timedelta(hours=24)
+    pks = set()
+    for pk in AttendanceRecord.objects.filter(status=AttendanceStatus.SUBMITTED, submitted_at__lte=cutoff).values_list("assignment_id", flat=True):
+        pks.add(pk)
+    for pk in CompletionRecord.objects.filter(status=CompletionStatus.SUBMITTED, submitted_at__lte=cutoff).values_list("assignment_id", flat=True):
+        pks.add(pk)
+    for assignment in Assignment.objects.filter(pk__in=pks).select_related("job__business", "worker"):
+        _auto_confirm_pending(assignment)
 
 
 def _log_audit(actor, action, model_name, object_id, details=None):

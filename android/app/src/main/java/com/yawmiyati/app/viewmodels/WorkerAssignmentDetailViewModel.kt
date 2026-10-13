@@ -3,7 +3,9 @@ package com.yawmiyati.app.viewmodels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.yawmiyati.app.data.api.AttendanceResponse
+import com.yawmiyati.app.data.api.AttendanceSubmitRequest
 import com.yawmiyati.app.data.api.CompletionResponse
+import com.yawmiyati.app.data.api.CompletionSubmitRequest
 import com.yawmiyati.app.data.assignments.AssignmentRepository
 import com.yawmiyati.app.data.assignments.AssignmentResult
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -76,6 +78,39 @@ class WorkerAssignmentDetailViewModel(
                     _completionState.value = if (r.message.contains("لا يوجد سجل"))
                         WorkerCompletionUiState.NotSubmitted
                     else WorkerCompletionUiState.Error(r.message)
+            }
+        }
+    }
+
+    fun submitAttendance(assignmentId: String, workDate: String, notes: String) {
+        if (_actionState.value is WorkerAssignmentActionState.Loading) return
+        viewModelScope.launch {
+            _actionState.value = WorkerAssignmentActionState.Loading
+            val req = AttendanceSubmitRequest(workDate = workDate, notes = notes)
+            when (val r = repository.submitAttendance(assignmentId, req)) {
+                is AssignmentResult.Success -> {
+                    _actionState.value = WorkerAssignmentActionState.Success
+                    loadAttendance(assignmentId)
+                }
+                is AssignmentResult.Error -> _actionState.value = WorkerAssignmentActionState.Error(r.message)
+            }
+        }
+    }
+
+    fun submitCompletion(assignmentId: String, hoursWorked: String?, notes: String) {
+        if (_actionState.value is WorkerAssignmentActionState.Loading) return
+        viewModelScope.launch {
+            _actionState.value = WorkerAssignmentActionState.Loading
+            val req = CompletionSubmitRequest(
+                hoursWorked = hoursWorked?.takeIf { it.isNotBlank() },
+                notes = notes
+            )
+            when (val r = repository.submitCompletion(assignmentId, req)) {
+                is AssignmentResult.Success -> {
+                    _actionState.value = WorkerAssignmentActionState.Success
+                    _completionState.value = WorkerCompletionUiState.Submitted(r.data)
+                }
+                is AssignmentResult.Error -> _actionState.value = WorkerAssignmentActionState.Error(r.message)
             }
         }
     }

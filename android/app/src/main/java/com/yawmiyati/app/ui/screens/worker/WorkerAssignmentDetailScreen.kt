@@ -24,6 +24,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -36,6 +37,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -51,6 +53,16 @@ import com.yawmiyati.app.viewmodels.WorkerAssignmentActionState
 import com.yawmiyati.app.viewmodels.WorkerAssignmentDetailViewModel
 import com.yawmiyati.app.viewmodels.WorkerAttendanceUiState
 import com.yawmiyati.app.viewmodels.WorkerCompletionUiState
+import java.time.LocalDate
+
+private fun hoursUntilAutoConfirm(submittedAt: String): Long {
+    return try {
+        val submitted = java.time.OffsetDateTime.parse(submittedAt)
+        val deadline = submitted.plusHours(24)
+        val remaining = java.time.Duration.between(java.time.OffsetDateTime.now(), deadline).toHours()
+        remaining.coerceIn(0L, 23L)
+    } catch (e: Exception) { 0L }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -68,6 +80,9 @@ fun WorkerAssignmentDetailScreen(
     val actionState by viewModel.actionState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     var showCancelDialog by remember { mutableStateOf(false) }
+    var attendanceNotes by rememberSaveable { mutableStateOf("") }
+    var completionHours by rememberSaveable { mutableStateOf("") }
+    var completionNotes by rememberSaveable { mutableStateOf("") }
 
     LaunchedEffect(assignmentId) { viewModel.load(assignmentId) }
 
@@ -176,22 +191,44 @@ fun WorkerAssignmentDetailScreen(
 
             when (val att = attendanceState) {
                 is WorkerAttendanceUiState.Loading -> item { LoadingIndicator() }
-                is WorkerAttendanceUiState.Empty   -> item {
-                    EmptyState(
-                        message = "لم يُسجّل صاحب العمل أي حضور بعد",
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                is WorkerAttendanceUiState.Empty,
+                is WorkerAttendanceUiState.Success -> {
+                    if (att is WorkerAttendanceUiState.Success) {
+                        items(att.records, key = { it.id }) { record ->
+                            WorkerAttendanceCard(
+                                record = record,
+                                isLoading = isActionLoading,
+                                isSelfSubmitted = record.submittedByPhone == workerPhone,
+                                onConfirm = { viewModel.confirmAttendance(assignmentId, record.id) },
+                                onDispute = { viewModel.disputeAttendance(assignmentId, record.id) }
+                            )
+                        }
+                    }
+                    // Submit form always visible so worker can log attendance for today
+                    item {
+                        Card(modifier = Modifier.fillMaxWidth()) {
+                            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                Text("تسجيل حضور", style = MaterialTheme.typography.titleSmall)
+                                OutlinedTextField(
+                                    value = attendanceNotes,
+                                    onValueChange = { attendanceNotes = it },
+                                    label = { Text("ملاحظات (اختياري)") },
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                                Button(
+                                    onClick = {
+                                        val today = LocalDate.now().toString()
+                                        viewModel.submitAttendance(assignmentId, today, attendanceNotes)
+                                        attendanceNotes = ""
+                                    },
+                                    enabled = !isActionLoading,
+                                    modifier = Modifier.fillMaxWidth()
+                                ) { Text("تسجيل الحضور ليوم اليوم") }
+                            }
+                        }
+                    }
                 }
-                is WorkerAttendanceUiState.Error   -> item { ErrorMessage(message = att.message) }
-                is WorkerAttendanceUiState.Success -> items(att.records, key = { it.id }) { record ->
-                    WorkerAttendanceCard(
-                        record = record,
-                        isLoading = isActionLoading,
-                        workerIsSubmitter = record.submittedByPhone == workerPhone,
-                        onConfirm = { viewModel.confirmAttendance(assignmentId, record.id) },
-                        onDispute = { viewModel.disputeAttendance(assignmentId, record.id) }
-                    )
-                }
+                is WorkerAttendanceUiState.Error -> item { ErrorMessage(message = att.message) }
             }
 
             item { HorizontalDivider() }
@@ -200,23 +237,43 @@ fun WorkerAssignmentDetailScreen(
             item { Text("إتمام المهمة", style = MaterialTheme.typography.titleMedium) }
 
             when (val comp = completionState) {
-                is WorkerCompletionUiState.Loading       -> item { LoadingIndicator() }
-                is WorkerCompletionUiState.NotSubmitted  -> item {
-                    EmptyState(
-                        message = "لم يُقدّم صاحب العمل سجل الإتمام بعد",
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                is WorkerCompletionUiState.Loading -> item { LoadingIndicator() }
+                is WorkerCompletionUiState.NotSubmitted -> item {
+                    Card(modifier = Modifier.fillMaxWidth()) {
+                        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Text("تقديم سجل الإتمام", style = MaterialTheme.typography.titleSmall)
+                            OutlinedTextField(
+                                value = completionHours,
+                                onValueChange = { completionHours = it },
+                                label = { Text("عدد ساعات العمل (اختياري)") },
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                            OutlinedTextField(
+                                value = completionNotes,
+                                onValueChange = { completionNotes = it },
+                                label = { Text("ملاحظات (اختياري)") },
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                            Button(
+                                onClick = {
+                                    viewModel.submitCompletion(assignmentId, completionHours, completionNotes)
+                                },
+                                enabled = !isActionLoading,
+                                modifier = Modifier.fillMaxWidth()
+                            ) { Text("تقديم إتمام المهمة") }
+                        }
+                    }
                 }
-                is WorkerCompletionUiState.Submitted     -> item {
+                is WorkerCompletionUiState.Submitted -> item {
                     WorkerCompletionCard(
                         record = comp.record,
                         isLoading = isActionLoading,
-                        workerIsSubmitter = comp.record.submittedByPhone == workerPhone,
+                        isSelfSubmitted = comp.record.submittedByPhone == workerPhone,
                         onConfirm = { viewModel.confirmCompletion(assignmentId) },
                         onDispute = { viewModel.disputeCompletion(assignmentId) }
                     )
                 }
-                is WorkerCompletionUiState.Error         -> item { ErrorMessage(message = comp.message) }
+                is WorkerCompletionUiState.Error -> item { ErrorMessage(message = comp.message) }
             }
 
             item { Spacer(Modifier.height(16.dp)) }
@@ -228,7 +285,7 @@ fun WorkerAssignmentDetailScreen(
 private fun WorkerAttendanceCard(
     record: AttendanceResponse,
     isLoading: Boolean,
-    workerIsSubmitter: Boolean,
+    isSelfSubmitted: Boolean,
     onConfirm: () -> Unit,
     onDispute: () -> Unit
 ) {
@@ -250,9 +307,10 @@ private fun WorkerAttendanceCard(
                 Text(record.notes, style = MaterialTheme.typography.bodySmall)
             }
             if (record.status == "SUBMITTED") {
-                if (workerIsSubmitter) {
+                if (isSelfSubmitted) {
+                    val hours = hoursUntilAutoConfirm(record.submittedAt)
                     Text(
-                        "بانتظار تأكيد الطرف الآخر",
+                        "يتأكد تلقائياً بعد $hours ساعة",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -282,7 +340,7 @@ private fun WorkerAttendanceCard(
 private fun WorkerCompletionCard(
     record: CompletionResponse,
     isLoading: Boolean,
-    workerIsSubmitter: Boolean,
+    isSelfSubmitted: Boolean,
     onConfirm: () -> Unit,
     onDispute: () -> Unit
 ) {
@@ -310,9 +368,10 @@ private fun WorkerCompletionCard(
                 Text(record.notes, style = MaterialTheme.typography.bodySmall)
             }
             if (record.status == "SUBMITTED") {
-                if (workerIsSubmitter) {
+                if (isSelfSubmitted) {
+                    val hours = hoursUntilAutoConfirm(record.submittedAt)
                     Text(
-                        "بانتظار تأكيد الطرف الآخر",
+                        "يتأكد تلقائياً بعد $hours ساعة",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

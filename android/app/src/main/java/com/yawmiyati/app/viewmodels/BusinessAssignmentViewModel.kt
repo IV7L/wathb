@@ -104,6 +104,34 @@ class BusinessAssignmentViewModel(
         }
     }
 
+    fun disputeAttendance(assignmentId: String, recId: String) {
+        if (_actionState.value is AssignmentWorkActionState.Loading) return
+        viewModelScope.launch {
+            _actionState.value = AssignmentWorkActionState.Loading
+            when (val r = repository.disputeAttendance(assignmentId, recId)) {
+                is AssignmentResult.Success -> {
+                    _actionState.value = AssignmentWorkActionState.Success
+                    loadAttendance(assignmentId)
+                }
+                is AssignmentResult.Error -> _actionState.value = AssignmentWorkActionState.Error(r.message)
+            }
+        }
+    }
+
+    fun disputeCompletion(assignmentId: String) {
+        if (_actionState.value is AssignmentWorkActionState.Loading) return
+        viewModelScope.launch {
+            _actionState.value = AssignmentWorkActionState.Loading
+            when (val r = repository.disputeCompletion(assignmentId)) {
+                is AssignmentResult.Success -> {
+                    _actionState.value = AssignmentWorkActionState.Success
+                    _completionState.value = CompletionUiState.Submitted(r.data)
+                }
+                is AssignmentResult.Error -> _actionState.value = AssignmentWorkActionState.Error(r.message)
+            }
+        }
+    }
+
     fun submitCompletion(assignmentId: String, hoursWorked: String?, notes: String) {
         if (_actionState.value is AssignmentWorkActionState.Loading) return
         viewModelScope.launch {

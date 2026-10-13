@@ -53,6 +53,15 @@ import com.yawmiyati.app.viewmodels.BusinessAssignmentViewModel
 import com.yawmiyati.app.viewmodels.CompletionUiState
 import java.time.LocalDate
 
+private fun hoursUntilAutoConfirm(submittedAt: String): Long {
+    return try {
+        val submitted = java.time.OffsetDateTime.parse(submittedAt)
+        val deadline = submitted.plusHours(24)
+        val remaining = java.time.Duration.between(java.time.OffsetDateTime.now(), deadline).toHours()
+        remaining.coerceIn(0L, 23L)
+    } catch (e: Exception) { 0L }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BusinessAssignmentDetailScreen(
@@ -157,7 +166,8 @@ fun BusinessAssignmentDetailScreen(
                         record = record,
                         isLoading = isActionLoading,
                         businessIsSubmitter = record.submittedByPhone != workerPhone,
-                        onConfirm = { viewModel.confirmAttendance(assignmentId, record.id) }
+                        onConfirm = { viewModel.confirmAttendance(assignmentId, record.id) },
+                        onDispute = { viewModel.disputeAttendance(assignmentId, record.id) }
                     )
                 }
             }
@@ -198,7 +208,6 @@ fun BusinessAssignmentDetailScreen(
             when (val comp = completionState) {
                 is CompletionUiState.Loading      -> item { LoadingIndicator() }
                 is CompletionUiState.NotSubmitted -> item {
-                    // Show submit completion form
                     Card(modifier = Modifier.fillMaxWidth()) {
                         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                             Text("تقديم سجل الإتمام", style = MaterialTheme.typography.titleSmall)
@@ -231,7 +240,8 @@ fun BusinessAssignmentDetailScreen(
                         record = comp.record,
                         isLoading = isActionLoading,
                         businessIsSubmitter = comp.record.submittedByPhone != workerPhone,
-                        onConfirm = { viewModel.confirmCompletion(assignmentId) }
+                        onConfirm = { viewModel.confirmCompletion(assignmentId) },
+                        onDispute = { viewModel.disputeCompletion(assignmentId) }
                     )
                 }
                 is CompletionUiState.Error        -> item { ErrorMessage(message = comp.message) }
@@ -247,7 +257,8 @@ private fun AttendanceCard(
     record: AttendanceResponse,
     isLoading: Boolean,
     businessIsSubmitter: Boolean,
-    onConfirm: () -> Unit
+    onConfirm: () -> Unit,
+    onDispute: () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -265,18 +276,31 @@ private fun AttendanceCard(
             }
             if (record.status == "SUBMITTED") {
                 if (businessIsSubmitter) {
+                    val hours = hoursUntilAutoConfirm(record.submittedAt)
                     Text(
-                        "بانتظار تأكيد الطرف الآخر",
+                        "يتأكد تلقائياً بعد $hours ساعة",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 } else {
-                    Button(
-                        onClick = onConfirm,
-                        enabled = !isLoading,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("تأكيد الحضور")
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Button(
+                            onClick = onConfirm,
+                            enabled = !isLoading,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("تأكيد الحضور")
+                        }
+                        OutlinedButton(
+                            onClick = onDispute,
+                            enabled = !isLoading,
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = MaterialTheme.colorScheme.error
+                            ),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("الاعتراض")
+                        }
                     }
                 }
             }
@@ -289,7 +313,8 @@ private fun CompletionCard(
     record: CompletionResponse,
     isLoading: Boolean,
     businessIsSubmitter: Boolean,
-    onConfirm: () -> Unit
+    onConfirm: () -> Unit,
+    onDispute: () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -310,18 +335,31 @@ private fun CompletionCard(
             }
             if (record.status == "SUBMITTED") {
                 if (businessIsSubmitter) {
+                    val hours = hoursUntilAutoConfirm(record.submittedAt)
                     Text(
-                        "بانتظار تأكيد الطرف الآخر",
+                        "يتأكد تلقائياً بعد $hours ساعة",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 } else {
-                    Button(
-                        onClick = onConfirm,
-                        enabled = !isLoading,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("تأكيد الإتمام")
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Button(
+                            onClick = onConfirm,
+                            enabled = !isLoading,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("تأكيد الإتمام")
+                        }
+                        OutlinedButton(
+                            onClick = onDispute,
+                            enabled = !isLoading,
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = MaterialTheme.colorScheme.error
+                            ),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("الاعتراض")
+                        }
                     }
                 }
             }

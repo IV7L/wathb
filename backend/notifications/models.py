@@ -23,6 +23,8 @@ class NotificationType(models.TextChoices):
     COMPLETION_SUBMITTED = "COMPLETION_SUBMITTED", "Completion Submitted"
     WAGE_REMINDER_1D = "WAGE_REMINDER_1D", "Wage Acknowledgement Reminder (1 day)"
     WAGE_REMINDER_3D = "WAGE_REMINDER_3D", "Wage Acknowledgement Reminder (3 days)"
+    ATTENDANCE_AUTO_CONFIRMED = "ATTENDANCE_AUTO_CONFIRMED", "Attendance Auto Confirmed"
+    COMPLETION_AUTO_CONFIRMED = "COMPLETION_AUTO_CONFIRMED", "Completion Auto Confirmed"
 
 
 class Notification(models.Model):

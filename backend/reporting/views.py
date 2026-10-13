@@ -10,10 +10,27 @@ from disputes.models import Dispute, DisputeStatus
 from jobs.models import JobListing, JobListingStatus, JobApplication
 
 
+def _auto_confirm_all_pending():
+    import datetime
+    from django.utils import timezone
+    from assignments.views import _auto_confirm_pending
+    from assignments.models import Assignment, AttendanceRecord, AttendanceStatus, CompletionRecord, CompletionStatus
+    now = timezone.now()
+    cutoff = now - datetime.timedelta(hours=24)
+    pks = set()
+    for pk in AttendanceRecord.objects.filter(status=AttendanceStatus.SUBMITTED, submitted_at__lte=cutoff).values_list("assignment_id", flat=True):
+        pks.add(pk)
+    for pk in CompletionRecord.objects.filter(status=CompletionStatus.SUBMITTED, submitted_at__lte=cutoff).values_list("assignment_id", flat=True):
+        pks.add(pk)
+    for assignment in Assignment.objects.filter(pk__in=pks).select_related("job__business", "worker"):
+        _auto_confirm_pending(assignment)
+
+
 class PilotSummaryView(APIView):
     permission_classes = [IsAdminRole]
 
     def get(self, request):
+        _auto_confirm_all_pending()
         data = _compute_pilot_summary()
         return Response(data)
 

@@ -1,3 +1,5 @@
+import datetime
+
 from django.db import transaction
 from django.utils import timezone
 from rest_framework import generics, status
@@ -46,6 +48,13 @@ class AssignmentDetailView(generics.RetrieveAPIView):
         elif user.role == Role.ADMIN:
             return Assignment.objects.all()
         return Assignment.objects.none()
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        _auto_confirm_pending(instance)
+        instance.refresh_from_db()
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
 
 
 class AssignmentAcceptView(APIView):
@@ -167,6 +176,7 @@ class AttendanceListCreateView(APIView):
         assignment = self._get_assignment(request, pk)
         if assignment is None:
             return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+        _auto_confirm_pending(assignment)
         records = AttendanceRecord.objects.filter(assignment=assignment)
         return Response(AttendanceRecordSerializer(records, many=True).data)
 
@@ -182,13 +192,22 @@ class AttendanceListCreateView(APIView):
         serializer.is_valid(raise_exception=True)
         record = serializer.save(assignment=assignment, submitted_by=request.user)
 
-        business_user = assignment.job.business.user
-        _notify(
-            business_user, "ATTENDANCE_SUBMITTED",
-            f"تم تسجيل الحضور: {assignment.job.title}",
-            f"سجّل العامل حضوره ليوم {record.work_date}. بانتظار تأكيدك.",
-            "Assignment", str(assignment.pk),
-        )
+        worker = assignment.worker
+        biz_user = assignment.job.business.user
+        if request.user == worker:
+            _notify(
+                biz_user, "ATTENDANCE_SUBMITTED",
+                f"تم تسجيل الحضور: {assignment.job.title}",
+                f"سجّل العامل حضوره ليوم {record.work_date}. بانتظار تأكيدك خلال 24 ساعة.",
+                "Assignment", str(assignment.pk),
+            )
+        else:
+            _notify(
+                worker, "ATTENDANCE_SUBMITTED",
+                f"تم تسجيل الحضور: {assignment.job.title}",
+                f"سجّل صاحب العمل حضورك ليوم {record.work_date}. بانتظار تأكيدك خلال 24 ساعة.",
+                "Assignment", str(assignment.pk),
+            )
 
         return Response(AttendanceRecordSerializer(record).data, status=status.HTTP_201_CREATED)
 
@@ -233,7 +252,7 @@ class AttendanceConfirmView(APIView):
             elif user.role == Role.BUSINESS:
                 assignment = Assignment.objects.get(pk=pk, job__business__user=user)
                 record = AttendanceRecord.objects.get(pk=rec_id, assignment=assignment)
-                if record.submitted_by.role == Role.BUSINESS:
+                if record.submitted_by == user:
                     return None, None
             elif user.role == Role.ADMIN:
                 assignment = Assignment.objects.get(pk=pk)
@@ -261,6 +280,12 @@ class AttendanceDisputeView(APIView):
         except (Assignment.DoesNotExist, AttendanceRecord.DoesNotExist):
             return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
 
+        if record.submitted_by == user:
+            return Response(
+                {"detail": "لا يمكن الاعتراض على سجل قدّمته بنفسك."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
         if record.status != AttendanceStatus.SUBMITTED:
             return Response({"detail": "Only submitted attendance can be disputed."}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -268,12 +293,21 @@ class AttendanceDisputeView(APIView):
         record.save(update_fields=["status"])
 
         worker = assignment.worker
-        _notify(
-            worker, "ATTENDANCE_DISPUTED",
-            f"اعتُرض على حضورك: {assignment.job.title}",
-            f"اعترض صاحب العمل على سجل حضورك ليوم {record.work_date}.",
-            "Assignment", str(assignment.pk),
-        )
+        biz_user = assignment.job.business.user
+        if user == worker:
+            _notify(
+                biz_user, "ATTENDANCE_DISPUTED",
+                f"اعتُرض على سجل الحضور: {assignment.job.title}",
+                f"اعترض العامل على سجل حضور يوم {record.work_date}.",
+                "Assignment", str(assignment.pk),
+            )
+        else:
+            _notify(
+                worker, "ATTENDANCE_DISPUTED",
+                f"اعتُرض على حضورك: {assignment.job.title}",
+                f"اعترض صاحب العمل على سجل حضورك ليوم {record.work_date}.",
+                "Assignment", str(assignment.pk),
+            )
 
         return Response(AttendanceRecordSerializer(record).data)
 
@@ -285,6 +319,7 @@ class CompletionView(APIView):
         assignment = self._get_assignment(request, pk)
         if assignment is None:
             return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+        _auto_confirm_pending(assignment)
         try:
             record = assignment.completion_record
             return Response(CompletionRecordSerializer(record).data)
@@ -310,13 +345,22 @@ class CompletionView(APIView):
         assignment.status = AssignmentStatus.ACTIVE
         assignment.save(update_fields=["status"])
 
-        business_user = assignment.job.business.user
-        _notify(
-            business_user, "COMPLETION_SUBMITTED",
-            f"طلب إنهاء العمل: {assignment.job.title}",
-            "أرسل العامل طلب تأكيد إنهاء العمل. بانتظار موافقتك.",
-            "Assignment", str(assignment.pk),
-        )
+        worker = assignment.worker
+        biz_user = assignment.job.business.user
+        if request.user == worker:
+            _notify(
+                biz_user, "COMPLETION_SUBMITTED",
+                f"طلب إنهاء العمل: {assignment.job.title}",
+                "أرسل العامل طلب تأكيد إنهاء العمل. بانتظار موافقتك خلال 24 ساعة.",
+                "Assignment", str(assignment.pk),
+            )
+        else:
+            _notify(
+                worker, "COMPLETION_SUBMITTED",
+                f"طلب إنهاء العمل: {assignment.job.title}",
+                "قدّم صاحب العمل سجل الإتمام. بانتظار تأكيدك خلال 24 ساعة.",
+                "Assignment", str(assignment.pk),
+            )
 
         return Response(CompletionRecordSerializer(record).data, status=status.HTTP_201_CREATED)
 
@@ -394,18 +438,34 @@ class CompletionDisputeView(APIView):
         except (Assignment.DoesNotExist, CompletionRecord.DoesNotExist):
             return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
 
+        if record.submitted_by == user:
+            return Response(
+                {"detail": "لا يمكن الاعتراض على سجل قدّمته بنفسك."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
         if record.status != CompletionStatus.SUBMITTED:
             return Response({"detail": "Only submitted completions can be disputed."}, status=status.HTTP_400_BAD_REQUEST)
 
         record.status = CompletionStatus.DISPUTED
         record.save(update_fields=["status"])
 
-        _notify(
-            assignment.worker, "COMPLETION_DISPUTED",
-            f"اعتُرض على إنهاء العمل: {assignment.job.title}",
-            "اعترض صاحب العمل على طلب إنهاء العمل. تواصل مع الدعم.",
-            "Assignment", str(assignment.pk),
-        )
+        worker = assignment.worker
+        biz_user = assignment.job.business.user
+        if user == worker:
+            _notify(
+                biz_user, "COMPLETION_DISPUTED",
+                f"اعتُرض على إنهاء العمل: {assignment.job.title}",
+                "اعترض العامل على سجل الإتمام. تواصل مع الدعم.",
+                "Assignment", str(assignment.pk),
+            )
+        else:
+            _notify(
+                worker, "COMPLETION_DISPUTED",
+                f"اعتُرض على إنهاء العمل: {assignment.job.title}",
+                "اعترض صاحب العمل على طلب إنهاء العمل. تواصل مع الدعم.",
+                "Assignment", str(assignment.pk),
+            )
 
         return Response(CompletionRecordSerializer(record).data)
 
@@ -454,3 +514,64 @@ def _create_wage_obligation(assignment):
         )
     except IntegrityError:
         pass
+
+
+def _auto_confirm_pending(assignment):
+    from audit.models import AuditEvent
+    now = timezone.now()
+    cutoff = now - datetime.timedelta(hours=24)
+
+    for record in list(AttendanceRecord.objects.filter(
+        assignment=assignment,
+        status=AttendanceStatus.SUBMITTED,
+        submitted_at__lte=cutoff,
+    )):
+        with transaction.atomic():
+            r = AttendanceRecord.objects.select_for_update().get(pk=record.pk)
+            if r.status != AttendanceStatus.SUBMITTED:
+                continue
+            r.status = AttendanceStatus.CONFIRMED
+            r.confirmed_at = now
+            r.save(update_fields=["status", "confirmed_at"])
+            worker = assignment.worker
+            biz_user = assignment.job.business.user
+            title = f"تم التأكيد التلقائي: حضور {assignment.job.title} ليوم {r.work_date}"
+            body = "لم يُستجب خلال 24 ساعة، تم التأكيد تلقائياً."
+            _notify(worker, "ATTENDANCE_AUTO_CONFIRMED", title, body, "Assignment", str(assignment.pk))
+            _notify(biz_user, "ATTENDANCE_AUTO_CONFIRMED", title, body, "Assignment", str(assignment.pk))
+            AuditEvent.objects.create(
+                actor=None,
+                action="attendance_auto_confirmed",
+                model_name="AttendanceRecord",
+                object_id=str(r.pk),
+            )
+
+    comp = CompletionRecord.objects.filter(
+        assignment=assignment,
+        status=CompletionStatus.SUBMITTED,
+        submitted_at__lte=cutoff,
+    ).first()
+    if comp is None:
+        return
+    with transaction.atomic():
+        c = CompletionRecord.objects.select_for_update().get(pk=comp.pk)
+        if c.status != CompletionStatus.SUBMITTED:
+            return
+        c.status = CompletionStatus.CONFIRMED
+        c.confirmed_at = now
+        c.save(update_fields=["status", "confirmed_at"])
+        assignment.status = AssignmentStatus.COMPLETED
+        assignment.save(update_fields=["status"])
+        _create_wage_obligation(assignment)
+        worker = assignment.worker
+        biz_user = assignment.job.business.user
+        title = f"تم التأكيد التلقائي: إتمام {assignment.job.title}"
+        body = "لم يُستجب خلال 24 ساعة، تم تأكيد إتمام المهمة تلقائياً."
+        _notify(worker, "COMPLETION_AUTO_CONFIRMED", title, body, "Assignment", str(assignment.pk))
+        _notify(biz_user, "COMPLETION_AUTO_CONFIRMED", title, body, "Assignment", str(assignment.pk))
+        AuditEvent.objects.create(
+            actor=None,
+            action="completion_auto_confirmed",
+            model_name="CompletionRecord",
+            object_id=str(c.pk),
+        )

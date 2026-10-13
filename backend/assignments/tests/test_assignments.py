@@ -1,6 +1,7 @@
 import datetime
 
 from django.urls import reverse
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APITestCase
 
@@ -361,3 +362,124 @@ class AssignmentSerializerTermsTests(APITestCase):
         # Live fields still reflect the job (they come from the FK, not the snapshot)
         self.assertEqual(item["job_wage_amount"], self.job.wage_amount)
         self.assertEqual(item["status"], AssignmentStatus.ACCEPTED)
+
+
+class AutoConfirmTests(APITestCase):
+
+    def setUp(self):
+        self.biz_user, self.biz_profile = make_business()
+        self.worker = make_worker()
+        self.job = make_job(self.biz_profile)
+        self.assignment = make_assignment(
+            self.job, self.worker, assign_status=AssignmentStatus.ACCEPTED
+        )
+        self.assignment.terms_snapshot = self.job.material_terms_snapshot()
+        self.assignment.save(update_fields=["terms_snapshot"])
+
+    def test_business_can_submit_attendance(self):
+        self.client.force_authenticate(user=self.biz_user)
+        response = self.client.post(
+            reverse("attendance-list", args=[self.assignment.pk]),
+            {"work_date": str(self.job.work_date)},
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        record = AttendanceRecord.objects.get(assignment=self.assignment)
+        self.assertEqual(record.submitted_by, self.biz_user)
+
+    def test_business_can_submit_completion(self):
+        self.client.force_authenticate(user=self.biz_user)
+        response = self.client.post(
+            reverse("completion", args=[self.assignment.pk]),
+            {"notes": "Business submitted"},
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_worker_cannot_self_confirm_attendance(self):
+        AttendanceRecord.objects.create(
+            assignment=self.assignment, submitted_by=self.worker,
+            work_date=self.job.work_date, status=AttendanceStatus.SUBMITTED,
+        )
+        record = AttendanceRecord.objects.get(assignment=self.assignment)
+        self.client.force_authenticate(user=self.worker)
+        response = self.client.patch(
+            reverse("attendance-confirm", args=[self.assignment.pk, record.pk])
+        )
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_business_cannot_self_confirm_attendance(self):
+        AttendanceRecord.objects.create(
+            assignment=self.assignment, submitted_by=self.biz_user,
+            work_date=self.job.work_date, status=AttendanceStatus.SUBMITTED,
+        )
+        record = AttendanceRecord.objects.get(assignment=self.assignment)
+        self.client.force_authenticate(user=self.biz_user)
+        response = self.client.patch(
+            reverse("attendance-confirm", args=[self.assignment.pk, record.pk])
+        )
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_worker_can_confirm_business_attendance(self):
+        AttendanceRecord.objects.create(
+            assignment=self.assignment, submitted_by=self.biz_user,
+            work_date=self.job.work_date, status=AttendanceStatus.SUBMITTED,
+        )
+        record = AttendanceRecord.objects.get(assignment=self.assignment)
+        self.client.force_authenticate(user=self.worker)
+        response = self.client.patch(
+            reverse("attendance-confirm", args=[self.assignment.pk, record.pk])
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_auto_confirm_attendance_after_24h(self):
+        record = AttendanceRecord.objects.create(
+            assignment=self.assignment, submitted_by=self.worker,
+            work_date=self.job.work_date, status=AttendanceStatus.SUBMITTED,
+        )
+        AttendanceRecord.objects.filter(pk=record.pk).update(
+            submitted_at=timezone.now() - datetime.timedelta(hours=25)
+        )
+        from assignments.views import _auto_confirm_pending
+        _auto_confirm_pending(self.assignment)
+        record.refresh_from_db()
+        self.assertEqual(record.status, AttendanceStatus.CONFIRMED)
+
+    def test_auto_confirm_completion_creates_wage_obligation(self):
+        comp = CompletionRecord.objects.create(
+            assignment=self.assignment, submitted_by=self.worker,
+            status=CompletionStatus.SUBMITTED,
+        )
+        CompletionRecord.objects.filter(pk=comp.pk).update(
+            submitted_at=timezone.now() - datetime.timedelta(hours=25)
+        )
+        from assignments.views import _auto_confirm_pending
+        _auto_confirm_pending(self.assignment)
+        comp.refresh_from_db()
+        self.assertEqual(comp.status, CompletionStatus.CONFIRMED)
+        self.assertTrue(WageObligation.objects.filter(assignment=self.assignment).exists())
+
+    def test_dispute_blocks_auto_confirm(self):
+        comp = CompletionRecord.objects.create(
+            assignment=self.assignment, submitted_by=self.worker,
+            status=CompletionStatus.DISPUTED,
+        )
+        CompletionRecord.objects.filter(pk=comp.pk).update(
+            submitted_at=timezone.now() - datetime.timedelta(hours=25)
+        )
+        from assignments.views import _auto_confirm_pending
+        _auto_confirm_pending(self.assignment)
+        comp.refresh_from_db()
+        self.assertEqual(comp.status, CompletionStatus.DISPUTED)
+        self.assertFalse(WageObligation.objects.filter(assignment=self.assignment).exists())
+
+    def test_auto_confirm_creates_wage_obligation_exactly_once(self):
+        comp = CompletionRecord.objects.create(
+            assignment=self.assignment, submitted_by=self.worker,
+            status=CompletionStatus.SUBMITTED,
+        )
+        CompletionRecord.objects.filter(pk=comp.pk).update(
+            submitted_at=timezone.now() - datetime.timedelta(hours=25)
+        )
+        from assignments.views import _auto_confirm_pending
+        _auto_confirm_pending(self.assignment)
+        _auto_confirm_pending(self.assignment)
+        self.assertEqual(WageObligation.objects.filter(assignment=self.assignment).count(), 1)
