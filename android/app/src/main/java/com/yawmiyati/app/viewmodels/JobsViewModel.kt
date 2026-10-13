@@ -15,6 +15,13 @@ sealed class PublishUiState {
     data class Error(val message: String) : PublishUiState()
 }
 
+sealed class CloneJobUiState {
+    object Idle : CloneJobUiState()
+    object Cloning : CloneJobUiState()
+    object Cloned : CloneJobUiState()
+    data class Error(val message: String) : CloneJobUiState()
+}
+
 sealed class CancelJobUiState {
     object Idle : CancelJobUiState()
     data class Loading(val jobId: String) : CancelJobUiState()
@@ -121,6 +128,25 @@ class JobsViewModel(private val repository: JobRepository = JobRepository()) : V
     }
 
     fun resetCancelState() { _cancelState.value = CancelJobUiState.Idle }
+
+    private val _cloneState = MutableStateFlow<CloneJobUiState>(CloneJobUiState.Idle)
+    val cloneState: StateFlow<CloneJobUiState> = _cloneState
+
+    fun cloneJob(jobId: String) {
+        if (_cloneState.value is CloneJobUiState.Cloning) return
+        viewModelScope.launch {
+            _cloneState.value = CloneJobUiState.Cloning
+            when (val result = repository.cloneJob(jobId)) {
+                is JobResult.Success -> {
+                    _cloneState.value = CloneJobUiState.Cloned
+                    refresh()
+                }
+                is JobResult.Error -> _cloneState.value = CloneJobUiState.Error(result.message)
+            }
+        }
+    }
+
+    fun resetCloneState() { _cloneState.value = CloneJobUiState.Idle }
 
     private suspend fun fetchPage(isRefresh: Boolean = false) {
         when (val result = repository.listJobs(city = currentCity, page = currentPage)) {

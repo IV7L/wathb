@@ -51,4 +51,7 @@ interface JobsApi {
         @Path("id") id: String,
         @Body request: CancelRequest
     ): Response<JobListingResponse>
+
+    @POST("jobs/{id}/clone/")
+    suspend fun cloneJob(@Path("id") id: String): Response<JobListingResponse>
 }

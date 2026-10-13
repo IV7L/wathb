@@ -182,6 +182,42 @@ class JobCancelView(APIView):
         return Response(JobListingSerializer(job).data)
 
 
+class JobCloneView(APIView):
+    """Clone an existing job listing as a new DRAFT owned by the same business."""
+    permission_classes = [IsVerifiedBusiness]
+
+    def post(self, request, pk):
+        try:
+            original = JobListing.objects.get(pk=pk, business__user=request.user)
+        except JobListing.DoesNotExist:
+            return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        clone = JobListing(
+            business=original.business,
+            title=original.title,
+            description=original.description,
+            location_address=original.location_address,
+            location_city=original.location_city,
+            work_date=original.work_date,
+            start_time=original.start_time,
+            end_time=original.end_time,
+            num_workers_needed=original.num_workers_needed,
+            wage_amount=original.wage_amount,
+            wage_currency=original.wage_currency,
+            wage_basis=original.wage_basis,
+            payment_method=original.payment_method,
+            payment_deadline_days=original.payment_deadline_days,
+            required_skills=original.required_skills,
+            attendance_requirements=original.attendance_requirements,
+            cancellation_policy=original.cancellation_policy,
+            additional_conditions=original.additional_conditions,
+            is_funded=original.is_funded,
+            status=JobListingStatus.DRAFT,
+        )
+        clone.save()
+        return Response(JobListingSerializer(clone).data, status=status.HTTP_201_CREATED)
+
+
 class JobCategoryListView(APIView):
     """Public-ish list of job categories (no auth required — workers see chips before login)."""
     permission_classes = [IsAuthenticated]

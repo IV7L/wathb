@@ -56,6 +56,7 @@ import com.yawmiyati.app.ui.components.ErrorMessage
 import com.yawmiyati.app.ui.components.LoadingIndicator
 import com.yawmiyati.app.viewmodels.AuthViewModel
 import com.yawmiyati.app.viewmodels.CancelJobUiState
+import com.yawmiyati.app.viewmodels.CloneJobUiState
 import com.yawmiyati.app.viewmodels.JobsUiState
 import com.yawmiyati.app.viewmodels.JobsViewModel
 import com.yawmiyati.app.viewmodels.PublishUiState
@@ -76,6 +77,7 @@ fun BusinessHomeScreen(
     val jobsState by jobsViewModel.uiState.collectAsState()
     val publishState by jobsViewModel.publishState.collectAsState()
     val cancelState by jobsViewModel.cancelState.collectAsState()
+    val cloneState by jobsViewModel.cloneState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     var cancelJobId by remember { mutableStateOf<String?>(null) }
 
@@ -96,6 +98,20 @@ fun BusinessHomeScreen(
             is CancelJobUiState.Error -> {
                 snackbarHostState.showSnackbar((cancelState as CancelJobUiState.Error).message)
                 jobsViewModel.resetCancelState()
+            }
+            else -> {}
+        }
+    }
+
+    LaunchedEffect(cloneState) {
+        when (cloneState) {
+            is CloneJobUiState.Cloned -> {
+                snackbarHostState.showSnackbar("تم إنشاء مسودة جديدة — ابحث عنها في قائمة الوظائف")
+                jobsViewModel.resetCloneState()
+            }
+            is CloneJobUiState.Error -> {
+                snackbarHostState.showSnackbar((cloneState as CloneJobUiState.Error).message)
+                jobsViewModel.resetCloneState()
             }
             else -> {}
         }
@@ -213,9 +229,11 @@ fun BusinessHomeScreen(
                                 job = job,
                                 isPublishing = publishState is PublishUiState.Loading &&
                                     (publishState as PublishUiState.Loading).jobId == job.id,
+                                isCloning = cloneState is CloneJobUiState.Cloning,
                                 onClick = { onViewApplications(job.id) },
                                 onPublish = { jobsViewModel.publishJob(job.id) },
-                                onCancel = { cancelJobId = job.id }
+                                onCancel = { cancelJobId = job.id },
+                                onClone = { jobsViewModel.cloneJob(job.id) }
                             )
                         }
                         item { Spacer(Modifier.height(80.dp)) }
@@ -230,9 +248,11 @@ fun BusinessHomeScreen(
 private fun BusinessJobCard(
     job: JobListingResponse,
     isPublishing: Boolean,
+    isCloning: Boolean = false,
     onClick: () -> Unit,
     onPublish: () -> Unit,
     onCancel: () -> Unit,
+    onClone: () -> Unit = {},
 ) {
     Card(
         onClick = onClick,
@@ -293,6 +313,14 @@ private fun BusinessJobCard(
                         1.dp, MaterialTheme.colorScheme.error
                     )
                 ) { Text("إلغاء الوظيفة") }
+            }
+            if (job.status in listOf("FILLED", "CANCELLED")) {
+                Spacer(Modifier.height(8.dp))
+                Button(
+                    onClick = onClone,
+                    enabled = !isCloning,
+                    modifier = Modifier.fillMaxWidth()
+                ) { Text(if (isCloning) "جارٍ النسخ..." else "انشر مرة ثانية") }
             }
         }
     }

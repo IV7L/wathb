@@ -98,7 +98,11 @@ class JobStateMachineTests(APITestCase):
     def test_cancel_published_job(self):
         self.job.status = JobListingStatus.PUBLISHED
         self.job.save(update_fields=["status"])
-        response = self.client.post(reverse("job-cancel", args=[self.job.pk]))
+        response = self.client.post(
+            reverse("job-cancel", args=[self.job.pk]),
+            {"reason": "test cancellation"},
+            format="json"
+        )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.job.refresh_from_db()
         self.assertEqual(self.job.status, JobListingStatus.CANCELLED)
