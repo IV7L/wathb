@@ -2,6 +2,10 @@ package com.yawmiyati.app.ui.screens.auth
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -70,11 +74,9 @@ fun LoginScreen(
     val activity = context as? FragmentActivity
     val tokenManager = remember { YawmiyatiApp.instance.tokenManager }
 
-    val showBiometric = remember {
-        activity != null &&
-        tokenManager.isLoggedIn() &&
-        BiometricHelper.isAvailable(context)
-    }
+    // Computed directly — no caching, reads current flag every recomposition
+    // Note: activity is only needed for the biometric prompt UI, not for showing the button
+    val showBiometric = tokenManager.isBiometricEligible()
 
     LaunchedEffect(uiState) {
         when (val state = uiState) {
@@ -171,49 +173,54 @@ fun LoginScreen(
 
                 Spacer(Modifier.height(28.dp))
 
-                Button(
-                    onClick = { viewModel.login(phone, password) },
-                    enabled = uiState !is AuthUiState.Loading,
-                    colors = ButtonDefaults.buttonColors(containerColor = WathbDeepTeal),
-                    modifier = Modifier.fillMaxWidth().height(52.dp)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(10.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    if (uiState is AuthUiState.Loading) {
-                        CircularProgressIndicator(
-                            modifier  = Modifier.height(20.dp),
-                            strokeWidth = 2.dp,
-                            color     = Color.White
-                        )
-                    } else {
-                        Text("دخول", style = MaterialTheme.typography.labelLarge, color = Color.White)
-                    }
-                }
-
-                if (showBiometric) {
-                    Spacer(Modifier.height(12.dp))
-                    OutlinedButton(
-                        onClick = {
-                            activity?.let { act ->
-                                BiometricHelper.prompt(
-                                    activity = act,
-                                    onSuccess = {
-                                        val role = tokenManager.getRole() ?: return@prompt
-                                        onLoginSuccess(role)
-                                    },
-                                    onFailed = {},
-                                    onError = {}
-                                )
-                            }
-                        },
-                        modifier = Modifier.fillMaxWidth().height(52.dp),
-                        border = BorderStroke(1.dp, WathbDeepTeal)
+                    Button(
+                        onClick = { viewModel.login(phone, password) },
+                        enabled = uiState !is AuthUiState.Loading,
+                        colors = ButtonDefaults.buttonColors(containerColor = WathbDeepTeal),
+                        modifier = Modifier.weight(1f).height(52.dp)
                     ) {
-                        Icon(
-                            imageVector = Icons.Filled.Fingerprint,
-                            contentDescription = null,
-                            tint = WathbDeepTeal,
-                            modifier = Modifier.padding(end = 8.dp)
-                        )
-                        Text("الدخول بالبصمة", color = WathbDeepTeal)
+                        if (uiState is AuthUiState.Loading) {
+                            CircularProgressIndicator(
+                                modifier  = Modifier.height(20.dp),
+                                strokeWidth = 2.dp,
+                                color     = Color.White
+                            )
+                        } else {
+                            Text("دخول", style = MaterialTheme.typography.labelLarge, color = Color.White)
+                        }
+                    }
+
+                    if (showBiometric) {
+                        OutlinedButton(
+                            onClick = {
+                                val act = activity
+                                if (act != null && BiometricHelper.isAvailable(context)) {
+                                    BiometricHelper.prompt(
+                                        activity = act,
+                                        onSuccess = { viewModel.loginWithBiometric() },
+                                        onFailed = {},
+                                        onError = {}
+                                    )
+                                } else {
+                                    viewModel.loginWithBiometric()
+                                }
+                            },
+                            modifier = Modifier.size(52.dp),
+                            shape = CircleShape,
+                            contentPadding = PaddingValues(0.dp),
+                            border = BorderStroke(1.5.dp, WathbDeepTeal)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Fingerprint,
+                                contentDescription = "الدخول بالبصمة",
+                                tint = WathbDeepTeal
+                            )
+                        }
                     }
                 }
 

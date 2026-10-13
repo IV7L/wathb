@@ -89,11 +89,36 @@ class AuthRepository(private val tokenManager: TokenManager) {
     }
 
     suspend fun logout() {
-        val refreshToken = tokenManager.getRefreshToken()
-        if (refreshToken != null) {
-            try { api.logout(RefreshRequest(refreshToken)) } catch (_: Exception) {}
+        // Soft logout: keep refresh token so biometric re-login works next time.
+        tokenManager.softLogout()
+    }
+
+    /** Exchange the stored refresh token for a new access token (used by biometric login). */
+    suspend fun refreshSession(): AuthResult<UserResponse> {
+        val refresh = tokenManager.getRefreshToken()
+            ?: return AuthResult.Error("لا توجد جلسة محفوظة")
+        return try {
+            val response = api.refreshToken(RefreshRequest(refresh))
+            if (response.isSuccessful) {
+                val body = response.body()!!
+                val newRefresh = body.refresh ?: refresh
+                tokenManager.saveTokens(body.access, newRefresh)
+                val meResponse = api.me()
+                if (meResponse.isSuccessful) {
+                    val user = meResponse.body()!!
+                    tokenManager.saveRole(user.role)
+                    AuthResult.Success(user)
+                } else {
+                    AuthResult.Error("تعذّر تحميل ملف المستخدم")
+                }
+            } else {
+                // Refresh token expired → clear everything, force manual login
+                tokenManager.clear()
+                AuthResult.Error("انتهت صلاحية الجلسة، سجّل دخولك مجدداً")
+            }
+        } catch (e: Exception) {
+            AuthResult.Error(networkMessage(e))
         }
-        tokenManager.clear()
     }
 
     private fun parseErrorMessage(body: String?): String {

@@ -13,7 +13,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Badge
@@ -54,7 +53,6 @@ import com.yawmiyati.app.ui.theme.WathbGold
 import com.yawmiyati.app.ui.utils.cityLatLng
 import com.yawmiyati.app.ui.utils.formatArabicDate
 import com.yawmiyati.app.ui.utils.formatArabicWage
-import com.yawmiyati.app.viewmodels.AuthViewModel
 import com.yawmiyati.app.viewmodels.JobsUiState
 import com.yawmiyati.app.viewmodels.JobsViewModel
 
@@ -69,8 +67,7 @@ fun WorkerHomeScreen(
     onLogout: () -> Unit,
     onNotifications: () -> Unit = {},
     unreadCount: Int = 0,
-    jobsViewModel: JobsViewModel = viewModel(),
-    authViewModel: AuthViewModel = viewModel()
+    jobsViewModel: JobsViewModel = viewModel()
 ) {
     val jobsState by jobsViewModel.uiState.collectAsState()
     val isRefreshing = (jobsState as? JobsUiState.Success)?.isRefreshing == true
@@ -96,12 +93,6 @@ fun WorkerHomeScreen(
                         }) {
                             Icon(Icons.Filled.Notifications, contentDescription = "الإشعارات", tint = Color.White)
                         }
-                    }
-                    IconButton(onClick = {
-                        authViewModel.logout()
-                        onLogout()
-                    }) {
-                        Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = "تسجيل الخروج", tint = Color.White)
                     }
                 }
             )
@@ -193,7 +184,7 @@ private fun JobCard(job: JobListingResponse, onClick: () -> Unit) {
             OsmMapView(
                 lat = coords.lat,
                 lng = coords.lng,
-                zoom = 14.0,
+                zoom = 13.0,
                 interactive = false,
                 showMarker = true,
                 modifier = Modifier.fillMaxSize()

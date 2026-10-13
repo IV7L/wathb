@@ -75,11 +75,20 @@ class AuthViewModel : ViewModel() {
         }
     }
 
-    fun logout() {
+    fun loginWithBiometric() {
         viewModelScope.launch {
-            repository.logout()
-            _uiState.value = AuthUiState.LoggedOut
+            _uiState.value = AuthUiState.Loading
+            _uiState.value = when (val result = repository.refreshSession()) {
+                is AuthResult.Success -> AuthUiState.Success(result.data)
+                is AuthResult.Error   -> AuthUiState.Error(result.message)
+            }
         }
+    }
+
+    fun logout() {
+        // softLogout is synchronous — must run before navigation clears this scope
+        tokenManager.softLogout()
+        _uiState.value = AuthUiState.LoggedOut
     }
 
     fun resetState() {
