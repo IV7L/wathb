@@ -16,6 +16,7 @@ import com.yawmiyati.app.ui.screens.auth.LoginScreen
 import com.yawmiyati.app.ui.screens.auth.RegisterScreen
 import com.yawmiyati.app.ui.screens.business.BusinessAssignmentDetailScreen
 import com.yawmiyati.app.ui.screens.business.BusinessMainScreen
+import com.yawmiyati.app.ui.screens.business.BusinessProfileScreen
 import com.yawmiyati.app.ui.screens.business.JobApplicationsScreen
 import com.yawmiyati.app.ui.screens.business.JobCreateScreen
 import com.yawmiyati.app.ui.screens.worker.JobDetailScreen
@@ -170,12 +171,17 @@ fun YawmiyatiNavGraph() {
                     navController.navigate(Screen.JobApplications.createRoute(jobId))
                 },
                 onNotifications = { navController.navigate(Screen.WorkerNotifications.route) },
+                onProfile = { navController.navigate(Screen.BusinessProfile.route) },
                 onLogout = {
                     navController.navigate(Screen.Login.route) {
                         popUpTo(0) { inclusive = true }
                     }
                 }
             )
+        }
+
+        composable(Screen.BusinessProfile.route) {
+            BusinessProfileScreen(onBack = { navController.popBackStack() })
         }
 
         composable(Screen.JobCreate.route) {

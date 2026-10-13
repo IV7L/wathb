@@ -116,6 +116,29 @@ data class WorkerProfileUpdateRequest(
     @SerializedName("is_available") val isAvailable: Boolean? = null,
 )
 
+data class BusinessProfileResponse(
+    val id: String,
+    val phone: String,
+    val email: String? = null,
+    @SerializedName("legal_name") val legalName: String,
+    @SerializedName("trade_name") val tradeName: String,
+    @SerializedName("registration_number") val registrationNumber: String,
+    @SerializedName("location_address") val locationAddress: String,
+    @SerializedName("location_city") val locationCity: String,
+    @SerializedName("contact_name") val contactName: String,
+    @SerializedName("contact_phone") val contactPhone: String,
+    @SerializedName("verification_status") val verificationStatus: String,
+)
+
+data class BusinessProfileUpdateRequest(
+    @SerializedName("legal_name") val legalName: String? = null,
+    @SerializedName("trade_name") val tradeName: String? = null,
+    @SerializedName("location_address") val locationAddress: String? = null,
+    @SerializedName("location_city") val locationCity: String? = null,
+    @SerializedName("contact_name") val contactName: String? = null,
+    @SerializedName("contact_phone") val contactPhone: String? = null,
+)
+
 // Matches JobListingCreateSerializer — wage_amount in minor units (agorot/cents)
 data class JobCreateRequest(
     val title: String,

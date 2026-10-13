@@ -12,6 +12,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Payments
@@ -65,6 +66,7 @@ fun BusinessHomeScreen(
     onCreateJob: () -> Unit,
     onViewApplications: (jobId: String) -> Unit,
     onWages: () -> Unit,
+    onProfile: () -> Unit = {},
     onLogout: () -> Unit,
     onNotifications: () -> Unit = {},
     unreadCount: Int = 0,
@@ -127,6 +129,9 @@ fun BusinessHomeScreen(
                         }) {
                             Icon(Icons.Filled.Notifications, contentDescription = "الإشعارات", tint = Color.White)
                         }
+                    }
+                    IconButton(onClick = onProfile) {
+                        Icon(Icons.Filled.AccountCircle, contentDescription = "الملف الشخصي", tint = Color.White)
                     }
                     IconButton(onClick = {
                         authViewModel.logout()

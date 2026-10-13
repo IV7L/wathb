@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material.icons.filled.Work
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -27,6 +28,7 @@ fun BusinessMainScreen(
     onCreateJob: () -> Unit,
     onViewApplications: (jobId: String) -> Unit,
     onNotifications: () -> Unit,
+    onProfile: () -> Unit = {},
     onLogout: () -> Unit,
     notificationsViewModel: NotificationsViewModel = viewModel()
 ) {
@@ -40,6 +42,7 @@ fun BusinessMainScreen(
                     onCreateJob        = onCreateJob,
                     onViewApplications = onViewApplications,
                     onWages            = { selectedTab = 1 },
+                    onProfile          = onProfile,
                     onLogout           = onLogout,
                     onNotifications    = onNotifications,
                     unreadCount        = unreadCount,
