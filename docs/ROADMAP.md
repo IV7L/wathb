@@ -68,7 +68,7 @@ Phase 3 مكتملة عندما تكون **جميع** هذه البنود منج
 - [x] E1: `/app/config/` + شاشات التطبيق
 - [x] E2: زر "تواصل مع الدعم" في الشاشات الرئيسية
 - [ ] G: وثيقة خطة الرعاية (بعد [STOP] وموافقة)
-- [ ] Django + Android JVM + assembleDebug كلها تمر
+- [x] Django (208 اختبار) + Android JVM + assembleDebug كلها تمر
 
 ---
 
