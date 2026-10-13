@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import com.yawmiyati.app.navigation.YawmiyatiNavGraph
+import com.yawmiyati.app.ui.screens.AppUpdateGate
 import com.yawmiyati.app.ui.theme.YawmiyatiTheme
 
 class MainActivity : ComponentActivity() {
@@ -17,7 +18,9 @@ class MainActivity : ComponentActivity() {
         setContent {
             YawmiyatiTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    YawmiyatiNavGraph()
+                    AppUpdateGate {
+                        YawmiyatiNavGraph()
+                    }
                 }
             }
         }

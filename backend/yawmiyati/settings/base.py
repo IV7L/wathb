@@ -160,3 +160,9 @@ CORS_ALLOWED_ORIGINS = config(
 
 # National ID HMAC key — required in production, optional in dev/test.
 NATIONAL_ID_HMAC_KEY = config("NATIONAL_ID_HMAC_KEY", default="")
+
+# App update config — served by /api/v1/app/config/ (no auth).
+APP_MIN_SUPPORTED_VERSION_CODE = config("APP_MIN_SUPPORTED_VERSION_CODE", default=1, cast=int)
+APP_LATEST_VERSION_CODE = config("APP_LATEST_VERSION_CODE", default=1, cast=int)
+APP_APK_DOWNLOAD_URL = config("APP_APK_DOWNLOAD_URL", default="")
+SUPPORT_WHATSAPP = config("SUPPORT_WHATSAPP", default="+970000000000")

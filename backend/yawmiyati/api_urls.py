@@ -1,6 +1,8 @@
 from django.urls import path, include
+from yawmiyati.app_config_view import AppConfigView
 
 urlpatterns = [
+    path("app/config/", AppConfigView.as_view(), name="app-config"),
     path("health/", include("yawmiyati.health_urls")),
     path("auth/", include("accounts.auth_urls")),
     path("workers/", include("accounts.worker_urls")),
