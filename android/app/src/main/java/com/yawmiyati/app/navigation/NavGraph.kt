@@ -111,7 +111,6 @@ fun YawmiyatiNavGraph() {
                         Screen.WorkerAssignmentDetail.createRoute(assignmentId, workerPhone, businessPhone, assignmentStatus)
                     )
                 },
-                onNotifications = { navController.navigate(Screen.WorkerNotifications.route) },
                 onLogout = {
                     navController.navigate(Screen.Login.route) {
                         popUpTo(0) { inclusive = true }
@@ -170,8 +169,6 @@ fun YawmiyatiNavGraph() {
                 onViewApplications = { jobId ->
                     navController.navigate(Screen.JobApplications.createRoute(jobId))
                 },
-                onNotifications = { navController.navigate(Screen.WorkerNotifications.route) },
-                onProfile = { navController.navigate(Screen.BusinessProfile.route) },
                 onLogout = {
                     navController.navigate(Screen.Login.route) {
                         popUpTo(0) { inclusive = true }
