@@ -9,9 +9,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -43,6 +47,8 @@ import com.yawmiyati.app.viewmodels.BusinessProfileViewModel
 @Composable
 fun BusinessProfileScreen(
     onBack: () -> Unit,
+    onLockApp: (() -> Unit)? = null,
+    onLogout: (() -> Unit)? = null,
     viewModel: BusinessProfileViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -200,6 +206,26 @@ fun BusinessProfileScreen(
                         enabled = saveState !is BusinessProfileSaveState.Saving,
                     ) {
                         Text(if (saveState is BusinessProfileSaveState.Saving) "جارٍ الحفظ..." else "حفظ")
+                    }
+
+                    if (onLockApp != null) {
+                        Spacer(Modifier.height(8.dp))
+                        OutlinedButton(onClick = onLockApp, modifier = Modifier.fillMaxWidth()) {
+                            Icon(Icons.AutoMirrored.Filled.ExitToApp, null, modifier = Modifier.padding(end = 8.dp))
+                            Text("قفل التطبيق")
+                        }
+                    }
+                    if (onLogout != null) {
+                        Spacer(Modifier.height(8.dp))
+                        OutlinedButton(
+                            onClick = onLogout,
+                            modifier = Modifier.fillMaxWidth(),
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.error),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                        ) {
+                            Icon(Icons.AutoMirrored.Filled.ExitToApp, null, modifier = Modifier.padding(end = 8.dp))
+                            Text("تسجيل الخروج")
+                        }
                     }
 
                     Spacer(Modifier.height(16.dp))

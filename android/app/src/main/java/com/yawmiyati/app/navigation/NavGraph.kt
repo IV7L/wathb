@@ -181,7 +181,15 @@ fun YawmiyatiNavGraph() {
         }
 
         composable(Screen.BusinessProfile.route) {
-            BusinessProfileScreen(onBack = { navController.popBackStack() })
+            val authVm: com.yawmiyati.app.viewmodels.AuthViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+            val navigateToLogin = {
+                navController.navigate(Screen.Login.route) { popUpTo(0) { inclusive = true } }
+            }
+            BusinessProfileScreen(
+                onBack    = { navController.popBackStack() },
+                onLockApp = { authVm.lockApp(); navigateToLogin() },
+                onLogout  = { authVm.logout(); navigateToLogin() }
+            )
         }
 
         composable(Screen.JobCreate.route) {

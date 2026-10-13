@@ -88,9 +88,25 @@ class AuthRepository(private val tokenManager: TokenManager) {
         }
     }
 
-    suspend fun logout() {
-        // Soft logout: keep refresh token so biometric re-login works next time.
+    /**
+     * Lock the app: removes access token locally; refresh token stays valid on the server
+     * so the next biometric prompt can obtain a new access token without a password.
+     * No network call.
+     */
+    fun lockApp() {
         tokenManager.softLogout()
+    }
+
+    /**
+     * Full logout: blacklists the refresh token on the server, then wipes all local tokens
+     * and the biometric-eligible flag. The user must re-enter their password next time.
+     */
+    suspend fun logout() {
+        val refresh = tokenManager.getRefreshToken()
+        if (refresh != null) {
+            try { api.logout(RefreshRequest(refresh)) } catch (_: Exception) {}
+        }
+        tokenManager.clear()
     }
 
     /** Exchange the stored refresh token for a new access token (used by biometric login). */

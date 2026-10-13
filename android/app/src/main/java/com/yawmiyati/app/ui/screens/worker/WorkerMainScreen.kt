@@ -66,6 +66,10 @@ fun WorkerMainScreen(
                 2 -> WorkerAssignmentsScreen(onManageAssignment = onManageAssignment)
                 3 -> WorkerMapScreen(onJobClick = onJobClick)
                 4 -> WorkerProfileScreen(
+                    onLockApp = {
+                        authViewModel.lockApp()
+                        onLogout()
+                    },
                     onLogout = {
                         authViewModel.logout()
                         onLogout()

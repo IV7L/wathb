@@ -235,3 +235,48 @@ class PhoneNormalizationTests(APITestCase):
             "phone": "not-a-phone", "password": "P@ss1234"
         })
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+class LogoutBlacklistTests(APITestCase):
+    """
+    E3: two distinct actions.
+    - lock_app: client-side only (no server call) — refresh token stays valid.
+    - logout: POST /auth/logout/ blacklists the refresh token; subsequent
+      refresh attempts must return 401.
+    """
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            "+970599002020", "StrongPass123!", role=Role.WORKER,
+        )
+        login = self.client.post(reverse("auth-login"), {
+            "phone": "0599002020", "password": "StrongPass123!",
+        })
+        self.access = login.data["access"]
+        self.refresh = login.data["refresh"]
+
+    def test_lock_app_refresh_token_still_valid(self):
+        # lock_app is client-side only; from the server's view the refresh
+        # token must still be usable after a lock (no blacklist call was made).
+        response = self.client.post(reverse("auth-token-refresh"), {"refresh": self.refresh})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("access", response.data)
+
+    def test_logout_blacklists_refresh_token(self):
+        # Full logout: POST /auth/logout/ with the refresh token.
+        logout_response = self.client.post(
+            reverse("auth-logout"), {"refresh": self.refresh}, format="json"
+        )
+        self.assertIn(logout_response.status_code, [
+            status.HTTP_200_OK, status.HTTP_205_RESET_CONTENT
+        ])
+
+        # The blacklisted refresh token must no longer produce a new access token.
+        refresh_response = self.client.post(
+            reverse("auth-token-refresh"), {"refresh": self.refresh}, format="json"
+        )
+        self.assertEqual(refresh_response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_logout_without_refresh_token_returns_400(self):
+        response = self.client.post(reverse("auth-logout"), {}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

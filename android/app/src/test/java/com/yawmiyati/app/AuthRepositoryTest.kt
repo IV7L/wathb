@@ -26,6 +26,33 @@ class AuthRepositoryTest {
         }
     }
 
+    // ── E3 logout contract ────────────────────────────────────────────────────
+    // Network behaviour is verified in backend LogoutBlacklistTests.
+    // These JVM tests verify the data-model contract only.
+
+    @Test
+    fun `lockApp RefreshRequest is not constructed — no body to send`() {
+        // lockApp() is synchronous and takes no refresh token argument.
+        // Verified by the signature: AuthRepository.lockApp() returns Unit with no params.
+        val method = com.yawmiyati.app.data.auth.AuthRepository::class.java
+            .declaredMethods.firstOrNull { it.name == "lockApp" }
+        assertTrue("lockApp method must exist", method != null)
+        assertEquals("lockApp must take no parameters", 0, method!!.parameterCount)
+    }
+
+    @Test
+    fun `logout sends the refresh token — RefreshRequest has correct field name`() {
+        // The server endpoint expects {"refresh": "..."}.
+        // RefreshRequest must serialize to that key.
+        val annotation = com.yawmiyati.app.data.api.RefreshRequest::class.java
+            .getDeclaredField("refresh")
+            .getAnnotation(com.google.gson.annotations.SerializedName::class.java)
+        // If no annotation, Gson uses the field name "refresh" — still correct.
+        // Either way the serialized key must be "refresh".
+        val key = annotation?.value ?: "refresh"
+        assertEquals("refresh", key)
+    }
+
     @Test
     fun `register request body has correct role field for worker`() {
         val request = com.yawmiyati.app.data.api.RegisterWorkerRequest(

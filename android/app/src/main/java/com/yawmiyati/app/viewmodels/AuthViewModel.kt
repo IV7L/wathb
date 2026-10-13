@@ -85,10 +85,18 @@ class AuthViewModel : ViewModel() {
         }
     }
 
-    fun logout() {
-        // softLogout is synchronous — must run before navigation clears this scope
-        tokenManager.softLogout()
+    /** Lock app: access token removed locally, refresh token + biometric flag kept. No server call. */
+    fun lockApp() {
+        repository.lockApp()
         _uiState.value = AuthUiState.LoggedOut
+    }
+
+    /** Full logout: blacklists refresh token on server, wipes all local tokens + biometric flag. */
+    fun logout() {
+        viewModelScope.launch {
+            repository.logout()
+            _uiState.value = AuthUiState.LoggedOut
+        }
     }
 
     fun resetState() {

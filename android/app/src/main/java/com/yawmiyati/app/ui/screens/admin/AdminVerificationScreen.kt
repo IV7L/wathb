@@ -57,7 +57,8 @@ import com.yawmiyati.app.viewmodels.VerifyActionState
 fun AdminVerificationScreen(
     onLogout: () -> Unit,
     onWageReview: () -> Unit = {},
-    viewModel: AdminViewModel = viewModel()
+    viewModel: AdminViewModel = viewModel(),
+    authViewModel: com.yawmiyati.app.viewmodels.AuthViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val actionState by viewModel.actionState.collectAsState()
@@ -85,7 +86,7 @@ fun AdminVerificationScreen(
                     IconButton(onClick = onWageReview) {
                         Icon(Icons.Filled.Payments, contentDescription = "مراجعة الدفعات")
                     }
-                    IconButton(onClick = onLogout) {
+                    IconButton(onClick = { authViewModel.logout(); onLogout() }) {
                         Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = "تسجيل الخروج")
                     }
                 }
