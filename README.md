@@ -1,4 +1,4 @@
-# Yawmiyati — يوميتي
+# Wathb
 
 A daily-work marketplace connecting workers with businesses in Gaza, Palestine.
 
