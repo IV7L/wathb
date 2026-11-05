@@ -244,7 +244,7 @@ html[lang="ar"] .group-label{letter-spacing:0}
 .phone-shell{
   position:relative;border:2.5px solid var(--teal-deep);
   border-radius:1.6rem;overflow:hidden;
-  aspect-ratio:390/844;background:var(--surface);box-shadow:var(--shadow-md);
+  aspect-ratio:720/1600;background:var(--surface);box-shadow:var(--shadow-md);
 }
 /* notch bar */
 .phone-shell::before{
@@ -605,7 +605,7 @@ html[lang="ar"] .footer-col h4{letter-spacing:0}
             </div>
             <img src="assets/screens/worker-1.webp"
                  alt="شاشة البحث عن وظيفة | Find a job screen"
-                 width="390" height="844" loading="lazy"
+                 width="720" height="1600" loading="lazy"
                  onerror="this.closest('.phone-shell').dataset.miss='1'">
           </div>
           <figcaption class="frame-cap">
@@ -621,7 +621,7 @@ html[lang="ar"] .footer-col h4{letter-spacing:0}
             </div>
             <img src="assets/screens/worker-2.webp"
                  alt="شاشة تفاصيل الوظيفة والأجر | Job details and wage screen"
-                 width="390" height="844" loading="lazy"
+                 width="720" height="1600" loading="lazy"
                  onerror="this.closest('.phone-shell').dataset.miss='1'">
           </div>
           <figcaption class="frame-cap">
@@ -637,7 +637,7 @@ html[lang="ar"] .footer-col h4{letter-spacing:0}
             </div>
             <img src="assets/screens/worker-3.webp"
                  alt="شاشة قبول شروط العمل | Accept work terms screen"
-                 width="390" height="844" loading="lazy"
+                 width="720" height="1600" loading="lazy"
                  onerror="this.closest('.phone-shell').dataset.miss='1'">
           </div>
           <figcaption class="frame-cap">
@@ -653,7 +653,7 @@ html[lang="ar"] .footer-col h4{letter-spacing:0}
             </div>
             <img src="assets/screens/worker-4.webp"
                  alt="شاشة إقرار استلام الأجر | Wage receipt confirmation screen"
-                 width="390" height="844" loading="lazy"
+                 width="720" height="1600" loading="lazy"
                  onerror="this.closest('.phone-shell').dataset.miss='1'">
           </div>
           <figcaption class="frame-cap">
@@ -678,7 +678,7 @@ html[lang="ar"] .footer-col h4{letter-spacing:0}
             </div>
             <img src="assets/screens/business-1.webp"
                  alt="شاشة نشر وظيفة جديدة | Post a new job screen"
-                 width="390" height="844" loading="lazy"
+                 width="720" height="1600" loading="lazy"
                  onerror="this.closest('.phone-shell').dataset.miss='1'">
           </div>
           <figcaption class="frame-cap">
@@ -694,7 +694,7 @@ html[lang="ar"] .footer-col h4{letter-spacing:0}
             </div>
             <img src="assets/screens/business-2.webp"
                  alt="شاشة اختيار المتقدمين للوظيفة | Select job applicants screen"
-                 width="390" height="844" loading="lazy"
+                 width="720" height="1600" loading="lazy"
                  onerror="this.closest('.phone-shell').dataset.miss='1'">
           </div>
           <figcaption class="frame-cap">
@@ -710,7 +710,7 @@ html[lang="ar"] .footer-col h4{letter-spacing:0}
             </div>
             <img src="assets/screens/business-3.webp"
                  alt="شاشة تأكيد إتمام العمل وإعلان الدفع | Confirm work completion and declare payment"
-                 width="390" height="844" loading="lazy"
+                 width="720" height="1600" loading="lazy"
                  onerror="this.closest('.phone-shell').dataset.miss='1'">
           </div>
           <figcaption class="frame-cap">
@@ -911,7 +911,7 @@ html[lang="ar"] .footer-col h4{letter-spacing:0}
 
 /* ── constants ──────────────────────────────────── */
 const APK_URL  = "";
-const WHATSAPP = "+970XXXXXXXXX";   /* TODO: replace before launch */
+const WHATSAPP = "+972598783757";
 
 /* ── APK download button ─────────────────────────── */
 var dlBtn = document.getElementById('dlBtn');
@@ -924,15 +924,24 @@ if(APK_URL){
 
 /* ── WhatsApp links ──────────────────────────────── */
 var digits = WHATSAPP.replace(/\D/g,'');
-var waHref = digits ? 'https://wa.me/'+digits : '#';
-['waHeroBtn','waFooter'].forEach(function(id){
-  var el = document.getElementById(id);
-  if(!el) return;
-  el.href = waHref;
-  if(digits){ el.target='_blank'; el.rel='noopener noreferrer'; }
-});
+var WA_MSG_AR = encodeURIComponent('مرحبًا، أود الاستفسار عن تطبيق وَثْب.');
+var WA_MSG_EN = encodeURIComponent('Hello, I would like to ask about the Wathb app.');
+function buildWaHref(){
+  if(!digits) return '#';
+  var msg = document.documentElement.lang==='en' ? WA_MSG_EN : WA_MSG_AR;
+  return 'https://wa.me/'+digits+'?text='+msg;
+}
+function updateWaLinks(){
+  ['waHeroBtn','waFooter'].forEach(function(id){
+    var el = document.getElementById(id);
+    if(!el) return;
+    el.href = buildWaHref();
+    if(digits){ el.target='_blank'; el.rel='noopener noreferrer'; }
+  });
+}
+updateWaLinks();
 var numEl = document.getElementById('waNum');
-if(numEl && WHATSAPP !== '+970XXXXXXXXX') numEl.textContent = WHATSAPP;
+if(numEl) numEl.textContent = WHATSAPP;
 
 /* ── language toggle ─────────────────────────────── */
 function getLang(){
@@ -949,6 +958,7 @@ function applyLang(l){
     btn.textContent = l==='ar' ? 'EN' : 'عر';
     btn.setAttribute('aria-label', l==='ar' ? 'Switch to English' : 'التبديل إلى العربية');
   });
+  updateWaLinks();
 }
 function toggleLang(){
   var next = document.documentElement.lang==='ar' ? 'en' : 'ar';
