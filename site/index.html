@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="description" content="وَثْب — تطبيق لتشغيل العمالة اليومية في غزة. يوثّق الأجر من يوم العمل حتى إقرار العامل بالاستلام. | Wathb — an app for daily work in Gaza. Records every wage from day of work to worker confirmation.">
+<meta property="og:title" content="وَثْب | Wathb">
+<meta property="og:description" content="تطبيق لتشغيل العمالة اليومية في غزة | An app for daily work in Gaza">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="ar_PS">
+<meta property="og:locale:alternate" content="en_US">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23006D6B'/%3E%3Ctext x='16' y='23' font-size='19' text-anchor='middle' fill='%23F4B432' font-family='sans-serif' font-weight='700'%D9%88%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;600;700&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap">
+<title>وَثْب | Wathb</title>
+<style>
+/* =========================================================
+   TOKENS
+   ========================================================= */
+:root {
+  --teal-deep:  #006D6B;
+  --teal:       #0EA5A3;
+  --teal-text:  #005453;
+  --gold:       #F4B432;
+  --cream:      #FEF3D7;
+  --cream-alt:  #f5e9c5;
+
+  --bg:         #FEF3D7;
+  --surface:    #ffffff;
+  --fg:         #0d2b2a;
+  --fg-muted:   #3d6160;
+
+  --border:     rgba(0,109,107,0.14);
+  --shadow-sm:  0 2px 8px rgba(0,0,0,0.07);
+  --shadow-md:  0 8px 32px rgba(0,0,0,0.12);
+
+  --font-ar: 'IBM Plex Sans Arabic', system-ui, sans-serif;
+  --font-en: 'IBM Plex Sans', system-ui, sans-serif;
+  --r-sm: 0.5rem; --r-md: 1rem; --r-lg: 1.5rem; --r-xl: 2.5rem;
+
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #091c1b; --surface: #0f2524; --cream: #132d2b; --cream-alt: #0d2321;
+    --fg: #deeeed; --fg-muted: #6daaa8; --teal-text: #3dbcba;
+    --border: rgba(14,165,163,0.18); color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #091c1b; --surface: #0f2524; --cream: #132d2b; --cream-alt: #0d2321;
+  --fg: #deeeed; --fg-muted: #6daaa8; --teal-text: #3dbcba;
+  --border: rgba(14,165,163,0.18); color-scheme: dark;
+}
+
+/* =========================================================
+   RESET
+   ========================================================= */
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; background:var(--bg); color:var(--fg);
+  font-family:var(--font-ar); line-height:1.65;
+  -webkit-font-smoothing:antialiased;
+}
+html[lang="en"] body{font-family:var(--font-en)}
+.ar{letter-spacing:0}
+img{max-width:100%;display:block}
+ol,ul{margin:0;padding:0;list-style:none}
+
+/* language switching */
+html[lang="ar"] .en{display:none!important}
+html[lang="en"] .ar{display:none!important}
+
+/* =========================================================
+   LAYOUT
+   ========================================================= */
+.container{width:100%;max-width:1140px;margin-inline:auto;padding-inline:1.5rem}
+section{padding-block:5rem}
+.section-label{
+  display:inline-block; font-size:.75rem; font-weight:600;
+  text-transform:uppercase; letter-spacing:.1em; color:var(--teal); margin-block-end:.6rem;
+}
+html[lang="ar"] .section-label{letter-spacing:0}
+.section-heading{
+  font-size:clamp(1.55rem,3.5vw,2.4rem); font-weight:700; line-height:1.22;
+  text-wrap:balance; margin:0 0 1rem; color:var(--fg);
+}
+
+/* =========================================================
+   BUTTONS
+   ========================================================= */
+.btn{
+  display:inline-flex; align-items:center; gap:.5rem;
+  padding-block:.8rem; padding-inline:1.75rem;
+  border-radius:var(--r-xl); font-size:1rem; font-weight:600;
+  cursor:pointer; text-decoration:none; border:2px solid transparent;
+  transition:transform .15s,box-shadow .15s,opacity .15s;
+  white-space:nowrap; font-family:inherit;
+}
+.btn:hover{transform:translateY(-2px);box-shadow:var(--shadow-md)}
+.btn:active{transform:translateY(0)}
+.btn:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+.btn:disabled,.btn[aria-disabled="true"]{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
+.btn-gold{background:var(--gold);color:#0d2b2a;border-color:var(--gold)}
+.btn-ghost{background:rgba(255,255,255,.1);color:#fff;border-color:rgba(255,255,255,.35)}
+.btn-ghost:hover{background:rgba(255,255,255,.18)}
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+.site-header{
+  position:sticky; top:env(safe-area-inset-top,0px); z-index:100;
+  background:rgba(0,109,107,.96); backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
+  border-block-end:1px solid rgba(255,255,255,.1);
+}
+.header-inner{
+  display:flex; align-items:center; justify-content:space-between;
+  padding-block:.9rem; gap:1rem;
+}
+.site-logo{display:flex;align-items:center;gap:.6rem;text-decoration:none}
+.logo-mark{
+  width:34px;height:34px;background:var(--gold);border-radius:7px;
+  display:grid;place-items:center;font-size:1.05rem;font-weight:700;
+  color:#0d2b2a;font-family:var(--font-ar);flex-shrink:0;
+}
+.logo-name{font-size:1.05rem;font-weight:700;color:#fff}
+.lang-btn{
+  background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.3);
+  color:#fff; border-radius:var(--r-xl); padding-block:.38rem; padding-inline:.9rem;
+  font-size:.82rem; font-weight:600; cursor:pointer; transition:background .15s;
+  font-family:var(--font-en);
+}
+.lang-btn:hover{background:rgba(255,255,255,.22)}
+.lang-btn:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+
+/* =========================================================
+   HERO
+   ========================================================= */
+.hero{
+  background:var(--teal-deep); color:#fff;
+  position:relative; overflow:hidden;
+  padding-block:0;
+}
+/* decorative oversized brand word */
+.hero::before{
+  content:'وَثْب';
+  position:absolute; inset-block-start:-1rem; right:-3rem;
+  font-size:clamp(12rem,33vw,26rem); font-weight:700;
+  font-family:var(--font-ar); letter-spacing:0;
+  color:rgba(255,255,255,.042); line-height:1;
+  pointer-events:none; user-select:none;
+}
+.hero-inner{
+  position:relative; z-index:1;
+  padding-block:6rem 5rem;
+  max-width:700px;
+}
+.hero-pill{
+  display:inline-flex; align-items:center; gap:.45rem;
+  background:rgba(244,180,50,.14); border:1px solid rgba(244,180,50,.35);
+  color:var(--gold); border-radius:var(--r-xl);
+  padding-block:.32rem; padding-inline:.9rem;
+  font-size:.78rem; font-weight:600; margin-block-end:1.4rem;
+}
+html[lang="ar"] .hero-pill{letter-spacing:0}
+.hero-title{
+  font-size:clamp(1.9rem,4.5vw,3.4rem); font-weight:700; line-height:1.18;
+  text-wrap:balance; margin:0 0 1.4rem; color:#fff;
+}
+.hero-sub{
+  font-size:clamp(.97rem,1.8vw,1.15rem); color:rgba(255,255,255,.78);
+  max-width:520px; margin:0 0 2.5rem; font-weight:300;
+}
+.hero-cta{display:flex;flex-wrap:wrap;gap:1rem;align-items:center}
+
+/* =========================================================
+   AUDIENCE
+   ========================================================= */
+.audience{background:var(--cream)}
+.audience-grid{
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(255px,1fr));
+  gap:1.5rem; margin-block-start:3rem;
+}
+.audience-card{
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--r-lg); padding:2rem; display:flex;
+  flex-direction:column; gap:.9rem; box-shadow:var(--shadow-sm);
+  transition:box-shadow .2s,transform .2s;
+}
+.audience-card:hover{box-shadow:var(--shadow-md);transform:translateY(-3px)}
+.card-icon{
+  width:46px;height:46px;background:rgba(0,109,107,.09);
+  border-radius:var(--r-md);display:grid;place-items:center;
+}
+.card-icon svg{width:22px;height:22px;color:var(--teal-text)}
+.audience-card h3{font-size:1.1rem;font-weight:700;margin:0;color:var(--teal-text)}
+.audience-card p{margin:0;font-size:.93rem;color:var(--fg-muted);line-height:1.6}
+
+/* =========================================================
+   HOW IT WORKS
+   ========================================================= */
+.how{background:var(--surface)}
+.steps-grid{
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(270px,1fr));
+  gap:2rem; margin-block-start:3.5rem;
+}
+.step{display:flex;gap:1.2rem;align-items:flex-start}
+.step-num{
+  flex-shrink:0;width:50px;height:50px;border-radius:50%;
+  background:var(--teal-deep);color:#fff;display:grid;place-items:center;
+  font-size:1.25rem;font-weight:700;font-family:var(--font-ar);
+}
+html[lang="en"] .step-num{font-family:var(--font-en)}
+.step:first-child .step-num{background:var(--gold);color:#0d2b2a}
+.step-body h3{font-size:.97rem;font-weight:600;margin:0 0 .3rem;color:var(--fg)}
+.step-body p{font-size:.88rem;color:var(--fg-muted);margin:0;line-height:1.55}
+
+/* =========================================================
+   SCREENSHOTS
+   ========================================================= */
+.screenshots{background:var(--cream);overflow:hidden}
+.screen-group{margin-block-end:3rem}
+.screen-group:last-child{margin-block-end:0}
+.group-label{
+  font-size:.78rem;font-weight:600;text-transform:uppercase;
+  letter-spacing:.08em;color:var(--teal);margin-block-end:1.1rem;
+}
+html[lang="ar"] .group-label{letter-spacing:0}
+.scroll-row{
+  display:flex;gap:1.2rem;overflow-x:auto;scroll-snap-type:x mandatory;
+  padding-block-end:.75rem; -webkit-overflow-scrolling:touch;
+  scrollbar-width:thin; scrollbar-color:var(--teal-deep) transparent;
+}
+.scroll-row::-webkit-scrollbar{height:3px}
+.scroll-row::-webkit-scrollbar-thumb{background:var(--teal-deep);border-radius:2px}
+
+.phone-frame{
+  flex-shrink:0;width:172px;scroll-snap-align:start;
+  display:flex;flex-direction:column;gap:.65rem;
+}
+.phone-shell{
+  position:relative;border:2.5px solid var(--teal-deep);
+  border-radius:1.6rem;overflow:hidden;
+  aspect-ratio:390/844;background:var(--surface);box-shadow:var(--shadow-md);
+}
+/* notch bar */
+.phone-shell::before{
+  content:'';position:absolute;inset-block-start:0;inset-inline:0;
+  height:18px;background:var(--teal-deep);z-index:2;
+}
+/* notch pill */
+.phone-shell::after{
+  content:'';position:absolute;inset-block-start:5px;
+  left:50%;transform:translateX(-50%);
+  width:52px;height:7px;background:rgba(0,0,0,.35);
+  border-radius:4px;z-index:3;
+}
+.phone-shell img{
+  width:100%;height:100%;object-fit:cover;object-position:top;display:block;
+}
+/* graceful placeholder when image missing */
+.phone-shell .ph{
+  display:none;position:absolute;inset:0;
+  flex-direction:column;align-items:center;justify-content:center;
+  gap:.6rem;padding:1rem;color:var(--fg-muted);text-align:center;
+}
+.phone-shell[data-miss] .ph{display:flex}
+.phone-shell[data-miss] img{opacity:0;position:absolute}
+.ph svg{width:32px;height:32px;opacity:.28}
+.ph span{font-size:.62rem;opacity:.45;line-height:1.4}
+.frame-cap{font-size:.77rem;color:var(--fg-muted);text-align:center;line-height:1.3}
+
+/* =========================================================
+   PRINCIPLES
+   ========================================================= */
+.principles{background:var(--teal-deep);color:#fff}
+.principles-grid{
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:4rem;align-items:start;
+}
+.principles .section-heading{color:#fff}
+.principles .section-label{color:var(--gold)}
+.principles-lead{font-size:.97rem;color:rgba(255,255,255,.68);margin:0;font-weight:300}
+.principles-list{display:flex;flex-direction:column;gap:1.1rem}
+.pr-item{display:flex;align-items:flex-start;gap:.9rem}
+.pr-check{
+  flex-shrink:0;width:26px;height:26px;border-radius:50%;
+  background:rgba(244,180,50,.14);border:1.5px solid rgba(244,180,50,.4);
+  display:grid;place-items:center;margin-block-start:.1rem;
+}
+.pr-check svg{width:13px;height:13px;color:var(--gold)}
+.pr-text{font-size:.93rem;color:rgba(255,255,255,.88);line-height:1.55}
+
+/* =========================================================
+   CONTEXT
+   ========================================================= */
+.context{background:var(--cream-alt)}
+.stats-grid{
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:1.75rem;margin-block-start:3rem;
+}
+.stat-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r-lg);padding:2rem;
+  border-inline-start:4px solid var(--teal-deep);
+}
+.stat-fig{
+  font-size:clamp(2.2rem,5.5vw,3.6rem);font-weight:700;
+  color:var(--teal-text);line-height:1;margin-block-end:.45rem;
+  font-variant-numeric:tabular-nums;
+}
+.stat-label{font-size:.93rem;color:var(--fg-muted);line-height:1.5;margin:0 0 .4rem}
+.stat-src{font-size:.72rem;color:var(--fg-muted);opacity:.6}
+
+/* =========================================================
+   WAGE SUPPORT
+   ========================================================= */
+.wage-support{background:var(--surface)}
+.wage-card{
+  background:var(--cream);border:1px solid var(--border);
+  border-radius:var(--r-lg);padding:2.25rem;max-width:660px;
+  display:flex;gap:1.75rem;align-items:flex-start;
+}
+.wage-badge{
+  flex-shrink:0;background:rgba(0,109,107,.09);border:1px solid rgba(0,109,107,.2);
+  border-radius:var(--r-sm);padding-block:.22rem;padding-inline:.6rem;
+  font-size:.68rem;font-weight:600;color:var(--teal-text);text-transform:uppercase;
+  letter-spacing:.06em;white-space:nowrap;align-self:flex-start;
+}
+html[lang="ar"] .wage-badge{letter-spacing:0}
+.wage-card h3{font-size:1.05rem;font-weight:700;color:var(--teal-text);margin:0 0 .45rem}
+.wage-card p{font-size:.93rem;color:var(--fg-muted);margin:0;line-height:1.6}
+
+/* =========================================================
+   FOOTER
+   ========================================================= */
+.site-footer{background:var(--teal-deep);color:rgba(255,255,255,.72);padding-block:3rem}
+.footer-inner{
+  display:flex;flex-wrap:wrap;justify-content:space-between;
+  align-items:flex-start;gap:2rem;
+}
+.footer-brand{display:flex;flex-direction:column;gap:.7rem}
+.footer-logo{display:flex;align-items:center;gap:.5rem;text-decoration:none;font-weight:700;font-size:1rem;color:#fff}
+.footer-blurb{font-size:.83rem;margin:0;max-width:200px;color:rgba(255,255,255,.65)}
+.footer-col h4{
+  font-size:.75rem;font-weight:600;color:rgba(255,255,255,.45);
+  text-transform:uppercase;letter-spacing:.08em;margin:0 0 .5rem;
+}
+html[lang="ar"] .footer-col h4{letter-spacing:0}
+.footer-col a{display:block;color:rgba(255,255,255,.8);text-decoration:none;font-size:.88rem;margin-block:.2rem}
+.footer-col a:hover{color:var(--gold)}
+.footer-bottom{
+  margin-block-start:2rem;padding-block-start:1.4rem;
+  border-block-start:1px solid rgba(255,255,255,.1);
+  display:flex;justify-content:space-between;align-items:center;
+  flex-wrap:wrap;gap:1rem;
+}
+.footer-copy{font-size:.78rem}
+
+/* =========================================================
+   ANIMATIONS
+   ========================================================= */
+@media (prefers-reduced-motion:no-preference){
+  .fade{opacity:0;transform:translateY(22px);transition:opacity .55s ease,transform .55s ease}
+  .fade.in{opacity:1;transform:none}
+  .fade:nth-child(2){transition-delay:.1s}
+  .fade:nth-child(3){transition-delay:.2s}
+  .fade:nth-child(4){transition-delay:.3s}
+}
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+@media (max-width:768px){
+  section{padding-block:3.5rem}
+  .principles-grid{grid-template-columns:1fr;gap:2.25rem}
+  .stats-grid{grid-template-columns:1fr}
+  .wage-card{flex-direction:column;gap:1rem}
+  .footer-inner{flex-direction:column}
+  .footer-bottom{flex-direction:column;align-items:flex-start}
+}
+@media (max-width:500px){
+  .steps-grid{grid-template-columns:1fr}
+  .audience-grid{grid-template-columns:1fr}
+}
+
+/* skip link */
+.skip{
+  position:absolute;top:-100%;inset-inline-start:1rem;
+  background:var(--gold);color:#0d2b2a;padding:.45rem 1rem;
+  border-radius:0 0 var(--r-sm) var(--r-sm);font-weight:700;text-decoration:none;z-index:999;
+}
+.skip:focus{top:0}
+</style>
+</head>
+<body>
+
+<a class="skip" href="#main">
+  <span class="ar">تخطَّ إلى المحتوى</span>
+  <span class="en">Skip to content</span>
+</a>
+
+<!-- ═══════════════════════ HEADER ═══════════════════════ -->
+<header class="site-header" role="banner">
+  <div class="container header-inner">
+    <a class="site-logo" href="#" aria-label="وَثْب — الصفحة الرئيسية | Wathb — home">
+      <div class="logo-mark" aria-hidden="true">و</div>
+      <span class="logo-name ar">وَثْب</span>
+      <span class="logo-name en">Wathb</span>
+    </a>
+    <button class="lang-btn" id="langBtn" aria-label="Switch to English">EN</button>
+  </div>
+</header>
+
+<!-- ═══════════════════════ MAIN ═══════════════════════════ -->
+<main id="main">
+
+<!-- ── HERO ───────────────────────────────────────────── -->
+<section class="hero" aria-labelledby="hero-title">
+  <div class="container hero-inner">
+
+    <div class="hero-pill" aria-hidden="true">
+      <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true">
+        <circle cx="6.5" cy="6.5" r="5.5" stroke="currentColor" stroke-width="1.4"/>
+        <path d="M6.5 3.5v3l1.8 1.8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+      </svg>
+      <span class="ar">تطبيق غزة للعمالة اليومية</span>
+      <span class="en">Gaza · Daily Work App</span>
+    </div>
+
+    <h1 class="hero-title" id="hero-title">
+      <span class="ar">وَثْب — تطبيق لتشغيل العمالة اليومية في غزة، يوثّق الأجر من يوم العمل حتى إقرار العامل بالاستلام.</span>
+      <span class="en">Wathb — an app for daily work in Gaza. It records every wage, from the day of work to the worker's confirmation of payment.</span>
+    </h1>
+
+    <p class="hero-sub">
+      <span class="ar">عمل موثّق. أجر مضمون. لكل طرف.</span>
+      <span class="en">Documented work. Secured wages. For everyone involved.</span>
+    </p>
+
+    <div class="hero-cta">
+      <a class="btn btn-gold" id="dlBtn" href="#" role="button" aria-disabled="true">
+        <svg width="17" height="17" viewBox="0 0 17 17" fill="currentColor" aria-hidden="true">
+          <path d="M8.5 11.5 5 8h2.25V4h2.5v4H12l-3.5 3.5ZM3 14h11v-1.5H3V14Z"/>
+        </svg>
+        <span class="ar">قريبًا على أندرويد</span>
+        <span class="en">Coming soon · Android</span>
+      </a>
+      <a class="btn btn-ghost" id="waHeroBtn" href="#footer">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M12 2C6.48 2 2 6.48 2 12c0 1.85.5 3.58 1.37 5.07L2 22l5.07-1.35A9.96 9.96 0 0 0 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2Zm4.9 14.1c-.2.57-1.17 1.1-1.62 1.17-.44.07-.98.1-1.57-.1a14.6 14.6 0 0 1-1.42-.52C9.9 15.76 8.5 13.9 8.4 13.77c-.1-.14-.83-1.1-.83-2.1 0-1 .52-1.49.7-1.7.18-.2.4-.25.53-.25h.38c.12 0 .28-.04.44.34.17.38.57 1.4.62 1.5.05.1.08.22.02.35-.07.12-.1.2-.2.3l-.3.33c-.1.1-.2.2-.09.4.12.18.52.86 1.12 1.4.77.69 1.42.9 1.62 1 .2.1.32.08.43-.05.12-.13.5-.58.63-.78.14-.2.27-.16.46-.1.18.07 1.17.55 1.37.65.2.1.33.14.38.22.05.08.05.47-.15 1.04Z"/>
+        </svg>
+        <span class="ar">تواصل معنا</span>
+        <span class="en">Get in touch</span>
+      </a>
+    </div>
+
+  </div>
+</section>
+
+<!-- ── AUDIENCE ────────────────────────────────────────── -->
+<section class="audience" id="audience" aria-labelledby="aud-h">
+  <div class="container">
+    <p class="section-label ar">لمن</p>
+    <p class="section-label en">Who it's for</p>
+    <h2 class="section-heading" id="aud-h">
+      <span class="ar">لثلاثة أطراف في سوق العمل اليومي</span>
+      <span class="en">Three sides of the daily labour market</span>
+    </h2>
+
+    <div class="audience-grid">
+
+      <article class="audience-card fade">
+        <div class="card-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="7" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/>
+          </svg>
+        </div>
+        <h3><span class="ar">العمال</span><span class="en">Workers</span></h3>
+        <p>
+          <span class="ar">ابحث عن عمل بشروط موثّقة وواضحة، واحصل على إقرار رسمي باستلام أجرك في كل مرة.</span>
+          <span class="en">Find work with clear, documented terms and receive a formal confirmation of every payment.</span>
+        </p>
+      </article>
+
+      <article class="audience-card fade">
+        <div class="card-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 21h18M3 7l9-4 9 4M5 7v14M19 7v14M9 21v-6h6v6"/>
+          </svg>
+        </div>
+        <h3><span class="ar">المنشآت</span><span class="en">Businesses</span></h3>
+        <p>
+          <span class="ar">انشر وظائفك وتابع المهام والتزاماتك المالية في مكان واحد، مع سجل واضح لكل ما تم.</span>
+          <span class="en">Post jobs, track assignments, and manage wage obligations in one place with a clear record of everything.</span>
+        </p>
+      </article>
+
+      <article class="audience-card fade">
+        <div class="card-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9"/>
+            <path d="M12 7v5l3 3M8.5 16.5s.8 1.5 3.5 1.5 3.5-1.5 3.5-1.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <h3><span class="ar">الممولون</span><span class="en">Funders</span></h3>
+        <p>
+          <span class="ar">دعم موجّه ومرصود — اعرف أين يذهب كل شيكل، من مصدره إلى العامل مباشرةً.</span>
+          <span class="en">Targeted, transparent support. Know where every shekel goes, from source to worker.</span>
+        </p>
+      </article>
+
+    </div>
+  </div>
+</section>
+
+<!-- ── HOW IT WORKS ────────────────────────────────────── -->
+<section class="how" id="how" aria-labelledby="how-h">
+  <div class="container">
+    <p class="section-label ar">كيف يعمل التطبيق</p>
+    <p class="section-label en">How it works</p>
+    <h2 class="section-heading" id="how-h">
+      <span class="ar">ست خطوات من النشر إلى الإقرار</span>
+      <span class="en">Six steps from posting to confirmation</span>
+    </h2>
+
+    <ol class="steps-grid">
+
+      <li class="step fade">
+        <div class="step-num" aria-label="1"><span class="ar">١</span><span class="en">1</span></div>
+        <div class="step-body">
+          <h3><span class="ar">المنشأة تنشر الوظيفة</span><span class="en">Business posts the job</span></h3>
+          <p><span class="ar">منشأة موثّقة تنشر وظيفة بتفاصيل الموقع والأجر وشروط العمل.</span><span class="en">A verified business posts a job with location, wage, and work terms.</span></p>
+        </div>
+      </li>
+
+      <li class="step fade">
+        <div class="step-num" aria-label="2"><span class="ar">٢</span><span class="en">2</span></div>
+        <div class="step-body">
+          <h3><span class="ar">العامل يتقدم</span><span class="en">Worker applies</span></h3>
+          <p><span class="ar">يرى العامل الوظيفة ويرسل طلب التقديم.</span><span class="en">The worker sees the listing and submits an application.</span></p>
+        </div>
+      </li>
+
+      <li class="step fade">
+        <div class="step-num" aria-label="3"><span class="ar">٣</span><span class="en">3</span></div>
+        <div class="step-body">
+          <h3><span class="ar">المنشأة تختار وتعرض</span><span class="en">Business selects and offers</span></h3>
+          <p><span class="ar">تختار المنشأة العامل وترسل له عرض المهمة.</span><span class="en">The business selects a worker and sends them the assignment offer.</span></p>
+        </div>
+      </li>
+
+      <li class="step fade">
+        <div class="step-num" aria-label="4"><span class="ar">٤</span><span class="en">4</span></div>
+        <div class="step-body">
+          <h3><span class="ar">العامل يقبل الشروط</span><span class="en">Worker accepts terms</span></h3>
+          <p><span class="ar">يقرأ العامل الشروط كاملةً ويوافق عليها قبل بدء العمل.</span><span class="en">The worker reviews and accepts the full terms before work begins.</span></p>
+        </div>
+      </li>
+
+      <li class="step fade">
+        <div class="step-num" aria-label="5"><span class="ar">٥</span><span class="en">5</span></div>
+        <div class="step-body">
+          <h3><span class="ar">المنشأة تؤكد وتُعلن الدفع</span><span class="en">Business confirms and declares payment</span></h3>
+          <p><span class="ar">عند إتمام العمل، تؤكد المنشأة الإنجاز وتُعلن أنها دفعت الأجر.</span><span class="en">On completion, the business confirms the work and declares the wage paid.</span></p>
+        </div>
+      </li>
+
+      <li class="step fade">
+        <div class="step-num" aria-label="6"><span class="ar">٦</span><span class="en">6</span></div>
+        <div class="step-body">
+          <h3><span class="ar">العامل يُقرّ أو يعترض</span><span class="en">Worker confirms or disputes</span></h3>
+          <p><span class="ar">يُقرّ العامل باستلام أجره، أو يرفع اعتراضًا تراجعه إدارة التطبيق.</span><span class="en">The worker confirms receipt, or raises a dispute reviewed by the app team.</span></p>
+        </div>
+      </li>
+
+    </ol>
+  </div>
+</section>
+
+<!-- ── SCREENSHOTS ─────────────────────────────────────── -->
+<section class="screenshots" id="screenshots" aria-labelledby="sc-h">
+  <div class="container">
+    <p class="section-label ar">داخل التطبيق</p>
+    <p class="section-label en">Inside the app</p>
+    <h2 class="section-heading" id="sc-h">
+      <span class="ar">شاشات حقيقية من التطبيق</span>
+      <span class="en">Real screens from the app</span>
+    </h2>
+
+    <!-- Worker group -->
+    <div class="screen-group">
+      <p class="group-label ar">واجهة العامل</p>
+      <p class="group-label en">Worker view</p>
+      <div class="scroll-row" role="list">
+
+        <figure class="phone-frame" role="listitem">
+          <div class="phone-shell" id="ws1">
+            <div class="ph">
+              <svg viewBox="0 0 32 32" fill="none" stroke="currentColor"><rect x="4" y="6" width="24" height="20" rx="2" stroke-width="1.4"/><path d="M10 16h12M10 20h7" stroke-width="1.4" stroke-linecap="round"/></svg>
+              <span class="ar">البحث عن وظيفة</span><span class="en">Find a job</span>
+            </div>
+            <img src="assets/screens/worker-1.webp"
+                 alt="شاشة البحث عن وظيفة | Find a job screen"
+                 width="390" height="844" loading="lazy"
+                 onerror="this.closest('.phone-shell').dataset.miss='1'">
+          </div>
+          <figcaption class="frame-cap">
+            <span class="ar">البحث عن وظيفة</span><span class="en">Find a job</span>
+          </figcaption>
+        </figure>
+
+        <figure class="phone-frame" role="listitem">
+          <div class="phone-shell" id="ws2">
+            <div class="ph">
+              <svg viewBox="0 0 32 32" fill="none" stroke="currentColor"><rect x="4" y="6" width="24" height="20" rx="2" stroke-width="1.4"/><path d="M10 12h12M10 16h8M10 20h5" stroke-width="1.4" stroke-linecap="round"/></svg>
+              <span class="ar">تفاصيل الوظيفة</span><span class="en">Job details</span>
+            </div>
+            <img src="assets/screens/worker-2.webp"
+                 alt="شاشة تفاصيل الوظيفة والأجر | Job details and wage screen"
+                 width="390" height="844" loading="lazy"
+                 onerror="this.closest('.phone-shell').dataset.miss='1'">
+          </div>
+          <figcaption class="frame-cap">
+            <span class="ar">تفاصيل الوظيفة</span><span class="en">Job details</span>
+          </figcaption>
+        </figure>
+
+        <figure class="phone-frame" role="listitem">
+          <div class="phone-shell" id="ws3">
+            <div class="ph">
+              <svg viewBox="0 0 32 32" fill="none" stroke="currentColor"><path d="M6 16l7 7L26 9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span class="ar">قبول الشروط</span><span class="en">Accept terms</span>
+            </div>
+            <img src="assets/screens/worker-3.webp"
+                 alt="شاشة قبول شروط العمل | Accept work terms screen"
+                 width="390" height="844" loading="lazy"
+                 onerror="this.closest('.phone-shell').dataset.miss='1'">
+          </div>
+          <figcaption class="frame-cap">
+            <span class="ar">قبول الشروط</span><span class="en">Accept terms</span>
+          </figcaption>
+        </figure>
+
+        <figure class="phone-frame" role="listitem">
+          <div class="phone-shell" id="ws4">
+            <div class="ph">
+              <svg viewBox="0 0 32 32" fill="none" stroke="currentColor"><circle cx="16" cy="16" r="11" stroke-width="1.4"/><path d="M16 11v5l3 3" stroke-width="1.4" stroke-linecap="round"/></svg>
+              <span class="ar">إقرار الأجر</span><span class="en">Confirm wage</span>
+            </div>
+            <img src="assets/screens/worker-4.webp"
+                 alt="شاشة إقرار استلام الأجر | Wage receipt confirmation screen"
+                 width="390" height="844" loading="lazy"
+                 onerror="this.closest('.phone-shell').dataset.miss='1'">
+          </div>
+          <figcaption class="frame-cap">
+            <span class="ar">إقرار الأجر</span><span class="en">Confirm wage</span>
+          </figcaption>
+        </figure>
+
+      </div>
+    </div>
+
+    <!-- Business group -->
+    <div class="screen-group">
+      <p class="group-label ar">واجهة المنشأة</p>
+      <p class="group-label en">Business view</p>
+      <div class="scroll-row" role="list">
+
+        <figure class="phone-frame" role="listitem">
+          <div class="phone-shell" id="bs1">
+            <div class="ph">
+              <svg viewBox="0 0 32 32" fill="none" stroke="currentColor"><rect x="8" y="8" width="16" height="16" rx="2" stroke-width="1.4"/><path d="M16 12v8M12 16h8" stroke-width="1.4" stroke-linecap="round"/></svg>
+              <span class="ar">نشر وظيفة</span><span class="en">Post a job</span>
+            </div>
+            <img src="assets/screens/business-1.webp"
+                 alt="شاشة نشر وظيفة جديدة | Post a new job screen"
+                 width="390" height="844" loading="lazy"
+                 onerror="this.closest('.phone-shell').dataset.miss='1'">
+          </div>
+          <figcaption class="frame-cap">
+            <span class="ar">نشر وظيفة</span><span class="en">Post a job</span>
+          </figcaption>
+        </figure>
+
+        <figure class="phone-frame" role="listitem">
+          <div class="phone-shell" id="bs2">
+            <div class="ph">
+              <svg viewBox="0 0 32 32" fill="none" stroke="currentColor"><circle cx="16" cy="11" r="5" stroke-width="1.4"/><path d="M6 27c0-5.5 4.5-10 10-10s10 4.5 10 10" stroke-width="1.4" stroke-linecap="round"/></svg>
+              <span class="ar">اختيار المتقدمين</span><span class="en">Select applicants</span>
+            </div>
+            <img src="assets/screens/business-2.webp"
+                 alt="شاشة اختيار المتقدمين للوظيفة | Select job applicants screen"
+                 width="390" height="844" loading="lazy"
+                 onerror="this.closest('.phone-shell').dataset.miss='1'">
+          </div>
+          <figcaption class="frame-cap">
+            <span class="ar">اختيار المتقدمين</span><span class="en">Select applicants</span>
+          </figcaption>
+        </figure>
+
+        <figure class="phone-frame" role="listitem">
+          <div class="phone-shell" id="bs3">
+            <div class="ph">
+              <svg viewBox="0 0 32 32" fill="none" stroke="currentColor"><path d="M7 17l6 6 12-12" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span class="ar">تأكيد الإتمام</span><span class="en">Confirm completion</span>
+            </div>
+            <img src="assets/screens/business-3.webp"
+                 alt="شاشة تأكيد إتمام العمل وإعلان الدفع | Confirm work completion and declare payment"
+                 width="390" height="844" loading="lazy"
+                 onerror="this.closest('.phone-shell').dataset.miss='1'">
+          </div>
+          <figcaption class="frame-cap">
+            <span class="ar">تأكيد الإتمام</span><span class="en">Confirm completion</span>
+          </figcaption>
+        </figure>
+
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ── PRINCIPLES ─────────────────────────────────────── -->
+<section class="principles" id="principles" aria-labelledby="pr-h">
+  <div class="container principles-grid">
+
+    <div>
+      <p class="section-label ar">المبادئ</p>
+      <p class="section-label en">Our principles</p>
+      <h2 class="section-heading" id="pr-h">
+        <span class="ar">التطبيق يوثّق فقط، لا يتحكم</span>
+        <span class="en">The app documents. It doesn't control.</span>
+      </h2>
+      <p class="principles-lead">
+        <span class="ar">بُني وَثْب على احترام خصوصية العامل وحرية السوق، مع ضمان توثيق كل إجراء.</span>
+        <span class="en">Wathb is built on respect for worker privacy and market freedom, with full auditability of every action.</span>
+      </p>
+    </div>
+
+    <ul class="principles-list">
+
+      <li class="pr-item">
+        <div class="pr-check" aria-hidden="true">
+          <svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6.5l3 3 6-6"/></svg>
+        </div>
+        <p class="pr-text">
+          <span class="ar">التطبيق لا يحتجز أموالاً — المال يتنقل مباشرةً بين الطرفين.</span>
+          <span class="en">The app holds no money — funds move directly between the parties.</span>
+        </p>
+      </li>
+
+      <li class="pr-item">
+        <div class="pr-check" aria-hidden="true">
+          <svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6.5l3 3 6-6"/></svg>
+        </div>
+        <p class="pr-text">
+          <span class="ar">يستلم العامل أجره كاملاً دون أي خصم.</span>
+          <span class="en">The worker receives the full wage, with no deductions.</span>
+        </p>
+      </li>
+
+      <li class="pr-item">
+        <div class="pr-check" aria-hidden="true">
+          <svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6.5l3 3 6-6"/></svg>
+        </div>
+        <p class="pr-text">
+          <span class="ar">موقع العامل يبقى على الجهاز ولا يُرسل إلى أي جهة.</span>
+          <span class="en">The worker's location stays on the device and is never transmitted.</span>
+        </p>
+      </li>
+
+      <li class="pr-item">
+        <div class="pr-check" aria-hidden="true">
+          <svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6.5l3 3 6-6"/></svg>
+        </div>
+        <p class="pr-text">
+          <span class="ar">لا تقييمات ولا قوائم مفضلة، فتتوزع الفرص على أكبر عدد من العمال.</span>
+          <span class="en">No ratings or favourites lists, so opportunities spread across more workers.</span>
+        </p>
+      </li>
+
+      <li class="pr-item">
+        <div class="pr-check" aria-hidden="true">
+          <svg viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6.5l3 3 6-6"/></svg>
+        </div>
+        <p class="pr-text">
+          <span class="ar">كل إجراء مسجّل ومرجعي ومتاح للمراجعة.</span>
+          <span class="en">Every action is logged, auditable, and available for review.</span>
+        </p>
+      </li>
+
+    </ul>
+  </div>
+</section>
+
+<!-- ── CONTEXT ────────────────────────────────────────── -->
+<section class="context" id="context" aria-labelledby="ctx-h">
+  <div class="container">
+    <p class="section-label ar">السياق</p>
+    <p class="section-label en">The context</p>
+    <h2 class="section-heading" id="ctx-h">
+      <span class="ar">سوق العمل في غزة</span>
+      <span class="en">Labour market in Gaza</span>
+    </h2>
+
+    <div class="stats-grid">
+
+      <div class="stat-card fade">
+        <div class="stat-fig">85.1%</div>
+        <p class="stat-label">
+          <span class="ar">معدل البطالة، مقارنةً بـ 45.1% قبل الحرب.</span>
+          <span class="en">Unemployment rate, up from 45.1% before the war.</span>
+        </p>
+        <p class="stat-src">
+          <span class="ar">المصدر: منظمة العمل الدولية، 2026</span>
+          <span class="en">Source: ILO, 2026</span>
+        </p>
+      </div>
+
+      <div class="stat-card fade">
+        <div class="stat-fig">252,000+</div>
+        <p class="stat-label">
+          <span class="ar">وظيفة مفقودة منذ بداية الحرب.</span>
+          <span class="en">Jobs lost since the start of the war.</span>
+        </p>
+        <p class="stat-src">
+          <span class="ar">المصدر: منظمة العمل الدولية، 2026</span>
+          <span class="en">Source: ILO, 2026</span>
+        </p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ── WAGE SUPPORT ───────────────────────────────────── -->
+<section class="wage-support" id="wage-support" aria-labelledby="ws-h">
+  <div class="container">
+    <p class="section-label ar">ميزة اختيارية</p>
+    <p class="section-label en">Optional feature</p>
+    <h2 class="section-heading" id="ws-h">
+      <span class="ar">دعم الأجور</span>
+      <span class="en">Wage support</span>
+    </h2>
+    <div class="wage-card fade">
+      <div>
+        <span class="wage-badge ar">اختياري</span>
+        <span class="wage-badge en">Optional</span>
+      </div>
+      <div>
+        <h3>
+          <span class="ar">تغطية جزء من الأجر مباشرةً للعامل</span>
+          <span class="en">Cover part of the wage — directly to the worker</span>
+        </h3>
+        <p>
+          <span class="ar">يتيح التطبيق للممول تغطية جزء من أجر العامل، يُدفع مباشرةً إليه دون وسيط. هذه الميزة اختيارية ولا يعتمد عليها التطبيق في عمله.</span>
+          <span class="en">The app lets a funder cover part of a worker's wage, paid directly to them with no intermediary. This feature is optional and the app does not depend on it to function.</span>
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- ═══════════════════════ FOOTER ═══════════════════════ -->
+<footer class="site-footer" id="footer" role="contentinfo">
+  <div class="container">
+    <div class="footer-inner">
+
+      <div class="footer-brand">
+        <a class="footer-logo" href="#" aria-label="وَثْب — العودة للأعلى">
+          <div class="logo-mark" aria-hidden="true">و</div>
+          <span class="ar">وَثْب</span><span class="en">Wathb</span>
+        </a>
+        <p class="footer-blurb">
+          <span class="ar">تطبيق لتشغيل العمالة اليومية في غزة.</span>
+          <span class="en">An app for daily work in Gaza.</span>
+        </p>
+      </div>
+
+      <div class="footer-col">
+        <h4><span class="ar">تواصل</span><span class="en">Contact</span></h4>
+        <a id="waFooter" href="#">
+          <span class="ar">واتساب</span><span class="en">WhatsApp</span>
+          <span id="waNum" style="direction:ltr;display:inline-block;padding-inline-start:.35em"></span>
+        </a>
+      </div>
+
+    </div>
+
+    <div class="footer-bottom">
+      <p class="footer-copy">
+        <span class="ar">© وَثْب ٢٠٢٦. جميع الحقوق محفوظة.</span>
+        <span class="en">© Wathb 2026. All rights reserved.</span>
+      </p>
+      <button class="lang-btn" id="langBtn2">
+        <span class="ar">English</span><span class="en">العربية</span>
+      </button>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+'use strict';
+
+/* ── constants ──────────────────────────────────── */
+const APK_URL  = "";
+const WHATSAPP = "+970XXXXXXXXX";   /* TODO: replace before launch */
+
+/* ── APK download button ─────────────────────────── */
+var dlBtn = document.getElementById('dlBtn');
+if(APK_URL){
+  dlBtn.href = APK_URL;
+  dlBtn.removeAttribute('aria-disabled');
+} else {
+  dlBtn.addEventListener('click', function(e){ e.preventDefault(); });
+}
+
+/* ── WhatsApp links ──────────────────────────────── */
+var digits = WHATSAPP.replace(/\D/g,'');
+var waHref = digits ? 'https://wa.me/'+digits : '#';
+['waHeroBtn','waFooter'].forEach(function(id){
+  var el = document.getElementById(id);
+  if(!el) return;
+  el.href = waHref;
+  if(digits){ el.target='_blank'; el.rel='noopener noreferrer'; }
+});
+var numEl = document.getElementById('waNum');
+if(numEl && WHATSAPP !== '+970XXXXXXXXX') numEl.textContent = WHATSAPP;
+
+/* ── language toggle ─────────────────────────────── */
+function getLang(){
+  try{ return localStorage.getItem('wathb_lang')||'ar'; }catch(_){ return 'ar'; }
+}
+function saveLang(l){
+  try{ localStorage.setItem('wathb_lang',l); }catch(_){}
+}
+function applyLang(l){
+  var html = document.documentElement;
+  html.lang = l;
+  html.dir  = l==='ar' ? 'rtl' : 'ltr';
+  document.querySelectorAll('.lang-btn').forEach(function(btn){
+    btn.textContent = l==='ar' ? 'EN' : 'عر';
+    btn.setAttribute('aria-label', l==='ar' ? 'Switch to English' : 'التبديل إلى العربية');
+  });
+}
+function toggleLang(){
+  var next = document.documentElement.lang==='ar' ? 'en' : 'ar';
+  applyLang(next); saveLang(next);
+}
+document.querySelectorAll('.lang-btn').forEach(function(btn){
+  btn.addEventListener('click', toggleLang);
+});
+applyLang(getLang());
+
+/* ── scroll animations ───────────────────────────── */
+if('IntersectionObserver' in window){
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); }
+    });
+  },{threshold:0.1});
+  document.querySelectorAll('.fade').forEach(function(el){ io.observe(el); });
+} else {
+  document.querySelectorAll('.fade').forEach(function(el){ el.classList.add('in'); });
+}
+
+})();
+</script>
+</body>
+</html>
