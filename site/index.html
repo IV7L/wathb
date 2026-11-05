@@ -319,20 +319,85 @@ html[lang="ar"] .group-label{letter-spacing:0}
    WAGE SUPPORT
    ========================================================= */
 .wage-support{background:var(--surface)}
-.wage-card{
+
+.ws-flow{
+  display:flex;align-items:center;justify-content:center;
+  flex-wrap:wrap;gap:.5rem;margin-block:0 2.5rem;
+}
+.ws-node{
+  display:flex;flex-direction:column;align-items:center;text-align:center;
+  gap:.35rem;padding:1.1rem 1.4rem;
   background:var(--cream);border:1px solid var(--border);
-  border-radius:var(--r-lg);padding:2.25rem;max-width:660px;
-  display:flex;gap:1.75rem;align-items:flex-start;
+  border-radius:var(--r-md);min-width:110px;
 }
-.wage-badge{
-  flex-shrink:0;background:rgba(0,109,107,.09);border:1px solid rgba(0,109,107,.2);
-  border-radius:var(--r-sm);padding-block:.22rem;padding-inline:.6rem;
-  font-size:.68rem;font-weight:600;color:var(--teal-text);text-transform:uppercase;
-  letter-spacing:.06em;white-space:nowrap;align-self:flex-start;
+.ws-node-worker{
+  background:var(--teal-deep);border-color:var(--teal-deep);
+  box-shadow:var(--shadow-md);
 }
-html[lang="ar"] .wage-badge{letter-spacing:0}
-.wage-card h3{font-size:1.05rem;font-weight:700;color:var(--teal-text);margin:0 0 .45rem}
-.wage-card p{font-size:.93rem;color:var(--fg-muted);margin:0;line-height:1.6}
+.ws-icon{
+  width:2rem;height:2rem;display:flex;align-items:center;justify-content:center;
+  color:var(--teal-text);
+}
+.ws-node-worker .ws-icon{color:#fff}
+.ws-node-label{font-weight:700;font-size:.85rem;margin:0;color:var(--fg)}
+.ws-node-worker .ws-node-label{color:#fff}
+.ws-node-desc{font-size:.72rem;color:var(--fg-muted);margin:0;line-height:1.3}
+.ws-node-worker .ws-node-desc{color:rgba(255,255,255,.75)}
+.ws-arrow{
+  font-size:1.5rem;color:var(--teal);padding-inline:.35rem;
+  flex-shrink:0;display:flex;align-items:center;
+}
+html[dir="ltr"] .ws-arrow-to-worker::before{content:'→'}
+html[dir="rtl"]  .ws-arrow-to-worker::before{content:'←'}
+html[dir="ltr"] .ws-arrow-from-funder::before{content:'←'}
+html[dir="rtl"]  .ws-arrow-from-funder::before{content:'→'}
+
+.ws-bar-section{max-width:560px;margin-inline:auto;margin-block:0 1.75rem}
+.ws-bar-header{
+  font-size:.82rem;font-weight:600;color:var(--fg-muted);
+  margin-block-end:.7rem;text-align:center;
+}
+.ws-bar{
+  display:flex;height:3.2rem;border-radius:var(--r-sm);overflow:hidden;
+  border:1px solid var(--border);
+}
+html[dir="rtl"] .ws-bar{flex-direction:row-reverse}
+.ws-seg{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:.05rem;overflow:hidden;min-width:0;
+}
+@media (prefers-reduced-motion:no-preference){
+  .ws-seg{transition:width .3s ease}
+}
+.ws-seg-biz{background:var(--teal-deep);color:#fff}
+.ws-seg-fund{background:var(--gold)}
+.ws-seg-amt{font-size:.82rem;font-weight:700;line-height:1;white-space:nowrap}
+.ws-seg-lbl{font-size:.64rem;white-space:nowrap;opacity:.85}
+.ws-seg-fund .ws-seg-amt,.ws-seg-fund .ws-seg-lbl{color:var(--fg)}
+
+.ws-slider-row{
+  display:flex;align-items:center;gap:.75rem;margin-block-start:.8rem;flex-wrap:wrap;
+}
+.ws-slider-label{font-size:.8rem;color:var(--fg-muted);flex-shrink:0}
+.ws-slider{flex:1;min-width:100px;cursor:pointer;accent-color:var(--teal-deep)}
+.ws-pct-label{
+  font-size:.9rem;font-weight:700;color:var(--teal-text);
+  min-width:2.75rem;text-align:center;
+}
+
+.ws-pills{
+  display:flex;flex-wrap:wrap;gap:.5rem;
+  justify-content:center;margin-block:0 1rem;
+}
+.ws-pill{
+  background:rgba(0,109,107,.08);border:1px solid rgba(0,109,107,.18);
+  border-radius:var(--r-xl);padding-block:.28rem;padding-inline:.9rem;
+  font-size:.78rem;font-weight:600;color:var(--teal-text);
+}
+.ws-note{
+  font-size:.78rem;color:var(--fg-muted);margin:0;
+  line-height:1.65;text-align:center;max-width:480px;margin-inline:auto;
+}
 
 /* =========================================================
    FOOTER
@@ -378,8 +443,7 @@ html[lang="ar"] .footer-col h4{letter-spacing:0}
   section{padding-block:3.5rem}
   .principles-grid{grid-template-columns:1fr;gap:2.25rem}
   .stats-grid{grid-template-columns:1fr}
-  .wage-card{flex-direction:column;gap:1rem}
-  .footer-inner{flex-direction:column}
+.footer-inner{flex-direction:column}
   .footer-bottom{flex-direction:column;align-items:flex-start}
 }
 @media (max-width:500px){
@@ -633,31 +697,15 @@ html[lang="ar"] .footer-col h4{letter-spacing:0}
           <div class="phone-shell" id="ws3">
             <div class="ph">
               <svg viewBox="0 0 32 32" fill="none" stroke="currentColor"><path d="M6 16l7 7L26 9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              <span class="ar">قبول الشروط</span><span class="en">Accept terms</span>
+              <span class="ar">قبول الشروط وإقرار الأجر</span><span class="en">Accept the terms and confirm the wage</span>
             </div>
             <img src="assets/screens/worker-3.webp"
-                 alt="شاشة قبول شروط العمل | Accept work terms screen"
+                 alt="شاشة قبول الشروط وإقرار الأجر | Accept the terms and confirm the wage screen"
                  width="720" height="1600" loading="lazy"
                  onerror="this.closest('.phone-shell').dataset.miss='1'">
           </div>
           <figcaption class="frame-cap">
-            <span class="ar">قبول الشروط</span><span class="en">Accept terms</span>
-          </figcaption>
-        </figure>
-
-        <figure class="phone-frame" role="listitem">
-          <div class="phone-shell" id="ws4">
-            <div class="ph">
-              <svg viewBox="0 0 32 32" fill="none" stroke="currentColor"><circle cx="16" cy="16" r="11" stroke-width="1.4"/><path d="M16 11v5l3 3" stroke-width="1.4" stroke-linecap="round"/></svg>
-              <span class="ar">إقرار الأجر</span><span class="en">Confirm wage</span>
-            </div>
-            <img src="assets/screens/worker-4.webp"
-                 alt="شاشة إقرار استلام الأجر | Wage receipt confirmation screen"
-                 width="720" height="1600" loading="lazy"
-                 onerror="this.closest('.phone-shell').dataset.miss='1'">
-          </div>
-          <figcaption class="frame-cap">
-            <span class="ar">إقرار الأجر</span><span class="en">Confirm wage</span>
+            <span class="ar">قبول الشروط وإقرار الأجر</span><span class="en">Accept the terms and confirm the wage</span>
           </figcaption>
         </figure>
 
@@ -846,22 +894,83 @@ html[lang="ar"] .footer-col h4{letter-spacing:0}
       <span class="ar">دعم الأجور</span>
       <span class="en">Wage support</span>
     </h2>
-    <div class="wage-card fade">
-      <div>
-        <span class="wage-badge ar">اختياري</span>
-        <span class="wage-badge en">Optional</span>
+
+    <!-- Flow diagram -->
+    <div class="ws-flow fade" role="img" aria-label="مخطط: المنشأة والممول يدفعان مباشرة للعامل | Diagram: business and funder pay directly to the worker">
+      <div class="ws-node">
+        <div class="ws-icon" aria-hidden="true">
+          <svg width="28" height="28" viewBox="0 0 32 32" fill="none" stroke="currentColor"><rect x="4" y="10" width="24" height="16" rx="2" stroke-width="1.5"/><path d="M10 10V7a2 2 0 012-2h8a2 2 0 012 2v3" stroke-width="1.5"/><path d="M12 18h8M12 22h5" stroke-width="1.4" stroke-linecap="round"/></svg>
+        </div>
+        <p class="ws-node-label ar">المنشأة</p>
+        <p class="ws-node-label en">Business</p>
+        <p class="ws-node-desc ar">تنشر الوظيفة</p>
+        <p class="ws-node-desc en">Posts the job</p>
       </div>
-      <div>
-        <h3>
-          <span class="ar">تغطية جزء من الأجر مباشرةً للعامل</span>
-          <span class="en">Cover part of the wage — directly to the worker</span>
-        </h3>
-        <p>
-          <span class="ar">يتيح التطبيق للممول تغطية جزء من أجر العامل، يُدفع مباشرةً إليه دون وسيط. هذه الميزة اختيارية ولا يعتمد عليها التطبيق في عمله.</span>
-          <span class="en">The app lets a funder cover part of a worker's wage, paid directly to them with no intermediary. This feature is optional and the app does not depend on it to function.</span>
-        </p>
+      <div class="ws-arrow ws-arrow-to-worker" aria-hidden="true"></div>
+      <div class="ws-node ws-node-worker">
+        <div class="ws-icon" aria-hidden="true">
+          <svg width="28" height="28" viewBox="0 0 32 32" fill="none" stroke="currentColor"><circle cx="16" cy="10" r="4" stroke-width="1.5"/><path d="M8 26c0-4.418 3.582-8 8-8s8 3.582 8 8" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </div>
+        <p class="ws-node-label ar">العامل</p>
+        <p class="ws-node-label en">Worker</p>
+        <p class="ws-node-desc ar">يستلم الأجر كاملاً</p>
+        <p class="ws-node-desc en">Receives the full wage</p>
+      </div>
+      <div class="ws-arrow ws-arrow-from-funder" aria-hidden="true"></div>
+      <div class="ws-node">
+        <div class="ws-icon" aria-hidden="true">
+          <svg width="28" height="28" viewBox="0 0 32 32" fill="none" stroke="currentColor"><path d="M6 20c0-5.523 4.477-10 10-10s10 4.477 10 10" stroke-width="1.5" stroke-linecap="round"/><circle cx="16" cy="13" r="2" stroke-width="1.4"/><path d="M10 26h12M13 26v-3h6v3" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <p class="ws-node-label ar">الممول</p>
+        <p class="ws-node-label en">Funder</p>
+        <p class="ws-node-desc ar">يغطي جزءاً من الأجر</p>
+        <p class="ws-node-desc en">Covers part of the wage</p>
       </div>
     </div>
+
+    <!-- Segmented bar + slider -->
+    <div class="ws-bar-section fade">
+      <p class="ws-bar-header">
+        <span class="ar">مثال توضيحي — أجر 40₪</span>
+        <span class="en">Illustrative example — 40₪ wage</span>
+      </p>
+      <div class="ws-bar" role="img" aria-label="شريط يوضح توزيع الأجر | Bar showing wage split">
+        <div class="ws-seg ws-seg-biz" id="wsBizSeg" style="width:50%">
+          <span class="ws-seg-amt" id="wsBizAmt">20₪</span>
+          <span class="ws-seg-lbl ar">المنشأة</span>
+          <span class="ws-seg-lbl en">Business</span>
+        </div>
+        <div class="ws-seg ws-seg-fund" id="wsFundSeg" style="width:50%">
+          <span class="ws-seg-amt" id="wsFundAmt">20₪</span>
+          <span class="ws-seg-lbl ar">الممول</span>
+          <span class="ws-seg-lbl en">Funder</span>
+        </div>
+      </div>
+      <div class="ws-slider-row">
+        <label class="ws-slider-label" for="wsSlider">
+          <span class="ar">تغطية الممول</span>
+          <span class="en">Funder coverage</span>
+        </label>
+        <input type="range" id="wsSlider" class="ws-slider"
+               min="25" max="75" step="5" value="50"
+               aria-label="نسبة تغطية الممول / Funder coverage percentage"
+               aria-valuetext="50%">
+        <span id="wsLive" class="ws-pct-label" aria-live="polite" aria-atomic="true">50%</span>
+      </div>
+    </div>
+
+    <!-- Pills -->
+    <div class="ws-pills fade">
+      <span class="ws-pill"><span class="ar">اختيارية تماماً</span><span class="en">Fully optional</span></span>
+      <span class="ws-pill"><span class="ar">مباشرة للعامل</span><span class="en">Directly to the worker</span></span>
+      <span class="ws-pill"><span class="ar">بدون وسيط</span><span class="en">No intermediary</span></span>
+    </div>
+
+    <p class="ws-note fade">
+      <span class="ar">التطبيق يعمل بشكل كامل بدون هذه الميزة. الأرقام أعلاه توضيحية فقط.</span>
+      <span class="en">The app works fully without this feature. The figures above are illustrative only.</span>
+    </p>
+
   </div>
 </section>
 
@@ -968,6 +1077,29 @@ document.querySelectorAll('.lang-btn').forEach(function(btn){
   btn.addEventListener('click', toggleLang);
 });
 applyLang(getLang());
+
+/* ── wage bar slider ─────────────────────────────── */
+function updateWageBar(pct){
+  var fundShkl = Math.round(40 * pct / 100);
+  var bizShkl  = 40 - fundShkl;
+  var bizSeg   = document.getElementById('wsBizSeg');
+  var fundSeg  = document.getElementById('wsFundSeg');
+  var bizAmt   = document.getElementById('wsBizAmt');
+  var fundAmt  = document.getElementById('wsFundAmt');
+  var live     = document.getElementById('wsLive');
+  var slider   = document.getElementById('wsSlider');
+  if(bizSeg)  bizSeg.style.width  = (100-pct) + '%';
+  if(fundSeg) fundSeg.style.width = pct + '%';
+  if(bizAmt)  bizAmt.textContent  = bizShkl  + '₪';
+  if(fundAmt) fundAmt.textContent = fundShkl + '₪';
+  if(live)    live.textContent    = pct + '%';
+  if(slider)  slider.setAttribute('aria-valuetext', pct + '%');
+}
+var wsSlider = document.getElementById('wsSlider');
+if(wsSlider){
+  wsSlider.addEventListener('input', function(){ updateWageBar(+this.value); });
+  updateWageBar(+wsSlider.value);
+}
 
 /* ── scroll animations ───────────────────────────── */
 if('IntersectionObserver' in window){
